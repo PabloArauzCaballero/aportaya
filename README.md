@@ -3,6 +3,12 @@
 Sistema web destinado a la creación, administración y seguimiento de grupos de
 pasanaku. Esta rama contiene el **modelo de datos completo** del sistema.
 
+La carpeta [`docs/`](docs/Index.md) es además una **bóveda de Obsidian**: ábrala con
+`Abrir carpeta como bóveda` y empiece por `Index.md` para recorrer el modelo como
+grafo, con una nota por tabla y una por clave foránea
+([`docs/Modelos/`](docs/Modelos/Entidades/_Entidades.md), generadas con
+`scripts/generar_boveda.py`).
+
 Para cada módulo hay dos archivos en [`docs/entidades/`](docs/entidades/README.md):
 
 - un **`.puml`** con dos diagramas: el **modelo de clases** (diseño orientado a

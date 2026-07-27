@@ -6,6 +6,14 @@ existir**. No es un diccionario de datos (los tipos y las claves ya están en lo
 pasanaku resuelve, qué se rompería si se elimina, y qué papel cumple en el
 sistema.
 
+## Dónde encaja este directorio
+
+Estas fichas responden **por qué** existe cada entidad. Para la estructura —columnas,
+claves, cardinalidades— está la bóveda de Obsidian en [`docs/`](../Index.md), con una
+nota por tabla ([Entidades](../Modelos/Entidades/_Entidades.md)) y una por clave
+foránea ([Relaciones](../Modelos/Relaciones/_Relaciones.md)). Esas notas se generan
+desde los `.puml` con `scripts/generar_boveda.py`; estas fichas están escritas a mano.
+
 ## Cómo leer cada ficha
 
 Cada entidad se documenta con cuatro preguntas:

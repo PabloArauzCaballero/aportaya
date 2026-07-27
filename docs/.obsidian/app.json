@@ -1,0 +1,9 @@
+{
+  "alwaysUpdateLinks": true,
+  "newLinkFormat": "shortest",
+  "useMarkdownLinks": false,
+  "attachmentFolderPath": "",
+  "showLineNumber": false,
+  "readableLineLength": true,
+  "propertiesInDocument": "visible"
+}
