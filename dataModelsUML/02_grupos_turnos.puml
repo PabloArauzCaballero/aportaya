@@ -1,0 +1,1002 @@
+@startuml 02_grupos_turnos_clases
+' ============================================================
+'  MODULO 2: Grupos, Cupos, Turnos y Gobernanza
+'  Diagrama de CLASES  (modelo detallado)
+'  Cubre: nucleo v1 + RF-19 (conformacion / emparejamiento automatico)
+'  Contexto pasanaku: un grupo es un contrato colectivo rotativo;
+'  el orden de cobro es el activo mas disputado, por eso se modela
+'  sorteo verificable, permutas y decisiones por votacion.
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 2 - Grupos, Cupos, Turnos y Gobernanza (clases)
+
+legend top right
+  <b>Concepto clave</b>
+  <b>Participante</b> = persona dentro del grupo.
+  <b>Cupo</b> = "mano" o cuota economica. Una persona puede
+  tener 2 cupos (paga doble y cobra dos veces), practica
+  habitual en pasanakus reales. Las obligaciones del
+  modulo 3 y los turnos cuelgan del <b>Cupo</b>, no de la persona.
+endlegend
+
+' ============================================================
+package "Definicion del Grupo" {
+
+  enum EstadoGrupo {
+    BORRADOR
+    ABIERTO_A_INSCRIPCION
+    CONFORMADO
+    ACTIVO
+    EN_CURSO
+    SUSPENDIDO
+    FINALIZADO
+    CANCELADO
+    DISUELTO_ANTICIPADAMENTE
+  }
+
+  enum Periodicidad {
+    SEMANAL
+    QUINCENAL
+    MENSUAL
+    BIMENSUAL
+  }
+
+  enum TipoConformacion {
+    MANUAL_POR_INVITACION
+    EMPAREJAMIENTO_AUTOMATICO
+    MIXTA
+  }
+
+  enum ModalidadAsignacionTurno {
+    SORTEO_ALEATORIO
+    ORDEN_DE_INGRESO
+    POR_REPUTACION
+    SUBASTA_DESCUENTO
+    ACUERDO_MANUAL
+  }
+
+  enum Visibilidad {
+    PRIVADO
+    ENLACE_DIRECTO
+    PUBLICO_DIRECTORIO
+  }
+
+  class Grupo <<AR>> {
+    - id: UUID
+    - codigoPublico: String <<unico, para invitar>>
+    - nombre: String
+    - descripcion: String
+    - montoAporte: Decimal
+    - moneda: String <<ISO-4217: BOB, USD>>
+    - periodicidad: Periodicidad
+    - diaCobro: Integer <<1..31 o 1..7>>
+    - numPeriodos: Integer
+    - cuposTotales: Integer
+    - cuposOcupados: Integer
+    - fechaInicio: Date
+    - fechaFinEstimada: Date
+    - estado: EstadoGrupo
+    - tipoConformacion: TipoConformacion
+    - modalidadTurnos: ModalidadAsignacionTurno
+    - visibilidad: Visibilidad
+    - organizadorId: UUID <<null si es autogestionado>>
+    - esAutogestionado: Boolean
+    - requiereKYCMinimo: NivelKYC
+    - reputacionMinima: Decimal
+    - diasGracia: Integer
+    - aplicaRecargoMora: Boolean
+    - usaFondoGarantia: Boolean
+    - porcentajeFondoGarantia: Decimal
+    - quorumDecisiones: Decimal <<ej. 0.66>>
+    - version: Integer
+    --
+    + publicar()
+    + validarConformacion(): List<Violacion>
+    + activar()
+    + generarCalendario(): List<Periodo>
+    + asignarTurnos(modalidad): List<Turno>
+    + suspender(motivo)
+    + cancelar(motivo)
+    + disolverAnticipadamente(acuerdoId)
+    + montoBolsaPorPeriodo(): Decimal
+    + estaCompleto(): Boolean
+    + saldoEsperadoAcumulado(): Decimal
+  }
+
+  class ConfiguracionGrupo {
+    - grupoId: UUID
+    - permiteCuposMultiples: Boolean
+    - maxCuposPorPersona: Integer
+    - permitePermutaTurnos: Boolean
+    - requiereAvalista: Boolean
+    - permiteIngresoTardio: Boolean
+    - horaLimitePago: Time
+    - toleranciaMontoParcial: Decimal
+    - politicaMoraId: UUID
+    - politicaSancionId: UUID
+    --
+    + validarCoherencia(): Boolean
+  }
+
+  class ReglamentoGrupo {
+    - id: UUID
+    - grupoId: UUID
+    - version: Integer
+    - contenido: Text
+    - hashContenido: String <<SHA-256, sella el texto>>
+    - clausulasMora: Text
+    - clausulasAbandono: Text
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    - redactadoPor: UUID
+    --
+    + publicarNuevaVersion(texto): ReglamentoGrupo
+    + requiereReaceptacion(): Boolean
+  }
+
+  class AceptacionReglamento {
+    - id: UUID
+    - reglamentoId: UUID
+    - participanteId: UUID
+    - aceptadoEn: DateTime
+    - hashFirmado: String
+    - ipOrigen: String
+    - tokenFirmaId: UUID <<modulo 1>>
+    --
+    + verificarIntegridad(): Boolean
+  }
+
+  class HistorialEstadoGrupo {
+    - id: UUID
+    - grupoId: UUID
+    - estadoAnterior: EstadoGrupo
+    - estadoNuevo: EstadoGrupo
+    - motivo: String
+    - ejecutadoPor: UUID
+    - fechaHora: DateTime
+  }
+}
+
+' ============================================================
+package "Membresia: Participantes y Cupos" {
+
+  enum EstadoParticipante {
+    INVITADO
+    POSTULANTE
+    ACEPTADO_PENDIENTE_FIRMA
+    ACTIVO
+    EN_MORA
+    SUSPENDIDO
+    REEMPLAZADO
+    RETIRADO
+    EXPULSADO
+  }
+
+  enum EstadoCupo {
+    LIBRE
+    RESERVADO
+    OCUPADO
+    EN_TRASPASO
+    LIBERADO_POR_INCUMPLIMIENTO
+  }
+
+  class Participante <<AR>> {
+    - id: UUID
+    - grupoId: UUID
+    - usuarioId: UUID
+    - alias: String
+    - estado: EstadoParticipante
+    - esOrganizador: Boolean
+    - invitadoPorId: UUID <<cadena de confianza>>
+    - fechaIngreso: DateTime
+    - fechaSalida: DateTime
+    - motivoSalida: String
+    - reputacionAlIngresar: Decimal
+    - aportesRealizados: Integer
+    - aportesEnMora: Integer
+    --
+    + aceptarInvitacion(token)
+    + firmarReglamento()
+    + marcarEnMora(registroIncumplimientoId)
+    + regularizar()
+    + suspender(motivo)
+    + expulsar(acuerdoId)
+    + solicitarRetiro(): SolicitudRetiro
+    + saldoNetoEnGrupo(): Decimal
+    + yaCobro(): Boolean
+  }
+
+  class Cupo {
+    - id: UUID
+    - grupoId: UUID
+    - numero: Integer <<1..cuposTotales>>
+    - participanteId: UUID
+    - estado: EstadoCupo
+    - fraccion: Decimal <<1.0 = cupo entero; 0.5 = medio cupo compartido>>
+    - asignadoEn: DateTime
+    - liberadoEn: DateTime
+    --
+    + asignarA(participante)
+    + liberar(motivo)
+    + traspasarA(nuevoParticipante): TraspasoCupo
+    + turnoAsignado(): Turno
+  }
+
+  class TraspasoCupo {
+    - id: UUID
+    - cupoId: UUID
+    - participanteOrigenId: UUID
+    - participanteDestinoId: UUID
+    - motivo: String <<VENTA | REEMPLAZO_POR_MORA | RETIRO>>
+    - deudaTransferida: Decimal
+    - derechoCobroTransferido: Boolean
+    - aprobadoPorAcuerdoId: UUID
+    - fecha: DateTime
+    --
+    + ejecutar()
+    + revertir(motivo)
+  }
+
+  class SolicitudRetiro {
+    - id: UUID
+    - participanteId: UUID
+    - motivo: String
+    - solicitadoEn: DateTime
+    - estado: String <<PENDIENTE | APROBADA | RECHAZADA>>
+    - requiereReemplazo: Boolean
+    - liquidacionCalculada: Decimal
+    --
+    + calcularLiquidacion(): Decimal
+  }
+
+  class SolicitudIngreso {
+    - id: UUID
+    - grupoId: UUID
+    - usuarioId: UUID
+    - cuposSolicitados: Integer
+    - mensaje: String
+    - estado: String <<PENDIENTE | APROBADA | RECHAZADA | EXPIRADA>>
+    - puntajeCompatibilidad: Decimal
+    - revisadaPor: UUID
+    - fechaSolicitud: DateTime
+    - fechaResolucion: DateTime
+    --
+    + evaluarAutomaticamente(): Decimal
+    + aprobar(revisorId): Participante
+    + rechazar(motivo)
+  }
+
+  class Invitacion {
+    - id: UUID
+    - grupoId: UUID
+    - telefonoInvitado: String
+    - nombreSugerido: String
+    - emisorId: UUID
+    - tokenId: UUID <<TokenEnlaceFirmado, modulo 1>>
+    - canal: String <<WHATSAPP | SMS | ENLACE>>
+    - estado: String <<PENDIENTE | ENVIADA | ACEPTADA | RECHAZADA | EXPIRADA | REVOCADA>>
+    - enviosRealizados: Integer
+    - fechaEnvio: DateTime
+    - fechaExpiracion: DateTime
+    - fechaRespuesta: DateTime
+    --
+    + generarEnlace(): String
+    + reenviar()
+    + aceptar(usuarioId): Participante
+    + revocar(motivo)
+  }
+}
+
+' ============================================================
+package "Calendario y Turnos" {
+
+  enum EstadoPeriodo {
+    PROGRAMADO
+    ABIERTO
+    EN_GRACIA
+    CERRADO
+    LIQUIDADO
+    CANCELADO
+  }
+
+  enum EstadoTurno {
+    PROGRAMADO
+    CONFIRMADO
+    EN_CURSO
+    COBRADO
+    DIFERIDO
+    PERMUTADO
+    ANULADO
+  }
+
+  class Periodo {
+    - id: UUID
+    - grupoId: UUID
+    - numero: Integer
+    - fechaInicio: Date
+    - fechaLimitePago: Date
+    - fechaFinGracia: Date
+    - fechaEntregaPrevista: Date
+    - estado: EstadoPeriodo
+    - montoObjetivo: Decimal
+    - montoRecaudado: Decimal
+    - cuposMorosos: Integer
+    --
+    + abrir()
+    + cerrar()
+    + estaCompletamenteFinanciado(): Boolean
+    + brechaFinanciamiento(): Decimal
+    + diasParaVencimiento(): Integer
+  }
+
+  class Turno {
+    - id: UUID
+    - grupoId: UUID
+    - periodoId: UUID
+    - cupoId: UUID
+    - ordenAsignado: Integer
+    - estado: EstadoTurno
+    - criterioAsignacion: ModalidadAsignacionTurno
+    - montoEstimadoCobro: Decimal
+    - descuentoSubasta: Decimal
+    - permutadoConTurnoId: UUID
+    - confirmadoEn: DateTime
+    --
+    + confirmar()
+    + diferir(motivo)
+    + anular(motivo)
+    + beneficiario(): Participante
+  }
+
+  class SorteoTurnos {
+    - id: UUID
+    - grupoId: UUID
+    - algoritmo: String <<FISHER_YATES_HMAC>>
+    - semillaServidor: String <<revelada tras el sorteo>>
+    - hashSemillaPrevio: String <<publicado antes: prueba de no manipulacion>>
+    - semillaPublica: String <<ej. hash de bloque / aporte de participantes>>
+    - resultado: JSON <<orden final cupo->posicion>>
+    - ejecutadoPor: UUID
+    - fechaEjecucion: DateTime
+    - testigos: List<UUID>
+    --
+    + comprometerSemilla(): String
+    + ejecutar(): List<Turno>
+    + verificar(semilla, hash): Boolean
+    + repetirPorAnulacion(motivo)
+  }
+
+  class SolicitudPermuta {
+    - id: UUID
+    - turnoOrigenId: UUID
+    - turnoDestinoId: UUID
+    - solicitanteId: UUID
+    - contraparteId: UUID
+    - motivo: String
+    - compensacionOfrecida: Decimal
+    - estado: String <<PENDIENTE | ACEPTADA | RECHAZADA | APROBADA_ORG | EJECUTADA>>
+    - aprobadaPorOrganizador: Boolean
+    - fechaSolicitud: DateTime
+    - fechaEjecucion: DateTime
+    --
+    + aceptarContraparte()
+    + aprobarOrganizador()
+    + ejecutar()
+  }
+
+  class DiaNoHabil {
+    - id: UUID
+    - fecha: Date
+    - descripcion: String
+    - alcance: String <<NACIONAL | DEPARTAMENTAL | GRUPO>>
+    --
+    + {static} siguienteHabil(fecha): Date
+  }
+}
+
+' ============================================================
+package "Conformacion Automatica (RF-19)" {
+
+  class PostulacionEmparejamiento {
+    - id: UUID
+    - usuarioId: UUID
+    - montoDeseado: Decimal
+    - rangoMontoMin: Decimal
+    - rangoMontoMax: Decimal
+    - periodicidadDeseada: Periodicidad
+    - fechaInicioDeseada: Date
+    - preferenciaTurno: String <<TEMPRANO | INDIFERENTE | TARDIO>>
+    - toleranciaRiesgo: String
+    - estado: String <<ACTIVA | EMPAREJADA | EXPIRADA | CANCELADA>>
+    - vigenteHasta: DateTime
+    --
+    + cancelar()
+    + esCompatibleCon(otra): Decimal
+  }
+
+  class CriterioEmparejamiento <<Pol>> {
+    - id: UUID
+    - pesoReputacion: Decimal
+    - pesoMonto: Decimal
+    - pesoGeografia: Decimal
+    - pesoHistorialComun: Decimal
+    - reputacionMinima: Decimal
+    - maxMorososPorGrupo: Integer
+    - vigenteDesde: DateTime
+    --
+    + puntuar(postulacionA, postulacionB): Decimal
+  }
+
+  class PropuestaGrupo {
+    - id: UUID
+    - postulacionesIds: List<UUID>
+    - montoAporte: Decimal
+    - periodicidad: Periodicidad
+    - puntajeCohesion: Decimal
+    - riesgoEstimado: Decimal
+    - estado: String <<PROPUESTA | ACEPTADA_PARCIAL | CONFIRMADA | DESCARTADA>>
+    - aceptacionesRecibidas: Integer
+    - expiraEn: DateTime
+    --
+    + notificarCandidatos()
+    + registrarAceptacion(usuarioId)
+    + materializar(): Grupo
+  }
+
+  class MotorEmparejamiento <<Svc>> {
+    --
+    + buscarCandidatos(postulacion): List<PostulacionEmparejamiento>
+    + proponerGrupos(): List<PropuestaGrupo>
+    + asignarTurnosPorReputacion(grupo): List<Turno>
+    + reequilibrarPorRiesgo(grupo): void
+    + explicarEmparejamiento(propuestaId): String
+  }
+}
+
+' ============================================================
+package "Gobernanza del Grupo" {
+
+  enum TipoAcuerdo {
+    EXPULSION_PARTICIPANTE
+    CAMBIO_FECHA_COBRO
+    CAMBIO_MONTO
+    ADMISION_REEMPLAZO
+    PERMUTA_TURNOS
+    DISOLUCION_ANTICIPADA
+    CONDONACION_MORA
+    CAMBIO_REGLAMENTO
+  }
+
+  class Acuerdo {
+    - id: UUID
+    - grupoId: UUID
+    - tipo: TipoAcuerdo
+    - descripcion: String
+    - propuestoPor: UUID
+    - quorumRequerido: Decimal
+    - votosAFavor: Integer
+    - votosEnContra: Integer
+    - abstenciones: Integer
+    - estado: String <<ABIERTO | APROBADO | RECHAZADO | EXPIRADO | EJECUTADO>>
+    - referenciaAfectadaId: UUID
+    - abiertoEn: DateTime
+    - cierraEn: DateTime
+    - ejecutadoEn: DateTime
+    --
+    + abrirVotacion()
+    + registrarVoto(voto)
+    + calcularResultado(): String
+    + ejecutar()
+  }
+
+  class VotoParticipante {
+    - id: UUID
+    - acuerdoId: UUID
+    - participanteId: UUID
+    - sentido: String <<A_FAVOR | EN_CONTRA | ABSTENCION>>
+    - peso: Decimal <<= cupos que posee>>
+    - comentario: String
+    - emitidoEn: DateTime
+    --
+    + esValido(): Boolean
+  }
+}
+
+' ---------- Relaciones ----------
+Grupo "1" *-- "1" ConfiguracionGrupo
+Grupo "1" *-- "1..*" ReglamentoGrupo
+Grupo "1" *-- "0..*" HistorialEstadoGrupo
+Grupo "1" *-- "3..*" Participante
+Grupo "1" *-- "3..*" Cupo
+Grupo "1" *-- "0..*" Invitacion
+Grupo "1" *-- "0..*" SolicitudIngreso
+Grupo "1" *-- "1..*" Periodo
+Grupo "1" *-- "0..1" SorteoTurnos
+Grupo "1" *-- "0..*" Acuerdo
+
+ReglamentoGrupo "1" *-- "0..*" AceptacionReglamento
+Participante "1" -- "0..*" AceptacionReglamento
+Participante "1" o-- "1..*" Cupo : posee >
+Participante "1" *-- "0..1" SolicitudRetiro
+Participante "1" -- "0..*" VotoParticipante
+Cupo "1" *-- "0..*" TraspasoCupo
+Periodo "1" *-- "1..*" Turno
+Cupo "1" -- "0..1" Turno : cobra en >
+Turno "1" -- "0..*" SolicitudPermuta
+SorteoTurnos ..> Turno : produce >
+Acuerdo "1" *-- "0..*" VotoParticipante
+Acuerdo ..> TraspasoCupo : puede autorizar >
+Acuerdo ..> SolicitudPermuta : puede autorizar >
+
+MotorEmparejamiento ..> PostulacionEmparejamiento : consume >
+MotorEmparejamiento ..> CriterioEmparejamiento : aplica >
+MotorEmparejamiento ..> PropuestaGrupo : genera >
+PropuestaGrupo ..> Grupo : materializa >
+Periodo ..> DiaNoHabil : ajusta fechas con >
+
+Grupo --> EstadoGrupo
+Grupo --> Periodicidad
+Grupo --> TipoConformacion
+Grupo --> ModalidadAsignacionTurno
+Grupo --> Visibilidad
+Participante --> EstadoParticipante
+Cupo --> EstadoCupo
+Periodo --> EstadoPeriodo
+Turno --> EstadoTurno
+Acuerdo --> TipoAcuerdo
+
+note right of SorteoTurnos
+  <b>Sorteo verificable (commit-reveal)</b>
+  1. Antes de sortear se publica hashSemillaPrevio.
+  2. Se mezcla con una semilla publica que los
+     propios participantes aportan.
+  3. Tras el sorteo se revela la semilla: cualquiera
+     puede recomputar el orden y comprobar que
+     nadie lo manipulo.
+  Sin esto, el orden de cobro es el punto de
+  desconfianza numero uno del pasanaku.
+end note
+
+note right of Cupo
+  Separar Cupo de Participante permite:
+  - una persona con 2 manos (paga y cobra doble),
+  - medio cupo compartido entre dos personas,
+  - reemplazar al moroso conservando la
+    posicion economica del cupo en el calendario.
+end note
+
+note bottom of Acuerdo
+  Expulsar a un moroso, condonar una mora o
+  mover la fecha de cobro NO son decisiones
+  unilaterales del organizador: quedan
+  registradas como acuerdo con quorum y voto
+  ponderado por cupos (prueba ante disputas).
+end note
+
+note bottom of Participante
+  usuarioId referencia a usuario.id (modulo 1).
+  invitadoPorId construye la cadena de confianza
+  que el modulo 8 usa para el aval solidario.
+end note
+
+@enduml
+
+@startuml 02_grupos_turnos_relacional
+' ============================================================
+'  MODULO 2: Grupos, Cupos, Turnos y Gobernanza
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 2 - Grupos, Cupos, Turnos y Gobernanza (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> CHECK    <<NULL>> admite nulos
+  Todas las tablas llevan creado_en, actualizado_en, version.
+endlegend
+
+entity "grupo" as grupo {
+  * id : UUID <<PK>>
+  --
+  codigo_publico : VARCHAR(12) <<UQ>>
+  nombre : VARCHAR(120)
+  descripcion : VARCHAR(400) <<NULL>>
+  monto_aporte : DECIMAL(14,2) <<CK: > 0>>
+  moneda : CHAR(3)
+  periodicidad : VARCHAR(15) <<CK>>
+  dia_cobro : SMALLINT
+  num_periodos : SMALLINT <<CK: >= 3>>
+  cupos_totales : SMALLINT
+  cupos_ocupados : SMALLINT
+  fecha_inicio : DATE
+  fecha_fin_estimada : DATE
+  estado : VARCHAR(30) <<CK, IDX>>
+  tipo_conformacion : VARCHAR(30) <<CK>>
+  modalidad_turnos : VARCHAR(25) <<CK>>
+  visibilidad : VARCHAR(20) <<CK>>
+  # organizador_id : UUID <<FK, NULL>>
+  es_autogestionado : BOOLEAN
+  requiere_kyc_minimo : VARCHAR(15)
+  reputacion_minima : DECIMAL(6,2)
+  dias_gracia : SMALLINT
+  aplica_recargo_mora : BOOLEAN
+  usa_fondo_garantia : BOOLEAN
+  porcentaje_fondo_garantia : DECIMAL(5,2)
+  quorum_decisiones : DECIMAL(4,3)
+  cancelado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "configuracion_grupo" as cfg {
+  * # grupo_id : UUID <<PK, FK>>
+  --
+  permite_cupos_multiples : BOOLEAN
+  max_cupos_por_persona : SMALLINT
+  permite_permuta_turnos : BOOLEAN
+  requiere_avalista : BOOLEAN
+  permite_ingreso_tardio : BOOLEAN
+  hora_limite_pago : TIME
+  tolerancia_monto_parcial : DECIMAL(5,2)
+  # politica_mora_id : UUID <<FK, NULL>>
+  # politica_sancion_id : UUID <<FK, NULL>>
+}
+
+entity "reglamento_grupo" as regl {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  version : SMALLINT <<UQ+grupo_id>>
+  contenido : TEXT
+  hash_contenido : VARCHAR(64)
+  clausulas_mora : TEXT
+  clausulas_abandono : TEXT
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+  # redactado_por : UUID <<FK>>
+}
+
+entity "aceptacion_reglamento" as acepregl {
+  * id : UUID <<PK>>
+  --
+  # reglamento_id : UUID <<FK>>
+  # participante_id : UUID <<FK>>
+  aceptado_en : TIMESTAMPTZ
+  hash_firmado : VARCHAR(64)
+  ip_origen : INET
+  # token_firma_id : UUID <<FK, NULL, M1>>
+}
+
+entity "historial_estado_grupo" as histgr {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  estado_anterior : VARCHAR(30)
+  estado_nuevo : VARCHAR(30)
+  motivo : VARCHAR(200)
+  # ejecutado_por : UUID <<FK>>
+  fecha_hora : TIMESTAMPTZ
+}
+
+entity "participante" as part {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  # usuario_id : UUID <<FK, IDX>>
+  alias : VARCHAR(60) <<NULL>>
+  estado : VARCHAR(30) <<CK, IDX>>
+  es_organizador : BOOLEAN
+  # invitado_por_id : UUID <<FK, NULL>>
+  fecha_ingreso : TIMESTAMPTZ
+  fecha_salida : TIMESTAMPTZ <<NULL>>
+  motivo_salida : VARCHAR(160) <<NULL>>
+  reputacion_al_ingresar : DECIMAL(6,2)
+  aportes_realizados : SMALLINT
+  aportes_en_mora : SMALLINT
+}
+
+entity "cupo" as cupo {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  numero : SMALLINT <<UQ+grupo_id>>
+  # participante_id : UUID <<FK, NULL>>
+  estado : VARCHAR(30) <<CK>>
+  fraccion : DECIMAL(3,2) <<CK: > 0 AND <= 1>>
+  asignado_en : TIMESTAMPTZ <<NULL>>
+  liberado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "traspaso_cupo" as trasp {
+  * id : UUID <<PK>>
+  --
+  # cupo_id : UUID <<FK, IDX>>
+  # participante_origen_id : UUID <<FK>>
+  # participante_destino_id : UUID <<FK>>
+  motivo : VARCHAR(30) <<CK>>
+  deuda_transferida : DECIMAL(14,2)
+  derecho_cobro_transferido : BOOLEAN
+  # aprobado_por_acuerdo_id : UUID <<FK, NULL>>
+  fecha : TIMESTAMPTZ
+  revertido_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "solicitud_retiro" as retiro {
+  * id : UUID <<PK>>
+  --
+  # participante_id : UUID <<FK, UQ parcial>>
+  motivo : VARCHAR(200)
+  solicitado_en : TIMESTAMPTZ
+  estado : VARCHAR(15) <<CK>>
+  requiere_reemplazo : BOOLEAN
+  liquidacion_calculada : DECIMAL(14,2)
+}
+
+entity "solicitud_ingreso" as soling {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  # usuario_id : UUID <<FK, IDX>>
+  cupos_solicitados : SMALLINT
+  mensaje : VARCHAR(300) <<NULL>>
+  estado : VARCHAR(15) <<CK>>
+  puntaje_compatibilidad : DECIMAL(5,2) <<NULL>>
+  # revisada_por : UUID <<FK, NULL>>
+  fecha_solicitud : TIMESTAMPTZ
+  fecha_resolucion : TIMESTAMPTZ <<NULL>>
+}
+
+entity "invitacion" as inv {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  telefono_invitado : VARCHAR(20) <<IDX>>
+  nombre_sugerido : VARCHAR(80) <<NULL>>
+  # emisor_id : UUID <<FK>>
+  # token_id : UUID <<FK, UQ, M1>>
+  canal : VARCHAR(15) <<CK>>
+  estado : VARCHAR(15) <<CK>>
+  envios_realizados : SMALLINT
+  fecha_envio : TIMESTAMPTZ
+  fecha_expiracion : TIMESTAMPTZ
+  fecha_respuesta : TIMESTAMPTZ <<NULL>>
+}
+
+entity "periodo" as periodo {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  numero : SMALLINT <<UQ+grupo_id>>
+  fecha_inicio : DATE
+  fecha_limite_pago : DATE <<IDX>>
+  fecha_fin_gracia : DATE
+  fecha_entrega_prevista : DATE
+  estado : VARCHAR(15) <<CK, IDX>>
+  monto_objetivo : DECIMAL(14,2)
+  monto_recaudado : DECIMAL(14,2)
+  cupos_morosos : SMALLINT
+}
+
+entity "turno" as turno {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  # periodo_id : UUID <<FK>>
+  # cupo_id : UUID <<FK>>
+  orden_asignado : SMALLINT <<UQ+grupo_id>>
+  estado : VARCHAR(15) <<CK>>
+  criterio_asignacion : VARCHAR(25)
+  monto_estimado_cobro : DECIMAL(14,2)
+  descuento_subasta : DECIMAL(14,2) <<NULL>>
+  # permutado_con_turno_id : UUID <<FK, NULL>>
+  confirmado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "sorteo_turnos" as sorteo {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, UQ parcial>>
+  algoritmo : VARCHAR(30)
+  hash_semilla_previo : VARCHAR(64)
+  semilla_servidor : VARCHAR(128) <<NULL hasta revelar>>
+  semilla_publica : VARCHAR(128)
+  resultado : JSONB
+  # ejecutado_por : UUID <<FK>>
+  fecha_ejecucion : TIMESTAMPTZ
+  anulado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "solicitud_permuta" as permuta {
+  * id : UUID <<PK>>
+  --
+  # turno_origen_id : UUID <<FK, IDX>>
+  # turno_destino_id : UUID <<FK>>
+  # solicitante_id : UUID <<FK>>
+  # contraparte_id : UUID <<FK>>
+  motivo : VARCHAR(200)
+  compensacion_ofrecida : DECIMAL(14,2) <<NULL>>
+  estado : VARCHAR(20) <<CK>>
+  aprobada_por_organizador : BOOLEAN
+  fecha_solicitud : TIMESTAMPTZ
+  fecha_ejecucion : TIMESTAMPTZ <<NULL>>
+}
+
+entity "dia_no_habil" as feriado {
+  * id : UUID <<PK>>
+  --
+  fecha : DATE <<UQ+alcance+grupo_id>>
+  descripcion : VARCHAR(120)
+  alcance : VARCHAR(15) <<CK>>
+  # grupo_id : UUID <<FK, NULL>>
+}
+
+entity "postulacion_emparejamiento" as postul {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  monto_deseado : DECIMAL(14,2)
+  rango_monto_min : DECIMAL(14,2)
+  rango_monto_max : DECIMAL(14,2)
+  periodicidad_deseada : VARCHAR(15)
+  fecha_inicio_deseada : DATE
+  preferencia_turno : VARCHAR(15) <<CK>>
+  tolerancia_riesgo : VARCHAR(15)
+  estado : VARCHAR(15) <<CK, IDX>>
+  vigente_hasta : TIMESTAMPTZ
+}
+
+entity "criterio_emparejamiento" as criterio {
+  * id : UUID <<PK>>
+  --
+  peso_reputacion : DECIMAL(4,3)
+  peso_monto : DECIMAL(4,3)
+  peso_geografia : DECIMAL(4,3)
+  peso_historial_comun : DECIMAL(4,3)
+  reputacion_minima : DECIMAL(6,2)
+  max_morosos_por_grupo : SMALLINT
+  vigente_desde : TIMESTAMPTZ
+}
+
+entity "propuesta_grupo" as propu {
+  * id : UUID <<PK>>
+  --
+  # criterio_id : UUID <<FK>>
+  monto_aporte : DECIMAL(14,2)
+  periodicidad : VARCHAR(15)
+  puntaje_cohesion : DECIMAL(5,2)
+  riesgo_estimado : DECIMAL(5,2)
+  estado : VARCHAR(20) <<CK>>
+  aceptaciones_recibidas : SMALLINT
+  expira_en : TIMESTAMPTZ
+  # grupo_materializado_id : UUID <<FK, NULL>>
+}
+
+entity "propuesta_postulacion" as propost {
+  * # propuesta_id : UUID <<PK, FK>>
+  * # postulacion_id : UUID <<PK, FK>>
+  --
+  acepto : BOOLEAN
+  respondido_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "acuerdo" as acuerdo {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(30) <<CK>>
+  descripcion : VARCHAR(400)
+  # propuesto_por : UUID <<FK>>
+  quorum_requerido : DECIMAL(4,3)
+  votos_a_favor : SMALLINT
+  votos_en_contra : SMALLINT
+  abstenciones : SMALLINT
+  estado : VARCHAR(15) <<CK>>
+  referencia_afectada_id : UUID <<NULL, polimorfica>>
+  abierto_en : TIMESTAMPTZ
+  cierra_en : TIMESTAMPTZ
+  ejecutado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "voto_participante" as voto {
+  * id : UUID <<PK>>
+  --
+  # acuerdo_id : UUID <<FK, IDX>>
+  # participante_id : UUID <<FK>>
+  sentido : VARCHAR(12) <<CK>>
+  peso : DECIMAL(4,2)
+  comentario : VARCHAR(300) <<NULL>>
+  emitido_en : TIMESTAMPTZ
+}
+
+grupo ||--|| cfg : "configura"
+grupo ||--o{ regl : "rige por"
+grupo ||--o{ histgr : "transiciona"
+grupo ||--o{ part : "agrupa"
+grupo ||--o{ cupo : "divide en"
+grupo ||--o{ inv : "envia"
+grupo ||--o{ soling : "recibe"
+grupo ||--o{ periodo : "programa"
+grupo ||--o| sorteo : "ordena por"
+grupo ||--o{ acuerdo : "decide"
+regl ||--o{ acepregl : "es firmado en"
+part ||--o{ acepregl : "firma"
+part ||--o{ cupo : "posee"
+part ||--o| retiro : "solicita"
+part ||--o{ voto : "emite"
+cupo ||--o{ trasp : "cambia de mano"
+periodo ||--o{ turno : "define"
+cupo ||--o{ turno : "cobra en"
+turno ||--o{ permuta : "negocia"
+acuerdo ||--o{ voto : "recibe"
+propu ||--o{ propost : ""
+postul ||--o{ propost : ""
+criterio ||--o{ propu : "puntua"
+propu |o--o| grupo : "materializa"
+
+note top of cupo
+  <b>UNIQUE (grupo_id, numero)</b> y
+  <b>UNIQUE (grupo_id, cupo_id) en turno</b>:
+  un cupo cobra exactamente una vez por ciclo.
+  Restriccion adicional por trigger:
+  SUM(fraccion) por grupo = cupos_totales.
+end note
+
+note bottom of turno
+  Reglas de integridad:
+  - UNIQUE (periodo_id) si la modalidad entrega
+    un solo beneficiario por periodo.
+  - UNIQUE (grupo_id, orden_asignado).
+  - CHECK: el cupo pertenece al mismo grupo
+    que el periodo (trigger de coherencia).
+end note
+
+note bottom of part
+  usuario_id -> usuario.id (modulo 1).
+  UNIQUE (grupo_id, usuario_id) evita que la
+  misma persona figure dos veces; para varias
+  manos se crean varios registros en "cupo".
+end note
+
+note bottom of acuerdo
+  referencia_afectada_id es polimorfica segun
+  "tipo": participante.id, turno.id,
+  registro_incumplimiento.id (M8) o
+  esquema_comision.id (M7).
+end note
+
+@enduml
