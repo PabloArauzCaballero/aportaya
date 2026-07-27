@@ -31,7 +31,7 @@ de cada entidad.
 | [04 — Entregas de Fondo](04_entregas_fondo.md) | [`.puml`](04_entregas_fondo.puml) | Que la bolsa llegue completa, a la persona correcta, una sola vez |
 | [05 — Notificaciones y Comunicaciones](05_notificaciones.md) | [`.puml`](05_notificaciones.puml) | WhatsApp como canal real de cobro, sin spam ni doble aviso |
 | [06 — Transparencia y Reputación](06_transparencia_reputacion.md) | [`.puml`](06_transparencia_reputacion.puml) | Que nadie tenga que "creerle" al organizador |
-| [07 — Organizador, Comisión y Automatización](07_organizador_comision.md) | [`.puml`](07_organizador_comision.puml) | Profesionalizar al organizador sin que toque la plata |
+| [07 — Organizador y Automatización](07_organizador_automatizacion.md) | [`.puml`](07_organizador_automatizacion.puml) | Administrar es un rol, no un negocio: sin comisión y sin custodia |
 | [08 — Garantía, Incumplimiento, Cobranza y Sanciones](08_garantia_incumplimiento.md) | [`.puml`](08_garantia_incumplimiento.puml) | El grupo no se detiene, pero la deuda no se perdona sola |
 | [09 — Auditoría, Reportes y Cumplimiento](09_auditoria_reportes.md) | [`.puml`](09_auditoria_reportes.puml) | Poder demostrar todo lo anterior ante un reclamo o un regulador |
 
@@ -64,6 +64,25 @@ cobrarle, quién autorizó cubrirlo con el fondo, qué dijo él en su descargo, 
 sanción se le aplicó y si la apeló. Todo el módulo 8 existe para responder eso.
 La reputación (módulo 6) es *una consecuencia* de ese expediente, no el registro
 mismo.
+
+## Una decisión que atraviesa todo: administrar no se cobra (RN-18)
+
+El organizador **no percibe comisión** y **no custodia el dinero del grupo**. Es un
+participante más: aporta y cobra su turno como cualquiera, y su rol solo le agrega
+funciones administrativas.
+
+Eso no está implementado como un permiso apagado ni como una bandera: **el modelo
+simplemente no tiene dónde representar un ingreso del organizador**. No existen
+`EsquemaComision`, `DevengoComision`, `LiquidacionComision` ni `PagoComision`, ni
+tipos de obligación, deducción o asiento contable asociados. La ausencia de la
+estructura es una garantía más fuerte que cualquier validación, porque no hay nada
+que desactivar.
+
+Consecuencias que se ven en varios módulos: la bolsa de la entrega (M4) nunca se
+descuenta por comisión, no hay egresos hacia el organizador en la contabilidad
+(M3), y las sanciones al organizador (M7) son todas de habilitación —advertencia,
+reducción de límite, suspensión, inhabilitación— porque no hay pago que retener.
+El detalle está en la [ficha del módulo 7](07_organizador_automatizacion.md).
 
 ## Convenciones
 

@@ -3,10 +3,10 @@
 '  MODULO 4: Entregas de Fondo (desembolso al beneficiario)
 '  Diagrama de CLASES  (modelo detallado)
 '  Cubre: nucleo, RN-05 (no se entrega sin fondo completo),
-'         RN-17 (trazabilidad), enlace con M7 (comision) y M8 (garantia)
+'         RN-17 (trazabilidad), enlace con M8 (garantia)
 '  Principio: la entrega es una liquidacion, no una transferencia
 '  simple. Se calcula bolsa bruta, se aplican deducciones linea a
-'  linea (comision, deuda propia, cobertura) y recien se desembolsa
+'  linea (deuda propia, cobertura) y recien se desembolsa
 '  el neto contra una cuenta bancaria previamente verificada.
 ' ============================================================
 skinparam backgroundColor #FFFFFF
@@ -68,7 +68,6 @@ package "Entrega y Liquidacion" {
   }
 
   enum TipoDeduccion {
-    COMISION_ORGANIZADOR
     APORTE_PROPIO_DEL_PERIODO
     DEUDA_VENCIDA_PROPIA
     RECARGO_MORA_PROPIO
@@ -120,7 +119,7 @@ package "Entrega y Liquidacion" {
     - tipo: TipoDeduccion
     - descripcion: String
     - monto: Decimal
-    - referenciaOrigenId: UUID <<obligacion, comision, cobertura>>
+    - referenciaOrigenId: UUID <<obligacion, cobertura>>
     - esObligatoria: Boolean
     - aplicadaEn: DateTime
     --
@@ -335,8 +334,8 @@ note right of DeduccionEntrega
   propio aporte del periodo, no se le cobra y
   se le paga: se descuenta como deduccion
   linea a linea. Cada linea apunta a su origen
-  (obligacion_aporte, liquidacion_comision o
-  cobertura) para que el beneficiario vea
+  (obligacion_aporte o cobertura) para que
+  el beneficiario vea
   exactamente por que recibio menos.
 end note
 
@@ -363,8 +362,8 @@ end note
 note bottom of EntregaFondo
   periodoId, turnoId y cupoId -> modulo 2.
   Las deducciones consumen datos de los
-  modulos 3 (obligaciones), 7 (comision) y
-  8 (cobertura). El asiento contable se
+  modulos 3 (obligaciones) y 8 (cobertura).
+  El asiento contable se
   registra en el modulo 3.
 end note
 
@@ -579,7 +578,6 @@ end note
 
 note bottom of deduc
   referencia_origen_id es polimorfica segun tipo:
-   COMISION_ORGANIZADOR -> liquidacion_comision.id (M7)
    DEUDA_VENCIDA_PROPIA -> obligacion_aporte.id (M3)
    REPOSICION_FONDO_GARANTIA -> cobertura_incumplimiento.id (M8)
 end note

@@ -183,10 +183,10 @@ evidencia que la ley obliga a tener).
 **Qué es.** El catálogo de reportes disponibles, con su consulta, parámetros,
 permiso requerido y si contiene datos sensibles.
 
-**Para qué sirve (negocio).** Los once tipos cubren a todos los públicos de la
+**Para qué sirve (negocio).** Los diez tipos cubren a todos los públicos de la
 plataforma: el participante (estado de cuenta), el organizador (estado del grupo,
-liquidación de comisiones), la operación (cartera en mora, conciliación diaria), la
-dirección (KPIs) y el regulador (operaciones sospechosas).
+desempeño), la operación (cartera en mora, conciliación diaria), la dirección
+(KPIs) y el regulador (operaciones sospechosas).
 
 `permisoRequerido` y `contieneDatosSensibles` son control de acceso: **el reporte
 de cartera en mora contiene nombres y montos de deudas de personas reales**, y no

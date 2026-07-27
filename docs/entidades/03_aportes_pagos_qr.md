@@ -50,9 +50,10 @@ desincronizar porque no se escribe a mano.
 
 `tipo` distingue seis conceptos distintos que un solo "aporte" confundiría:
 el aporte del período, el recargo por mora, el aporte al fondo de garantía, la
-comisión del organizador, la reposición de una cobertura consumida y el ajuste
-manual. Cada uno se cobra distinto, se contabiliza en cuenta distinta y tiene
-distinto tratamiento si el grupo se disuelve.
+reposición de una cobertura consumida y el ajuste manual. Cada uno se cobra
+distinto, se contabiliza en cuenta distinta y tiene distinto tratamiento si el
+grupo se disuelve. (No hay tipo de comisión: el organizador no cobra por
+administrar, RN-18.)
 
 `obligacionOrigenId` implementa una decisión de diseño importante: **un recargo
 por mora es OTRA obligación**, que apunta a la original. Así el `montoEsperado`
@@ -498,11 +499,11 @@ reintenta (`intentosProcesamiento`) o se manda a cola muerta para revisión manu
 ### `CuentaContable` / `cuenta_contable`
 
 **Qué es.** Cada bolsillo del sistema: la caja del grupo, la cuenta corriente de
-cada participante, el fondo de garantía, los ingresos por comisión.
+cada participante y el fondo de garantía.
 
 **Para qué sirve (negocio).** Permite responder, en cualquier momento y de forma
 verificable: *¿cuánta plata hay en el grupo? ¿cuánto de eso le corresponde a cada
-uno? ¿cuánto es del fondo de garantía y cuánto es comisión pendiente de pagar?*
+uno? ¿cuánto es del fondo de garantía?*
 
 La cuenta corriente por participante (`participanteId`) es la que sostiene el
 estado de cuenta individual: cuánto aportó, cuánto cobró, cuál es su posición neta
@@ -520,13 +521,13 @@ otras.
 **Qué es.** El registro de un hecho económico, compuesto por movimientos que
 suman igual en el debe y en el haber.
 
-**Para qué sirve (negocio).** Cada aporte acreditado, cada entrega, cada comisión
-liquidada, cada cobertura del fondo genera un asiento. La regla `SUM(debe) =
+**Para qué sirve (negocio).** Cada aporte acreditado, cada entrega y cada
+cobertura del fondo genera un asiento. La regla `SUM(debe) =
 SUM(haber)` **hace estructuralmente imposible** que la plata aparezca o desaparezca:
 si algo entró a un lado, salió de otro.
 
 `origenTipo` + `origenId` conectan el asiento con el hecho que lo generó (un pago,
-una entrega, una liquidación de comisión, una cobertura). Eso permite ir del
+una entrega, una cobertura). Eso permite ir del
 número al hecho y viceversa, que es lo primero que pide un auditor.
 
 **La regla de oro: los asientos no se editan ni se borran. Se reversan.**
@@ -549,7 +550,8 @@ señal de alarma.
 
 **Para qué sirve (negocio).** Es el detalle. Permite explicar un asiento en
 lenguaje entendible: "de la caja del grupo salieron Bs 4.800 (haber), entraron
-Bs 4.500 a la cuenta del beneficiario y Bs 300 a comisión del organizador (debe)".
+Bs 4.500 a la cuenta del beneficiario y Bs 300 a reposición del fondo de
+garantía (debe)".
 
 **Por qué debe existir.** Sin las líneas no hay doble partida, solo un total.
 

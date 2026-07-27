@@ -32,8 +32,9 @@ campos que más importan y por qué:
   tiempo, y cuánto me llevo cuando me toque. `montoBolsaPorPeriodo()` deriva de
   ellos y es la cifra que la gente realmente quiere saber.
 - `esAutogestionado` + `organizadorId` distinguen los dos modelos de negocio de la
-  plataforma: el grupo que administra una persona (y cobra comisión, M7) y el que
-  administra el sistema solo (organizador digital, sin comisión).
+  plataforma: el grupo que administra una persona habilitada (M7) y el que
+  administra el sistema solo (organizador digital). En ninguno de los dos casos
+  hay comisión: administrar no se cobra (RN-18).
 - `requiereKYCMinimo` y `reputacionMinima` son **filtros de entrada**. Un grupo de
   Bs 200 entre amigos no pide nada; uno de USD 500 entre desconocidos exige
   documento verificado y buen historial. Sin estos campos, todos los grupos
@@ -567,8 +568,8 @@ poder que en el pasanaku real nunca tuvo, y reproduce digitalmente el abuso que
 promete evitar.
 
 **A nivel de sistema.** `referencia_afectada_id` es polimórfica según `tipo`:
-`participante.id`, `turno.id`, `registro_incumplimiento.id` (M8) o
-`esquema_comision.id` (M7). Muchas entidades de otros módulos exigen un
+`participante.id`, `turno.id` o `registro_incumplimiento.id` (M8). Muchas
+entidades de otros módulos exigen un
 `acuerdo_id` para poder ejecutarse.
 
 ---

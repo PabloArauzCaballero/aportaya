@@ -994,9 +994,8 @@ end note
 
 note bottom of acuerdo
   referencia_afectada_id es polimorfica segun
-  "tipo": participante.id, turno.id,
-  registro_incumplimiento.id (M8) o
-  esquema_comision.id (M7).
+  "tipo": participante.id, turno.id o
+  registro_incumplimiento.id (M8).
 end note
 
 @enduml

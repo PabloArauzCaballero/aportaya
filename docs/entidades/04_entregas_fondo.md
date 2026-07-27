@@ -13,9 +13,9 @@ un `UPDATE`.
 El principio que gobierna el módulo:
 
 > **La entrega es una liquidación, no una transferencia.**
-> Se calcula la bolsa bruta, se aplican deducciones línea a línea (comisión, deuda
-> propia, reposición de cobertura), y recién entonces se desembolsa el neto contra
-> una cuenta bancaria previamente verificada.
+> Se calcula la bolsa bruta, se aplican deducciones línea a línea (deuda propia,
+> reposición de cobertura), y recién entonces se desembolsa el neto contra una
+> cuenta bancaria previamente verificada.
 
 ---
 
@@ -73,7 +73,7 @@ autorización ni la confirmación.
 su origen.
 
 **Para qué sirve (negocio).** Es **la entidad que hace explicable la entrega**.
-Ocho tipos, todos con un caso real detrás:
+Siete tipos, todos con un caso real detrás:
 
 - `APORTE_PROPIO_DEL_PERIODO`: el beneficiario también debe su aporte de este
   período. No tiene sentido cobrarle Bs 500 y pagarle Bs 6.000 el mismo día: se
@@ -85,9 +85,10 @@ Ocho tipos, todos con un caso real detrás:
   una cartera morosa.
 - `REPOSICION_FONDO_GARANTIA`: si el fondo cubrió un aporte suyo hace tres meses,
   ahora que cobra lo devuelve.
-- `COMISION_ORGANIZADOR`: cuando el esquema define que paga el beneficiario del
-  período (M7).
 - `RETENCION_IMPUESTO` y `COSTO_TRANSFERENCIA`: los descuentos que no decide nadie.
+
+  No hay deducción por comisión del organizador: administrar no se cobra (RN-18),
+  así que **la bolsa nunca se descuenta para pagarle a quien la administra**.
 
 `referenciaOrigenId` apunta al hecho concreto que justifica cada descuento. Eso es
 lo que permite que la pantalla diga "Bs 500 — tu aporte del período 7" en vez de
@@ -98,9 +99,8 @@ campo `total_descontado` que nadie puede auditar ni explicar. Y el beneficiario
 tiene todo el derecho a saber por qué recibió menos.
 
 **A nivel de sistema.** `referencia_origen_id` polimórfica según el tipo:
-`liquidacion_comision.id` (M7), `obligacion_aporte.id` (M3),
-`cobertura_incumplimiento.id` (M8). `revertida_en` permite anular una deducción
-aplicada por error sin borrar el rastro.
+`obligacion_aporte.id` (M3) y `cobertura_incumplimiento.id` (M8). `revertida_en`
+permite anular una deducción aplicada por error sin borrar el rastro.
 
 ---
 
