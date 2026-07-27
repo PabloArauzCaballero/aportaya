@@ -1,0 +1,956 @@
+@startuml 07_organizador_comision_clases
+' ============================================================
+'  MODULO 7: Organizador, Comision y Automatizacion (Parche A)
+'  Diagrama de CLASES  (modelo detallado)
+'  Cubre: RF-20, RN-18 (el organizador NO custodia fondos),
+'         RN-19, RN-20 (tope y aceptacion de comision), RN-22 (desempeno)
+'  Ciclo financiero de la comision modelado en tres tiempos:
+'    DEVENGO (se gana) -> LIQUIDACION (se calcula y aprueba)
+'    -> PAGO (se desembolsa), con retenciones impositivas.
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 7 - Organizador, Comision y Automatizacion (clases)
+
+legend top right
+  <b>RN-18 (invariante del sistema)</b>
+  El organizador nunca es cuenta de paso del dinero del grupo.
+  Su comision es una obligacion mas dentro del mismo circuito
+  de pagos (M3) y se le desembolsa como cualquier otro egreso,
+  con asiento contable propio.
+endlegend
+
+' ============================================================
+package "Habilitacion del Organizador" {
+
+  enum EstadoOrganizador {
+    POSTULADO
+    EN_EVALUACION
+    CAPACITACION_PENDIENTE
+    HABILITADO
+    LIMITADO
+    SUSPENDIDO
+    DESHABILITADO
+    RETIRADO
+  }
+
+  enum NivelOrganizador {
+    APRENDIZ
+    ESTANDAR
+    SENIOR
+    MAESTRO
+  }
+
+  class Organizador <<AR>> {
+    - id: UUID
+    - usuarioId: UUID
+    - estado: EstadoOrganizador
+    - nivel: NivelOrganizador
+    - limiteGruposSimultaneos: Integer
+    - limiteMontoAdministrado: Decimal
+    - gruposActivos: Integer
+    - gruposHistoricos: Integer
+    - montoAdministradoActual: Decimal
+    - calificacionPromedio: Decimal
+    - indiceMorosidadCartera: Decimal
+    - fechaPostulacion: DateTime
+    - fechaHabilitacion: DateTime
+    - fechaSuspension: DateTime
+    - cuentaCobroId: UUID
+    - version: Integer
+    --
+    + postular(): SolicitudOrganizador
+    + habilitar(evaluadorId)
+    + suspender(motivo, hasta)
+    + deshabilitar(motivo)
+    + ajustarLimites(nivel)
+    + puedeCrearGrupo(monto): Boolean
+    + cupoDisponible(): Integer
+    + comisionAcumulada(periodo): Decimal
+  }
+
+  class SolicitudOrganizador {
+    - id: UUID
+    - usuarioId: UUID
+    - motivacion: String
+    - experienciaDeclarada: String
+    - referenciasIds: List<UUID>
+    - kycReforzadoId: UUID
+    - puntajeReputacionAlSolicitar: Decimal
+    - estado: String <<PENDIENTE | EN_REVISION | APROBADA | RECHAZADA>>
+    - revisadaPor: UUID
+    - motivoRechazo: String
+    - fechaSolicitud: DateTime
+    - fechaResolucion: DateTime
+    --
+    + validarRequisitos(): List<Requisito>
+    + aprobar(revisorId): Organizador
+    + rechazar(motivo)
+  }
+
+  class RequisitoHabilitacion <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - descripcion: String
+    - tipo: String <<KYC | REPUTACION | ANTIGUEDAD | CAPACITACION | GARANTIA_ECONOMICA>>
+    - valorMinimo: Decimal
+    - esObligatorio: Boolean
+    - nivelRequerido: NivelOrganizador
+    - activo: Boolean
+    --
+    + evaluar(usuario): Boolean
+  }
+
+  class CapacitacionOrganizador {
+    - id: UUID
+    - organizadorId: UUID
+    - modulo: String
+    - completadaEn: DateTime
+    - puntajeEvaluacion: Decimal
+    - aprobada: Boolean
+    - vigenteHasta: DateTime
+    --
+    + registrarAprobacion()
+  }
+
+  class ContratoOrganizador {
+    - id: UUID
+    - organizadorId: UUID
+    - version: String
+    - contenidoHash: String
+    - obligaciones: String
+    - causalesRescision: String
+    - firmadoEn: DateTime
+    - tokenFirmaId: UUID
+    - vigenteDesde: Date
+    - vigenteHasta: Date
+    - rescindidoEn: DateTime
+    - motivoRescision: String
+    --
+    + firmar(tokenId)
+    + rescindir(motivo)
+    + estaVigente(): Boolean
+  }
+}
+
+' ============================================================
+package "Esquema y Aceptacion de Comision" {
+
+  enum TipoComision {
+    FIJA_POR_GRUPO
+    FIJA_POR_PERIODO
+    PORCENTAJE_SOBRE_APORTE
+    PORCENTAJE_SOBRE_BOLSA
+    ESCALONADA_POR_MONTO
+  }
+
+  enum EventoGatillo {
+    GRUPO_CONFORMADO
+    GRUPO_INICIADO
+    PERIODO_LIQUIDADO
+    ENTREGA_CONFIRMADA
+    CICLO_COMPLETADO
+  }
+
+  enum PagadorComision {
+    PRORRATEO_ENTRE_PARTICIPANTES
+    BENEFICIARIO_DEL_PERIODO
+    PLATAFORMA
+  }
+
+  class EsquemaComision <<AR>> {
+    - id: UUID
+    - grupoId: UUID
+    - organizadorId: UUID
+    - tipo: TipoComision
+    - valor: Decimal
+    - moneda: String
+    - baseCalculo: String <<APORTE | BOLSA_PERIODO | MONTO_TOTAL_CICLO>>
+    - eventoGatillo: EventoGatillo
+    - pagador: PagadorComision
+    - topeMaximoPorPeriodo: Decimal
+    - topeMaximoPorCiclo: Decimal
+    - topeRegulatorioPorcentaje: Decimal <<RN-20>>
+    - requiereAceptacionUnanime: Boolean
+    - porcentajeAceptacion: Decimal
+    - estado: String <<PROPUESTO | ACEPTADO | VIGENTE | RECHAZADO | SUSTITUIDO>>
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    - esquemaAnteriorId: UUID
+    --
+    + validarContraTope(): List<Violacion>
+    + calcularMonto(base): Decimal
+    + registrarAceptacion(participanteId): Boolean
+    + activar()
+    + sustituirPor(nuevo, acuerdoId): EsquemaComision
+    + estaPlenamenteAceptado(): Boolean
+  }
+
+  class AceptacionComision {
+    - id: UUID
+    - esquemaId: UUID
+    - participanteId: UUID
+    - acepta: Boolean
+    - fechaHora: DateTime
+    - ipOrigen: String
+    - tokenFirmaId: UUID
+    - comentario: String
+    --
+    + registrar()
+  }
+
+  class TramoComision {
+    - id: UUID
+    - esquemaId: UUID
+    - montoDesde: Decimal
+    - montoHasta: Decimal
+    - valor: Decimal
+    - esPorcentaje: Boolean
+    --
+    + aplica(monto): Boolean
+  }
+
+  class TopeRegulatorio <<Pol>> {
+    - id: UUID
+    - porcentajeMaximoSobreBolsa: Decimal
+    - montoMaximoAbsoluto: Decimal
+    - moneda: String
+    - fundamentoNormativo: String
+    - vigenteDesde: Date
+    --
+    + validar(esquema): Boolean
+  }
+}
+
+' ============================================================
+package "Ciclo Financiero de la Comision" {
+
+  enum EstadoDevengo {
+    DEVENGADO
+    LIQUIDADO
+    ANULADO
+    EN_DISPUTA
+  }
+
+  enum EstadoLiquidacion {
+    BORRADOR
+    CALCULADA
+    APROBADA
+    PAGADA
+    RECHAZADA
+    ANULADA
+    REVERSADA
+  }
+
+  class DevengoComision {
+    - id: UUID
+    - esquemaId: UUID
+    - organizadorId: UUID
+    - grupoId: UUID
+    - periodoId: UUID
+    - eventoGatillo: EventoGatillo
+    - baseCalculo: Decimal
+    - montoDevengado: Decimal
+    - moneda: String
+    - estado: EstadoDevengo
+    - fechaDevengo: DateTime
+    - liquidacionId: UUID
+    - referenciaOrigenId: UUID <<entrega o periodo>>
+    --
+    + calcular(): Decimal
+    + anular(motivo)
+    + esLiquidable(): Boolean
+  }
+
+  class LiquidacionComision <<AR>> {
+    - id: UUID
+    - organizadorId: UUID
+    - periodoLiquidacion: String <<ej. 2026-07>>
+    - montoBruto: Decimal
+    - totalRetenciones: Decimal
+    - totalDeducciones: Decimal
+    - montoNeto: Decimal
+    - moneda: String
+    - cantidadDevengos: Integer
+    - estado: EstadoLiquidacion
+    - calculadaEn: DateTime
+    - aprobadaPor: UUID
+    - aprobadaEn: DateTime
+    - pagadaEn: DateTime
+    - motivoRechazo: String
+    - liquidacionReversaId: UUID
+    --
+    + agregarDevengo(devengo)
+    + calcular(): Decimal
+    + aplicarRetenciones(): List<RetencionImpuesto>
+    + aprobar(aprobadorId)
+    + pagar(): PagoComision
+    + reversar(motivo): LiquidacionComision
+    + generarDocumento(): Documento
+  }
+
+  class RetencionImpuesto {
+    - id: UUID
+    - liquidacionId: UUID
+    - tipoImpuesto: String <<IT | RC_IVA | OTRO>>
+    - baseImponible: Decimal
+    - alicuota: Decimal
+    - montoRetenido: Decimal
+    - numeroCertificado: String
+    - normativaAplicada: String
+    --
+    + calcular(): Decimal
+    + emitirCertificado(): Documento
+  }
+
+  class DeduccionLiquidacion {
+    - id: UUID
+    - liquidacionId: UUID
+    - tipo: String <<SANCION | ANTICIPO | AJUSTE_PERIODO_ANTERIOR | COSTO_TRANSFERENCIA>>
+    - descripcion: String
+    - monto: Decimal
+    - referenciaOrigenId: UUID
+  }
+
+  class PagoComision {
+    - id: UUID
+    - liquidacionId: UUID
+    - cuentaDestinoId: UUID
+    - monto: Decimal
+    - estado: String <<PENDIENTE | ENVIADO | ACREDITADO | RECHAZADO>>
+    - referenciaProveedor: String
+    - claveIdempotencia: String
+    - fechaPago: DateTime
+    --
+    + ejecutar()
+    + conciliar()
+  }
+
+  class DisputaComision {
+    - id: UUID
+    - liquidacionId: UUID
+    - reclamanteId: UUID
+    - tipoReclamo: String <<MONTO_INCORRECTO | COBRO_NO_ACORDADO | DOBLE_COBRO>>
+    - descripcion: String
+    - montoDisputado: Decimal
+    - estado: String <<ABIERTA | EN_ANALISIS | RESUELTA | ESCALADA>>
+    - resolucion: String
+    - abiertaEn: DateTime
+    - resueltaEn: DateTime
+    --
+    + resolver(decision, nota)
+  }
+}
+
+' ============================================================
+package "Desempeno y Sanciones al Organizador" {
+
+  class EvaluacionDesempeno {
+    - id: UUID
+    - organizadorId: UUID
+    - periodoEvaluado: String
+    - indiceMorosidadCartera: Decimal
+    - tasaFinalizacionGrupos: Decimal
+    - satisfaccionParticipantes: Decimal
+    - tiempoRespuestaPromedioHoras: Decimal
+    - incidenciasAbiertas: Integer
+    - coberturasConsumidas: Integer
+    - puntajeGlobal: Decimal
+    - nivelSugerido: NivelOrganizador
+    - accionRecomendada: String
+    - evaluadoEn: DateTime
+    --
+    + calcular(): Decimal
+    + aplicarConsecuencias()
+  }
+
+  class MetricaOrganizador {
+    - id: UUID
+    - evaluacionId: UUID
+    - codigo: String
+    - valor: Decimal
+    - meta: Decimal
+    - cumple: Boolean
+    - peso: Decimal
+  }
+
+  class SancionOrganizador {
+    - id: UUID
+    - organizadorId: UUID
+    - evaluacionId: UUID
+    - tipo: String <<ADVERTENCIA | REDUCCION_LIMITE | RETENCION_COMISION | SUSPENSION | INHABILITACION>>
+    - motivo: String
+    - montoRetenido: Decimal
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    - estado: String <<VIGENTE | CUMPLIDA | REVOCADA | APELADA>>
+    - aplicadaPor: UUID
+    --
+    + aplicar()
+    + revocar(motivo, adminId)
+    + apelar(): ApelacionSancion
+  }
+
+  class ApelacionSancion {
+    - id: UUID
+    - sancionOrganizadorId: UUID
+    - argumento: String
+    - evidencias: List<String>
+    - estado: String <<PRESENTADA | EN_REVISION | ACEPTADA | RECHAZADA>>
+    - resueltaPor: UUID
+    - resolucion: String
+    - presentadaEn: DateTime
+    - resueltaEn: DateTime
+    --
+    + resolver(decision, nota)
+  }
+}
+
+' ============================================================
+package "Organizador Digital (automatizacion, RF-20)" {
+
+  class OrganizadorDigital <<Svc>> {
+    - id: UUID
+    - grupoId: UUID
+    - nivelAutonomia: String <<SOLO_SUGIERE | EJECUTA_CON_AVISO | AUTONOMO>>
+    - activo: Boolean
+    - activadoEn: DateTime
+    --
+    + ejecutarCicloDiario()
+    + reemplazarFuncionesDe(organizador)
+    + tareasPendientes(): List<TareaAutomatizada>
+  }
+
+  class ReglaAutomatizacion <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - descripcion: String
+    - disparador: String <<CRON | EVENTO>>
+    - expresionDisparo: String
+    - condicion: String
+    - accion: String <<GENERAR_COBROS | ENVIAR_RECORDATORIO | APLICAR_MORA | LIQUIDAR_PERIODO | EJECUTAR_ENTREGA | ESCALAR_COBRANZA>>
+    - requiereConfirmacionHumana: Boolean
+    - prioridad: Integer
+    - activa: Boolean
+    --
+    + evaluar(contexto): Boolean
+  }
+
+  class TareaAutomatizada {
+    - id: UUID
+    - reglaId: UUID
+    - grupoId: UUID
+    - tipo: String
+    - programadaPara: DateTime
+    - estado: String <<PROGRAMADA | EN_EJECUCION | COMPLETADA | FALLIDA | CANCELADA | REQUIERE_APROBACION>>
+    - intentos: Integer
+    - claveIdempotencia: String
+    --
+    + ejecutar(): EjecucionTarea
+    + cancelar(motivo)
+  }
+
+  class EjecucionTarea {
+    - id: UUID
+    - tareaId: UUID
+    - iniciadaEn: DateTime
+    - finalizadaEn: DateTime
+    - resultado: String <<EXITO | PARCIAL | ERROR>>
+    - registrosAfectados: Integer
+    - detalle: JSON
+    - mensajeError: String
+    --
+    + registrar()
+  }
+}
+
+' ---------- Relaciones ----------
+Organizador "1" *-- "0..1" SolicitudOrganizador
+Organizador "1" *-- "0..*" CapacitacionOrganizador
+Organizador "1" *-- "1..*" ContratoOrganizador
+Organizador "1" *-- "0..*" EsquemaComision
+Organizador "1" *-- "0..*" DevengoComision
+Organizador "1" *-- "0..*" LiquidacionComision
+Organizador "1" *-- "0..*" EvaluacionDesempeno
+Organizador "1" *-- "0..*" SancionOrganizador
+SolicitudOrganizador ..> RequisitoHabilitacion : evaluada con >
+
+EsquemaComision "1" *-- "0..*" AceptacionComision
+EsquemaComision "1" *-- "0..*" TramoComision
+EsquemaComision "1" *-- "0..*" DevengoComision
+EsquemaComision ..> TopeRegulatorio : validado contra >
+EsquemaComision "1" --> "0..1" EsquemaComision : sustituye >
+
+LiquidacionComision "1" o-- "1..*" DevengoComision : consolida >
+LiquidacionComision "1" *-- "0..*" RetencionImpuesto
+LiquidacionComision "1" *-- "0..*" DeduccionLiquidacion
+LiquidacionComision "1" *-- "0..1" PagoComision
+LiquidacionComision "1" *-- "0..*" DisputaComision
+
+EvaluacionDesempeno "1" *-- "1..*" MetricaOrganizador
+EvaluacionDesempeno ..> SancionOrganizador : puede originar >
+SancionOrganizador "1" *-- "0..1" ApelacionSancion
+SancionOrganizador ..> DeduccionLiquidacion : retiene via >
+
+OrganizadorDigital ..> ReglaAutomatizacion : aplica >
+ReglaAutomatizacion "1" *-- "0..*" TareaAutomatizada
+TareaAutomatizada "1" *-- "0..*" EjecucionTarea
+
+Organizador --> EstadoOrganizador
+Organizador --> NivelOrganizador
+EsquemaComision --> TipoComision
+EsquemaComision --> EventoGatillo
+EsquemaComision --> PagadorComision
+DevengoComision --> EstadoDevengo
+LiquidacionComision --> EstadoLiquidacion
+
+note right of EsquemaComision
+  <b>RN-19 / RN-20</b>
+  La comision no existe hasta que los
+  participantes la aceptan (AceptacionComision
+  con firma y sello de tiempo) y no puede
+  superar el TopeRegulatorio. Cambiarla a mitad
+  de ciclo exige un Acuerdo del grupo (M2):
+  el esquema viejo se marca SUSTITUIDO, nunca
+  se edita en sitio.
+end note
+
+note right of DevengoComision
+  <b>Por que separar devengo de liquidacion</b>
+  El organizador gana su comision periodo a
+  periodo (devengo), pero cobra una vez al mes
+  (liquidacion). Si un grupo se cae a mitad de
+  camino, los devengos no liquidados se anulan
+  sin tener que "quitarle" dinero ya pagado.
+end note
+
+note bottom of OrganizadorDigital
+  Cuando el grupo es autogestionado, el
+  organizador digital ejecuta el mismo conjunto
+  de tareas del organizador humano (cobros,
+  recordatorios, mora, liquidacion, entrega)
+  pero sin comision y con nivel de autonomia
+  configurable. Toda ejecucion queda en
+  EjecucionTarea y en la bitacora del modulo 9.
+end note
+
+note bottom of Organizador
+  usuarioId -> usuario.id (M1);
+  cuentaCobroId -> cuenta_bancaria_beneficiario.id (M4).
+  gruposActivos y montoAdministradoActual son
+  contadores mantenidos por trigger para hacer
+  cumplir los limites sin recorrer toda la cartera.
+end note
+
+@enduml
+
+@startuml 07_organizador_comision_relacional
+' ============================================================
+'  MODULO 7: Organizador, Comision y Automatizacion
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 7 - Organizador y Comision (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> CHECK    <<NULL>> admite nulos
+endlegend
+
+entity "organizador" as org {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, UQ>>
+  estado : VARCHAR(25) <<CK, IDX>>
+  nivel : VARCHAR(15) <<CK>>
+  limite_grupos_simultaneos : SMALLINT
+  limite_monto_administrado : DECIMAL(16,2)
+  grupos_activos : SMALLINT
+  grupos_historicos : SMALLINT
+  monto_administrado_actual : DECIMAL(16,2)
+  calificacion_promedio : DECIMAL(3,2)
+  indice_morosidad_cartera : DECIMAL(5,2)
+  fecha_postulacion : TIMESTAMPTZ
+  fecha_habilitacion : TIMESTAMPTZ <<NULL>>
+  fecha_suspension : TIMESTAMPTZ <<NULL>>
+  # cuenta_cobro_id : UUID <<FK, NULL, M4>>
+  version : INTEGER
+}
+
+entity "solicitud_organizador" as solorg {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  motivacion : TEXT
+  experiencia_declarada : TEXT
+  # kyc_reforzado_id : UUID <<FK, NULL, M1>>
+  puntaje_reputacion_al_solicitar : DECIMAL(6,2)
+  estado : VARCHAR(15) <<CK>>
+  # revisada_por : UUID <<FK, NULL>>
+  motivo_rechazo : VARCHAR(300) <<NULL>>
+  fecha_solicitud : TIMESTAMPTZ
+  fecha_resolucion : TIMESTAMPTZ <<NULL>>
+}
+
+entity "requisito_habilitacion" as req {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(40) <<UQ>>
+  descripcion : VARCHAR(200)
+  tipo : VARCHAR(25) <<CK>>
+  valor_minimo : DECIMAL(12,2)
+  es_obligatorio : BOOLEAN
+  nivel_requerido : VARCHAR(15) <<CK>>
+  activo : BOOLEAN
+}
+
+entity "capacitacion_organizador" as capac {
+  * id : UUID <<PK>>
+  --
+  # organizador_id : UUID <<FK, IDX>>
+  modulo : VARCHAR(80)
+  completada_en : TIMESTAMPTZ
+  puntaje_evaluacion : DECIMAL(5,2)
+  aprobada : BOOLEAN
+  vigente_hasta : DATE <<NULL>>
+}
+
+entity "contrato_organizador" as contorg {
+  * id : UUID <<PK>>
+  --
+  # organizador_id : UUID <<FK, IDX>>
+  version : VARCHAR(20)
+  contenido_hash : VARCHAR(64)
+  obligaciones : TEXT
+  causales_rescision : TEXT
+  firmado_en : TIMESTAMPTZ <<NULL>>
+  # token_firma_id : UUID <<FK, NULL, M1>>
+  vigente_desde : DATE
+  vigente_hasta : DATE <<NULL>>
+  rescindido_en : TIMESTAMPTZ <<NULL>>
+  motivo_rescision : VARCHAR(300) <<NULL>>
+}
+
+entity "tope_regulatorio" as tope {
+  * id : UUID <<PK>>
+  --
+  porcentaje_maximo_sobre_bolsa : DECIMAL(5,2)
+  monto_maximo_absoluto : DECIMAL(14,2)
+  moneda : CHAR(3)
+  fundamento_normativo : VARCHAR(200)
+  vigente_desde : DATE <<UQ>>
+}
+
+entity "esquema_comision" as esq {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  # organizador_id : UUID <<FK, IDX>>
+  # esquema_anterior_id : UUID <<FK, NULL>>
+  # tope_regulatorio_id : UUID <<FK>>
+  tipo : VARCHAR(30) <<CK>>
+  valor : DECIMAL(12,2)
+  moneda : CHAR(3)
+  base_calculo : VARCHAR(25) <<CK>>
+  evento_gatillo : VARCHAR(25) <<CK>>
+  pagador : VARCHAR(35) <<CK>>
+  tope_maximo_por_periodo : DECIMAL(14,2)
+  tope_maximo_por_ciclo : DECIMAL(14,2)
+  tope_regulatorio_porcentaje : DECIMAL(5,2)
+  requiere_aceptacion_unanime : BOOLEAN
+  porcentaje_aceptacion : DECIMAL(5,2)
+  estado : VARCHAR(15) <<CK, IDX>>
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+}
+
+entity "tramo_comision" as tramo {
+  * id : UUID <<PK>>
+  --
+  # esquema_id : UUID <<FK, IDX>>
+  monto_desde : DECIMAL(14,2)
+  monto_hasta : DECIMAL(14,2)
+  valor : DECIMAL(12,2)
+  es_porcentaje : BOOLEAN
+}
+
+entity "aceptacion_comision" as acepcom {
+  * id : UUID <<PK>>
+  --
+  # esquema_id : UUID <<FK, IDX>>
+  # participante_id : UUID <<FK, M2>>
+  acepta : BOOLEAN
+  fecha_hora : TIMESTAMPTZ
+  ip_origen : INET
+  # token_firma_id : UUID <<FK, NULL, M1>>
+  comentario : VARCHAR(300) <<NULL>>
+}
+
+entity "devengo_comision" as devengo {
+  * id : UUID <<PK>>
+  --
+  # esquema_id : UUID <<FK, IDX>>
+  # organizador_id : UUID <<FK, IDX>>
+  # grupo_id : UUID <<FK, IDX>>
+  # periodo_id : UUID <<FK, NULL>>
+  # liquidacion_id : UUID <<FK, NULL, IDX>>
+  evento_gatillo : VARCHAR(25) <<CK>>
+  base_calculo : DECIMAL(14,2)
+  monto_devengado : DECIMAL(14,2) <<CK: >= 0>>
+  moneda : CHAR(3)
+  estado : VARCHAR(15) <<CK, IDX>>
+  fecha_devengo : TIMESTAMPTZ <<IDX>>
+  referencia_origen_id : UUID <<NULL>>
+}
+
+entity "liquidacion_comision" as liq {
+  * id : UUID <<PK>>
+  --
+  # organizador_id : UUID <<FK, IDX>>
+  periodo_liquidacion : VARCHAR(10) <<UQ+organizador_id>>
+  monto_bruto : DECIMAL(14,2)
+  total_retenciones : DECIMAL(14,2)
+  total_deducciones : DECIMAL(14,2)
+  monto_neto : DECIMAL(14,2) <<CK: >= 0>>
+  moneda : CHAR(3)
+  cantidad_devengos : SMALLINT
+  estado : VARCHAR(15) <<CK, IDX>>
+  calculada_en : TIMESTAMPTZ
+  # aprobada_por : UUID <<FK, NULL>>
+  aprobada_en : TIMESTAMPTZ <<NULL>>
+  pagada_en : TIMESTAMPTZ <<NULL>>
+  motivo_rechazo : VARCHAR(300) <<NULL>>
+  # liquidacion_reversa_id : UUID <<FK, NULL>>
+}
+
+entity "retencion_impuesto" as reten {
+  * id : UUID <<PK>>
+  --
+  # liquidacion_id : UUID <<FK, IDX>>
+  tipo_impuesto : VARCHAR(15) <<CK>>
+  base_imponible : DECIMAL(14,2)
+  alicuota : DECIMAL(5,2)
+  monto_retenido : DECIMAL(14,2)
+  numero_certificado : VARCHAR(40) <<UQ, NULL>>
+  normativa_aplicada : VARCHAR(120)
+}
+
+entity "deduccion_liquidacion" as dedliq {
+  * id : UUID <<PK>>
+  --
+  # liquidacion_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(30) <<CK>>
+  descripcion : VARCHAR(200)
+  monto : DECIMAL(14,2)
+  referencia_origen_id : UUID <<NULL>>
+}
+
+entity "pago_comision" as pagocom {
+  * id : UUID <<PK>>
+  --
+  # liquidacion_id : UUID <<FK, UQ>>
+  # cuenta_destino_id : UUID <<FK, M4>>
+  monto : DECIMAL(14,2)
+  estado : VARCHAR(15) <<CK>>
+  referencia_proveedor : VARCHAR(80) <<UQ, NULL>>
+  clave_idempotencia : VARCHAR(80) <<UQ>>
+  fecha_pago : TIMESTAMPTZ <<NULL>>
+}
+
+entity "disputa_comision" as dispcom {
+  * id : UUID <<PK>>
+  --
+  # liquidacion_id : UUID <<FK, IDX>>
+  # reclamante_id : UUID <<FK>>
+  tipo_reclamo : VARCHAR(25) <<CK>>
+  descripcion : TEXT
+  monto_disputado : DECIMAL(14,2)
+  estado : VARCHAR(15) <<CK>>
+  resolucion : VARCHAR(400) <<NULL>>
+  abierta_en : TIMESTAMPTZ
+  resuelta_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "evaluacion_desempeno" as evaldes {
+  * id : UUID <<PK>>
+  --
+  # organizador_id : UUID <<FK, IDX>>
+  periodo_evaluado : VARCHAR(10) <<UQ+organizador_id>>
+  indice_morosidad_cartera : DECIMAL(5,2)
+  tasa_finalizacion_grupos : DECIMAL(5,2)
+  satisfaccion_participantes : DECIMAL(3,2)
+  tiempo_respuesta_promedio_horas : DECIMAL(6,2)
+  incidencias_abiertas : SMALLINT
+  coberturas_consumidas : SMALLINT
+  puntaje_global : DECIMAL(5,2)
+  nivel_sugerido : VARCHAR(15) <<CK>>
+  accion_recomendada : VARCHAR(120)
+  evaluado_en : TIMESTAMPTZ
+}
+
+entity "metrica_organizador" as metrorg {
+  * id : UUID <<PK>>
+  --
+  # evaluacion_id : UUID <<FK, IDX>>
+  codigo : VARCHAR(40) <<UQ+evaluacion_id>>
+  valor : DECIMAL(12,4)
+  meta : DECIMAL(12,4)
+  cumple : BOOLEAN
+  peso : DECIMAL(4,3)
+}
+
+entity "sancion_organizador" as sancorg {
+  * id : UUID <<PK>>
+  --
+  # organizador_id : UUID <<FK, IDX>>
+  # evaluacion_id : UUID <<FK, NULL>>
+  tipo : VARCHAR(25) <<CK>>
+  motivo : VARCHAR(300)
+  monto_retenido : DECIMAL(14,2) <<NULL>>
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  # aplicada_por : UUID <<FK>>
+}
+
+entity "apelacion_sancion_org" as apelorg {
+  * id : UUID <<PK>>
+  --
+  # sancion_organizador_id : UUID <<FK, UQ>>
+  argumento : TEXT
+  evidencias : JSONB
+  estado : VARCHAR(15) <<CK>>
+  # resuelta_por : UUID <<FK, NULL>>
+  resolucion : VARCHAR(400) <<NULL>>
+  presentada_en : TIMESTAMPTZ
+  resuelta_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "regla_automatizacion" as reglaauto {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(40) <<UQ>>
+  descripcion : VARCHAR(200)
+  disparador : VARCHAR(10) <<CK>>
+  expresion_disparo : VARCHAR(80)
+  condicion : VARCHAR(300)
+  accion : VARCHAR(30) <<CK>>
+  requiere_confirmacion_humana : BOOLEAN
+  prioridad : SMALLINT
+  activa : BOOLEAN
+}
+
+entity "tarea_automatizada" as tarea {
+  * id : UUID <<PK>>
+  --
+  # regla_id : UUID <<FK, IDX>>
+  # grupo_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(40)
+  programada_para : TIMESTAMPTZ <<IDX>>
+  estado : VARCHAR(25) <<CK, IDX>>
+  intentos : SMALLINT
+  clave_idempotencia : VARCHAR(80) <<UQ>>
+}
+
+entity "ejecucion_tarea" as ejec {
+  * id : UUID <<PK>>
+  --
+  # tarea_id : UUID <<FK, IDX>>
+  iniciada_en : TIMESTAMPTZ
+  finalizada_en : TIMESTAMPTZ <<NULL>>
+  resultado : VARCHAR(10) <<CK>>
+  registros_afectados : INTEGER
+  detalle : JSONB
+  mensaje_error : TEXT <<NULL>>
+}
+
+org ||--o| solorg : "postula con"
+org ||--o{ capac : "se capacita"
+org ||--o{ contorg : "firma"
+org ||--o{ esq : "cobra segun"
+org ||--o{ devengo : "gana"
+org ||--o{ liq : "liquida"
+org ||--o{ evaldes : "es evaluado"
+org ||--o{ sancorg : "es sancionado"
+tope ||--o{ esq : "limita"
+esq ||--o{ tramo : "escalona"
+esq ||--o{ acepcom : "es aceptado en"
+esq ||--o{ devengo : "genera"
+liq ||--o{ devengo : "consolida"
+liq ||--o{ reten : "retiene"
+liq ||--o{ dedliq : "deduce"
+liq ||--o| pagocom : "se paga con"
+liq ||--o{ dispcom : "se disputa"
+evaldes ||--|{ metrorg : "mide"
+evaldes ||--o{ sancorg : "origina"
+sancorg ||--o| apelorg : "se apela"
+reglaauto ||--o{ tarea : "programa"
+tarea ||--o{ ejec : "se ejecuta en"
+
+note top of esq
+  <b>Un solo esquema vigente por grupo</b>
+  CREATE UNIQUE INDEX ON esquema_comision (grupo_id)
+    WHERE estado = 'VIGENTE';
+  CHECK: valor <= tope_regulatorio_porcentaje
+  cuando tipo es porcentual.
+  grupo_id -> grupo.id (M2).
+end note
+
+note bottom of devengo
+  Un devengo solo entra a una liquidacion
+  (liquidacion_id) y solo una vez:
+  UNIQUE (esquema_id, periodo_id, evento_gatillo)
+  evita cobrar dos veces el mismo hito.
+end note
+
+note bottom of liq
+  El pago de la comision genera asiento contable
+  en el modulo 3 (origen_tipo = 'COMISION') y,
+  si el pagador es el beneficiario del periodo,
+  aparece como deduccion en la entrega (M4).
+end note
+
+note bottom of tarea
+  El organizador digital corre sobre estas dos
+  tablas: clave_idempotencia impide que un
+  reintento del planificador genere cobros o
+  recordatorios duplicados.
+end note
+
+@enduml

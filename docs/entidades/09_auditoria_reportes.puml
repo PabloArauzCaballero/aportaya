@@ -1,0 +1,868 @@
+@startuml 09_auditoria_reportes_clases
+' ============================================================
+'  MODULO 9: Auditoria, Reportes, Cumplimiento y Datos Personales
+'  Diagrama de CLASES  (modelo detallado)
+'  Cubre: RN-17 (bitacora inmutable), reportes y exportacion,
+'         cumplimiento AML/UIF y derechos ARCO sobre datos personales.
+'  Es el modulo transversal: observa a los ocho anteriores sin que
+'  ellos dependan de el (se alimenta por eventos, no por acoplamiento).
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 9 - Auditoria, Reportes y Cumplimiento (clases)
+
+legend top right
+  <b>Tres registros distintos, no uno solo</b>
+  <b>BitacoraEvento</b>: quien hizo que sobre que dato (auditoria tecnica).
+  <b>EventoDominio</b>: que paso en el negocio (integracion entre modulos).
+  <b>RegistroAccesoDatos</b>: quien MIRO datos sensibles (auditoria de lectura).
+  Confundirlos es el error clasico: el tercero es el que se pide
+  cuando hay una filtracion.
+endlegend
+
+' ============================================================
+package "Bitacora y Trazabilidad" {
+
+  enum TipoAccion {
+    CREACION
+    ACTUALIZACION
+    ELIMINACION_LOGICA
+    ANULACION
+    APROBACION
+    RECHAZO
+    CONCILIACION
+    COBERTURA
+    LIQUIDACION
+    DESEMBOLSO
+    SANCION
+    CAMBIO_ESTADO
+    CAMBIO_CONFIGURACION
+    ACCESO_DATOS
+    EXPORTACION
+    INICIO_SESION
+    CAMBIO_PERMISOS
+  }
+
+  enum OrigenAccion {
+    APP_MOVIL
+    APP_WEB
+    PANEL_ADMIN
+    API_PUBLICA
+    WEBHOOK_ENTRANTE
+    TAREA_PROGRAMADA
+    ORGANIZADOR_DIGITAL
+    MIGRACION
+    SOPORTE_INTERNO
+  }
+
+  class BitacoraEvento <<inmutable>> {
+    - id: UUID
+    - secuencia: Long <<correlativo global>>
+    - entidad: String
+    - entidadId: UUID
+    - accion: TipoAccion
+    - actorUsuarioId: UUID <<null si es sistema>>
+    - actorRol: String
+    - suplantandoAUsuarioId: UUID <<soporte actuando como usuario>>
+    - origen: OrigenAccion
+    - ipOrigen: String
+    - agenteUsuario: String
+    - correlationId: UUID
+    - requestId: UUID
+    - valorAnterior: JSON
+    - valorNuevo: JSON
+    - camposModificados: List<String>
+    - motivo: String
+    - grupoId: UUID <<para filtrar por grupo>>
+    - hashRegistro: String
+    - hashAnterior: String <<encadenamiento>>
+    - fechaHora: DateTime
+    --
+    + {static} registrar(contexto): BitacoraEvento
+    + calcularHash(): String
+    + verificarCadena(desde, hasta): Boolean
+    + {static} consultarPorEntidad(entidad, id): List
+    + {static} reconstruirEstadoA(entidad, id, fecha): JSON
+  }
+
+  class EventoDominio {
+    - id: UUID
+    - tipo: String <<pagos.acreditado, incumplimiento.detectado, ...>>
+    - version: String
+    - agregado: String
+    - agregadoId: UUID
+    - payload: JSON
+    - metadatos: JSON
+    - correlationId: UUID
+    - causationId: UUID <<evento que lo causo>>
+    - ocurridoEn: DateTime
+    - publicadoEn: DateTime
+    - estado: String <<PENDIENTE | PUBLICADO | FALLIDO>>
+    - intentos: Integer
+    --
+    + publicar()
+    + reintentar()
+  }
+
+  class RegistroAccesoDatos {
+    - id: UUID
+    - usuarioConsultorId: UUID
+    - usuarioAfectadoId: UUID
+    - tipoDato: String <<DOCUMENTO_IDENTIDAD | CUENTA_BANCARIA | HISTORIAL_PAGOS | TELEFONO>>
+    - operacion: String <<LECTURA | BUSQUEDA | EXPORTACION>>
+    - justificacion: String
+    - ticketSoporteId: String
+    - cantidadRegistros: Integer
+    - ipOrigen: String
+    - fechaHora: DateTime
+    --
+    + esAccesoInusual(): Boolean
+  }
+
+  class ServicioAuditoria <<Svc>> {
+    --
+    + registrarCambio(entidad, antes, despues, contexto)
+    + registrarAcceso(consultor, afectado, tipoDato)
+    + verificarIntegridadCadena(desde, hasta): ResultadoVerificacion
+    + trazarOperacion(correlationId): List<BitacoraEvento>
+    + aplicarRetencion(): Integer
+  }
+
+  class PoliticaRetencion <<Pol>> {
+    - id: UUID
+    - entidad: String
+    - mesesRetencionActiva: Integer
+    - mesesRetencionHistorica: Integer
+    - accionAlVencer: String <<ARCHIVAR | ANONIMIZAR | ELIMINAR>>
+    - baseLegal: String
+    - vigenteDesde: Date
+    --
+    + registrosVencidos(): List<UUID>
+  }
+}
+
+' ============================================================
+package "Reportes y Explotacion" {
+
+  enum TipoReporte {
+    ESTADO_DE_GRUPO
+    HISTORICO_DE_PAGOS
+    CARTERA_EN_MORA
+    DESEMPENO_ORGANIZADOR
+    LIQUIDACION_COMISIONES
+    MOVIMIENTO_FONDO_GARANTIA
+    CONCILIACION_DIARIA
+    ESTADO_DE_CUENTA_PARTICIPANTE
+    INCUMPLIMIENTOS_Y_SANCIONES
+    KPI_PLATAFORMA
+    OPERACIONES_SOSPECHOSAS
+  }
+
+  enum FormatoExportacion {
+    PDF
+    XLSX
+    CSV
+    JSON
+  }
+
+  class DefinicionReporte {
+    - id: UUID
+    - tipo: TipoReporte
+    - nombre: String
+    - descripcion: String
+    - consultaBase: String
+    - parametrosEsperados: JSON
+    - columnas: JSON
+    - permisoRequerido: String
+    - contieneDatosSensibles: Boolean
+    - cacheMinutos: Integer
+    - activa: Boolean
+    --
+    + validarParametros(params): List<Violacion>
+    + estimarCosto(params): Integer
+  }
+
+  class EjecucionReporte {
+    - id: UUID
+    - definicionId: UUID
+    - parametros: JSON
+    - grupoId: UUID
+    - solicitadoPor: UUID
+    - estado: String <<EN_COLA | EJECUTANDO | COMPLETADA | FALLIDA | EXPIRADA>>
+    - filasGeneradas: Integer
+    - duracionMs: Integer
+    - hashResultado: String
+    - mensajeError: String
+    - iniciadaEn: DateTime
+    - finalizadaEn: DateTime
+    --
+    + ejecutar(): ResultadoReporte
+    + cancelar()
+  }
+
+  class ExportacionReporte {
+    - id: UUID
+    - ejecucionId: UUID
+    - formato: FormatoExportacion
+    - urlArchivo: String
+    - hashArchivo: String
+    - tamanoBytes: Long
+    - estaCifrado: Boolean
+    - descargas: Integer
+    - expiraEn: DateTime
+    - generadaEn: DateTime
+    --
+    + generar(): Documento
+    + registrarDescarga(usuarioId)
+    + revocarAcceso()
+  }
+
+  class ProgramacionReporte {
+    - id: UUID
+    - definicionId: UUID
+    - expresionCron: String
+    - parametrosFijos: JSON
+    - destinatarios: List<UUID>
+    - canalEntrega: String
+    - formato: FormatoExportacion
+    - activa: Boolean
+    - ultimaEjecucionEn: DateTime
+    - proximaEjecucionEn: DateTime
+    --
+    + ejecutar(): EjecucionReporte
+  }
+
+  class IndicadorKPI {
+    - id: UUID
+    - codigo: String <<TASA_MOROSIDAD_GLOBAL | GRUPOS_ACTIVOS | MONTO_ADMINISTRADO | TASA_CONCILIACION_AUTOMATICA>>
+    - nombre: String
+    - valor: Decimal
+    - unidad: String
+    - dimension: String <<GLOBAL | POR_GRUPO | POR_ORGANIZADOR>>
+    - dimensionId: UUID
+    - periodo: String
+    - meta: Decimal
+    - variacionPeriodoAnterior: Decimal
+    - calculadoEn: DateTime
+    --
+    + recalcular()
+    + tendencia(): String
+  }
+}
+
+' ============================================================
+package "Cumplimiento y Prevencion (AML)" {
+
+  class ReglaCumplimiento <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - descripcion: String
+    - categoria: String <<UMBRAL_MONTO | FRACCIONAMIENTO | VELOCIDAD | RED_SOSPECHOSA | LISTA_RESTRICTIVA>>
+    - expresion: String
+    - umbral: Decimal
+    - ventanaHoras: Integer
+    - severidad: String
+    - accionAutomatica: String <<ALERTAR | RETENER_OPERACION | BLOQUEAR_USUARIO>>
+    - activa: Boolean
+    --
+    + evaluar(operacion): Boolean
+  }
+
+  class AlertaCumplimiento {
+    - id: UUID
+    - reglaId: UUID
+    - usuarioId: UUID
+    - grupoId: UUID
+    - operacionTipo: String
+    - operacionId: UUID
+    - montoInvolucrado: Decimal
+    - detalleDeteccion: JSON
+    - severidad: String
+    - estado: String <<ABIERTA | EN_ANALISIS | DESCARTADA | ESCALADA | REPORTADA>>
+    - analistaId: UUID
+    - conclusion: String
+    - detectadaEn: DateTime
+    - resueltaEn: DateTime
+    --
+    + asignar(analistaId)
+    + descartar(justificacion)
+    + escalar(): ReporteOperacionSospechosa
+  }
+
+  class ReporteOperacionSospechosa {
+    - id: UUID
+    - alertaIds: List<UUID>
+    - usuarioId: UUID
+    - tipologia: String
+    - montoTotal: Decimal
+    - periodoAnalizado: String
+    - narrativa: String
+    - estado: String <<BORRADOR | APROBADO | ENVIADO | ARCHIVADO>>
+    - numeroRadicado: String
+    - aprobadoPor: UUID
+    - enviadoEn: DateTime
+    --
+    + generarNarrativa(): String
+    + aprobar(oficialCumplimientoId)
+    + marcarEnviado(radicado)
+  }
+
+  class ListaRestrictivaExterna {
+    - id: UUID
+    - nombreLista: String <<PEP | OFAC | ONU | LOCAL>>
+    - version: String
+    - fechaActualizacion: Date
+    - registros: Integer
+    --
+    + buscarCoincidencias(usuario): List<CoincidenciaLista>
+  }
+
+  class CoincidenciaLista {
+    - id: UUID
+    - listaId: UUID
+    - usuarioId: UUID
+    - nombreCoincidente: String
+    - puntajeSimilitud: Decimal
+    - estado: String <<PENDIENTE | FALSO_POSITIVO | CONFIRMADA>>
+    - revisadaPor: UUID
+    - revisadaEn: DateTime
+    --
+    + revisar(decision, nota)
+  }
+
+  class UmbralOperativo <<Pol>> {
+    - id: UUID
+    - concepto: String <<APORTE_MAXIMO | ENTREGA_MAXIMA | ACUMULADO_MENSUAL>>
+    - nivelKYCRequerido: String
+    - montoMaximo: Decimal
+    - moneda: String
+    - vigenteDesde: Date
+    --
+    + permite(monto, nivelKYC): Boolean
+  }
+}
+
+' ============================================================
+package "Datos Personales y Soporte" {
+
+  class SolicitudDatosPersonales {
+    - id: UUID
+    - usuarioId: UUID
+    - tipo: String <<ACCESO | RECTIFICACION | CANCELACION | OPOSICION | PORTABILIDAD>>
+    - descripcion: String
+    - estado: String <<RECIBIDA | EN_PROCESO | ATENDIDA | RECHAZADA | PARCIAL>>
+    - fechaLimiteLegal: DateTime
+    - respuesta: String
+    - atendidaPor: UUID
+    - recibidaEn: DateTime
+    - atendidaEn: DateTime
+    --
+    + validarIdentidad(): Boolean
+    + ejecutar(): ExportacionReporte
+    + rechazarPorObligacionesVigentes(motivo)
+  }
+
+  class ProcesoAnonimizacion {
+    - id: UUID
+    - usuarioId: UUID
+    - solicitudId: UUID
+    - estrategia: String <<SEUDONIMIZACION | BORRADO_PARCIAL | BORRADO_TOTAL>>
+    - entidadesAfectadas: List<String>
+    - datosRetenidosPorLey: List<String>
+    - estado: String <<PLANIFICADO | EJECUTADO | REVERTIDO>>
+    - ejecutadoEn: DateTime
+    --
+    + simular(): JSON
+    + ejecutar()
+  }
+
+  class TicketSoporte {
+    - id: UUID
+    - usuarioId: UUID
+    - categoria: String
+    - asunto: String
+    - descripcion: String
+    - prioridad: String
+    - estado: String <<ABIERTO | EN_ATENCION | ESPERANDO_USUARIO | RESUELTO | CERRADO>>
+    - referenciaEntidad: String
+    - referenciaId: UUID
+    - asignadoA: UUID
+    - slaHoras: Integer
+    - abiertoEn: DateTime
+    - resueltoEn: DateTime
+    --
+    + escalar()
+    + resolver(nota)
+  }
+
+  class IncidenteOperativo {
+    - id: UUID
+    - codigo: String
+    - titulo: String
+    - severidad: String <<SEV1 | SEV2 | SEV3>>
+    - sistemaAfectado: String
+    - descripcion: String
+    - impactoUsuarios: Integer
+    - impactoMonetario: Decimal
+    - estado: String <<DETECTADO | MITIGADO | RESUELTO | POST_MORTEM>>
+    - detectadoEn: DateTime
+    - resueltoEn: DateTime
+    - causaRaiz: String
+    - accionesCorrectivas: String
+    --
+    + declarar()
+    + cerrar(postMortemUrl)
+  }
+}
+
+' ---------- Relaciones ----------
+ServicioAuditoria ..> BitacoraEvento : escribe >
+ServicioAuditoria ..> RegistroAccesoDatos : escribe >
+ServicioAuditoria ..> PoliticaRetencion : aplica >
+BitacoraEvento ..> EventoDominio : puede derivar de >
+
+DefinicionReporte "1" *-- "0..*" EjecucionReporte
+DefinicionReporte "1" *-- "0..*" ProgramacionReporte
+EjecucionReporte "1" *-- "0..*" ExportacionReporte
+ExportacionReporte ..> RegistroAccesoDatos : deja rastro en >
+
+ReglaCumplimiento "1" *-- "0..*" AlertaCumplimiento
+AlertaCumplimiento "0..*" --> "0..1" ReporteOperacionSospechosa
+ListaRestrictivaExterna "1" *-- "0..*" CoincidenciaLista
+CoincidenciaLista ..> AlertaCumplimiento : puede generar >
+UmbralOperativo ..> AlertaCumplimiento : dispara >
+
+SolicitudDatosPersonales "1" *-- "0..1" ProcesoAnonimizacion
+SolicitudDatosPersonales ..> ExportacionReporte : entrega via >
+TicketSoporte ..> IncidenteOperativo : puede escalar a >
+
+BitacoraEvento --> TipoAccion
+BitacoraEvento --> OrigenAccion
+DefinicionReporte --> TipoReporte
+ExportacionReporte --> FormatoExportacion
+
+note right of BitacoraEvento
+  <b>RN-17: inmutable y encadenada</b>
+  hashRegistro = H(secuencia || entidad ||
+    entidadId || accion || valorNuevo ||
+    fechaHora || hashAnterior).
+  Alterar un registro antiguo rompe la cadena y
+  se detecta con verificarCadena(). A nivel de BD
+  se revoca UPDATE/DELETE al rol de aplicacion;
+  solo INSERT.
+  suplantandoAUsuarioId deja constancia cuando
+  soporte opera "como" un usuario: sin ese campo,
+  nadie distingue al titular de un empleado.
+end note
+
+note right of EventoDominio
+  <b>Patron outbox</b>
+  Los modulos 1-8 escriben su cambio y el evento
+  en la MISMA transaccion; un publicador lo envia
+  despues. Asi la reputacion (M6), las
+  notificaciones (M5) y la auditoria nunca se
+  desincronizan del dato real, aunque la cola
+  este caida.
+  causationId permite reconstruir la cadena:
+  un aporte vencido -> incumplimiento detectado
+  -> cobertura aplicada -> sancion notificada.
+end note
+
+note bottom of AlertaCumplimiento
+  Tipologias relevantes en un pasanaku digital:
+  fraccionamiento de aportes para evitar
+  umbrales, grupos con participantes ficticios,
+  una misma cuenta destino para varios usuarios
+  (detectado en M4) y retiro inmediato tras
+  cobrar el turno.
+end note
+
+note bottom of SolicitudDatosPersonales
+  El derecho de cancelacion NO borra registros
+  con obligacion legal o financiera vigente
+  (deuda abierta en M8, asientos contables de
+  M3): esos se conservan y se documenta la
+  base legal en datosRetenidosPorLey.
+end note
+
+@enduml
+
+@startuml 09_auditoria_reportes_relacional
+' ============================================================
+'  MODULO 9: Auditoria, Reportes y Cumplimiento
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 9 - Auditoria, Reportes y Cumplimiento (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> CHECK    <<NULL>> admite nulos
+  bitacora_evento, evento_dominio y registro_acceso_datos:
+  INSERT-ONLY, particionadas por mes, con retencion por politica.
+endlegend
+
+entity "bitacora_evento" as bit {
+  * id : UUID <<PK>>
+  --
+  secuencia : BIGSERIAL <<UQ>>
+  entidad : VARCHAR(50) <<IDX>>
+  entidad_id : UUID <<IDX>>
+  accion : VARCHAR(30) <<CK, IDX>>
+  # actor_usuario_id : UUID <<FK, NULL, IDX>>
+  actor_rol : VARCHAR(30) <<NULL>>
+  # suplantando_a_usuario_id : UUID <<FK, NULL>>
+  origen : VARCHAR(25) <<CK>>
+  ip_origen : INET <<NULL>>
+  agente_usuario : VARCHAR(255) <<NULL>>
+  correlation_id : UUID <<IDX>>
+  request_id : UUID <<NULL>>
+  valor_anterior : JSONB <<NULL>>
+  valor_nuevo : JSONB <<NULL>>
+  campos_modificados : VARCHAR(400) <<NULL>>
+  motivo : VARCHAR(300) <<NULL>>
+  # grupo_id : UUID <<FK, NULL, IDX>>
+  hash_registro : VARCHAR(64) <<UQ>>
+  hash_anterior : VARCHAR(64)
+  fecha_hora : TIMESTAMPTZ <<IDX, particion>>
+}
+
+entity "evento_dominio" as evtdom {
+  * id : UUID <<PK>>
+  --
+  tipo : VARCHAR(60) <<IDX>>
+  version : VARCHAR(10)
+  agregado : VARCHAR(40)
+  agregado_id : UUID <<IDX>>
+  payload : JSONB
+  metadatos : JSONB
+  correlation_id : UUID <<IDX>>
+  causation_id : UUID <<NULL>>
+  ocurrido_en : TIMESTAMPTZ <<IDX>>
+  publicado_en : TIMESTAMPTZ <<NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  intentos : SMALLINT
+}
+
+entity "registro_acceso_datos" as accdatos {
+  * id : UUID <<PK>>
+  --
+  # usuario_consultor_id : UUID <<FK, IDX>>
+  # usuario_afectado_id : UUID <<FK, IDX>>
+  tipo_dato : VARCHAR(30) <<CK>>
+  operacion : VARCHAR(15) <<CK>>
+  justificacion : VARCHAR(300) <<NULL>>
+  ticket_soporte_id : VARCHAR(30) <<NULL>>
+  cantidad_registros : INTEGER
+  ip_origen : INET
+  fecha_hora : TIMESTAMPTZ <<IDX>>
+}
+
+entity "politica_retencion" as polret {
+  * id : UUID <<PK>>
+  --
+  entidad : VARCHAR(50) <<UQ>>
+  meses_retencion_activa : SMALLINT
+  meses_retencion_historica : SMALLINT
+  accion_al_vencer : VARCHAR(15) <<CK>>
+  base_legal : VARCHAR(200)
+  vigente_desde : DATE
+}
+
+entity "definicion_reporte" as defrep {
+  * id : UUID <<PK>>
+  --
+  tipo : VARCHAR(40) <<CK>>
+  nombre : VARCHAR(80) <<UQ>>
+  descripcion : VARCHAR(300)
+  consulta_base : TEXT
+  parametros_esperados : JSONB
+  columnas : JSONB
+  permiso_requerido : VARCHAR(60)
+  contiene_datos_sensibles : BOOLEAN
+  cache_minutos : SMALLINT
+  activa : BOOLEAN
+}
+
+entity "ejecucion_reporte" as ejerep {
+  * id : UUID <<PK>>
+  --
+  # definicion_id : UUID <<FK, IDX>>
+  # grupo_id : UUID <<FK, NULL>>
+  # solicitado_por : UUID <<FK, IDX>>
+  parametros : JSONB
+  estado : VARCHAR(15) <<CK, IDX>>
+  filas_generadas : INTEGER
+  duracion_ms : INTEGER
+  hash_resultado : VARCHAR(64) <<NULL>>
+  mensaje_error : TEXT <<NULL>>
+  iniciada_en : TIMESTAMPTZ
+  finalizada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "exportacion_reporte" as exprep {
+  * id : UUID <<PK>>
+  --
+  # ejecucion_id : UUID <<FK, IDX>>
+  formato : VARCHAR(10) <<CK>>
+  url_archivo : VARCHAR(255)
+  hash_archivo : VARCHAR(64)
+  tamano_bytes : BIGINT
+  esta_cifrado : BOOLEAN
+  descargas : SMALLINT
+  expira_en : TIMESTAMPTZ <<IDX>>
+  generada_en : TIMESTAMPTZ
+}
+
+entity "programacion_reporte" as progrep {
+  * id : UUID <<PK>>
+  --
+  # definicion_id : UUID <<FK, IDX>>
+  expresion_cron : VARCHAR(40)
+  parametros_fijos : JSONB
+  destinatarios : JSONB
+  canal_entrega : VARCHAR(20) <<CK>>
+  formato : VARCHAR(10) <<CK>>
+  activa : BOOLEAN
+  ultima_ejecucion_en : TIMESTAMPTZ <<NULL>>
+  proxima_ejecucion_en : TIMESTAMPTZ <<IDX>>
+}
+
+entity "indicador_kpi" as kpi {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(40) <<UQ+dimension+dimension_id+periodo>>
+  nombre : VARCHAR(80)
+  valor : DECIMAL(16,4)
+  unidad : VARCHAR(15)
+  dimension : VARCHAR(20) <<CK>>
+  dimension_id : UUID <<NULL>>
+  periodo : VARCHAR(10)
+  meta : DECIMAL(16,4) <<NULL>>
+  variacion_periodo_anterior : DECIMAL(8,4) <<NULL>>
+  calculado_en : TIMESTAMPTZ
+}
+
+entity "regla_cumplimiento" as reglacump {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(40) <<UQ>>
+  descripcion : VARCHAR(300)
+  categoria : VARCHAR(25) <<CK>>
+  expresion : VARCHAR(400)
+  umbral : DECIMAL(16,2) <<NULL>>
+  ventana_horas : SMALLINT <<NULL>>
+  severidad : VARCHAR(10) <<CK>>
+  accion_automatica : VARCHAR(20) <<CK>>
+  activa : BOOLEAN
+}
+
+entity "alerta_cumplimiento" as alertcump {
+  * id : UUID <<PK>>
+  --
+  # regla_id : UUID <<FK, IDX>>
+  # usuario_id : UUID <<FK, IDX>>
+  # grupo_id : UUID <<FK, NULL>>
+  # analista_id : UUID <<FK, NULL>>
+  # reporte_sospechoso_id : UUID <<FK, NULL>>
+  operacion_tipo : VARCHAR(30)
+  operacion_id : UUID <<IDX>>
+  monto_involucrado : DECIMAL(16,2)
+  detalle_deteccion : JSONB
+  severidad : VARCHAR(10) <<CK>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  conclusion : VARCHAR(500) <<NULL>>
+  detectada_en : TIMESTAMPTZ <<IDX>>
+  resuelta_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "reporte_operacion_sospechosa" as ros {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # aprobado_por : UUID <<FK, NULL>>
+  tipologia : VARCHAR(60)
+  monto_total : DECIMAL(16,2)
+  periodo_analizado : VARCHAR(20)
+  narrativa : TEXT
+  estado : VARCHAR(15) <<CK>>
+  numero_radicado : VARCHAR(40) <<UQ, NULL>>
+  enviado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "lista_restrictiva_externa" as listaext {
+  * id : UUID <<PK>>
+  --
+  nombre_lista : VARCHAR(30) <<UQ+version>>
+  version : VARCHAR(20)
+  fecha_actualizacion : DATE
+  registros : INTEGER
+}
+
+entity "coincidencia_lista" as coinc {
+  * id : UUID <<PK>>
+  --
+  # lista_id : UUID <<FK, IDX>>
+  # usuario_id : UUID <<FK, IDX>>
+  # revisada_por : UUID <<FK, NULL>>
+  nombre_coincidente : VARCHAR(150)
+  puntaje_similitud : DECIMAL(5,4)
+  estado : VARCHAR(20) <<CK, IDX>>
+  revisada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "umbral_operativo" as umbral {
+  * id : UUID <<PK>>
+  --
+  concepto : VARCHAR(30) <<UQ+nivel_kyc_requerido>>
+  nivel_kyc_requerido : VARCHAR(15) <<CK>>
+  monto_maximo : DECIMAL(16,2)
+  moneda : CHAR(3)
+  vigente_desde : DATE
+}
+
+entity "solicitud_datos_personales" as soldatos {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # atendida_por : UUID <<FK, NULL>>
+  tipo : VARCHAR(20) <<CK>>
+  descripcion : VARCHAR(400)
+  estado : VARCHAR(15) <<CK, IDX>>
+  fecha_limite_legal : TIMESTAMPTZ <<IDX>>
+  respuesta : TEXT <<NULL>>
+  recibida_en : TIMESTAMPTZ
+  atendida_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "proceso_anonimizacion" as anonim {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, UQ>>
+  # solicitud_id : UUID <<FK, NULL>>
+  estrategia : VARCHAR(25) <<CK>>
+  entidades_afectadas : JSONB
+  datos_retenidos_por_ley : JSONB
+  estado : VARCHAR(15) <<CK>>
+  ejecutado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "ticket_soporte" as ticket {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # asignado_a : UUID <<FK, NULL, IDX>>
+  categoria : VARCHAR(40)
+  asunto : VARCHAR(160)
+  descripcion : TEXT
+  prioridad : VARCHAR(10) <<CK>>
+  estado : VARCHAR(20) <<CK, IDX>>
+  referencia_entidad : VARCHAR(40) <<NULL>>
+  referencia_id : UUID <<NULL>>
+  sla_horas : SMALLINT
+  abierto_en : TIMESTAMPTZ
+  resuelto_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "incidente_operativo" as incop {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(20) <<UQ>>
+  titulo : VARCHAR(160)
+  severidad : VARCHAR(6) <<CK>>
+  sistema_afectado : VARCHAR(60)
+  descripcion : TEXT
+  impacto_usuarios : INTEGER
+  impacto_monetario : DECIMAL(16,2)
+  estado : VARCHAR(15) <<CK>>
+  detectado_en : TIMESTAMPTZ
+  resuelto_en : TIMESTAMPTZ <<NULL>>
+  causa_raiz : TEXT <<NULL>>
+  acciones_correctivas : TEXT <<NULL>>
+}
+
+defrep ||--o{ ejerep : "se ejecuta como"
+defrep ||--o{ progrep : "se programa en"
+ejerep ||--o{ exprep : "exporta"
+reglacump ||--o{ alertcump : "detecta"
+ros ||--o{ alertcump : "consolida"
+listaext ||--o{ coinc : "coincide en"
+soldatos ||--o| anonim : "ejecuta"
+polret ||--o{ bit : "retiene"
+
+note top of bit
+  <b>Cadena de integridad</b>
+  hash_registro = SHA256(secuencia || entidad ||
+    entidad_id || accion || valor_nuevo ||
+    fecha_hora || hash_anterior).
+  REVOKE UPDATE, DELETE ON bitacora_evento
+    FROM rol_aplicacion;
+  entidad_id es referencia polimorfica a
+  cualquier PK de los modulos 1-8: se valida en
+  aplicacion, no por FK, para no acoplar la
+  auditoria al esquema que audita.
+end note
+
+note bottom of evtdom
+  <b>Outbox transaccional</b>
+  Indice parcial de despacho:
+  CREATE INDEX ON evento_dominio (ocurrido_en)
+    WHERE estado = 'PENDIENTE';
+  Consumidores: reputacion (M6), notificaciones
+  (M5), metricas (M6/M9) y cumplimiento (este modulo).
+end note
+
+note bottom of accdatos
+  Auditoria de LECTURA, no de escritura.
+  Responde "quien vio la cedula o la cuenta
+  bancaria de este usuario y con que
+  justificacion". Consultas masivas por un
+  mismo consultor disparan alerta_cumplimiento
+  (categoria RED_SOSPECHOSA).
+end note
+
+note bottom of alertcump
+  operacion_id es polimorfica: pago.id (M3),
+  entrega_fondo.id (M4), cobertura.id (M8).
+  Varias alertas se agrupan en un unico
+  reporte_operacion_sospechosa antes de
+  remitirse a la autoridad competente.
+end note
+
+@enduml
