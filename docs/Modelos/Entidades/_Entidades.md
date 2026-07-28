@@ -13,7 +13,7 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 
 ## 01 — Identidad, Usuarios y Seguridad
 
-> Saber con certeza a quién le estás confiando plata ajena · [[01_identidad_usuarios|ficha de negocio]]
+> Saber con certeza a quién le estás confiando plata ajena · [[01_identidad_usuarios|ficha de negocio]] · [[_Entidades 01|índice del módulo]]
 
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |
@@ -45,7 +45,7 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 
 ## 02 — Grupos, Cupos, Turnos y Gobernanza
 
-> Reglas del juego, orden de cobro y decisiones colectivas · [[02_grupos_turnos|ficha de negocio]]
+> Reglas del juego, orden de cobro y decisiones colectivas · [[02_grupos_turnos|ficha de negocio]] · [[_Entidades 02|índice del módulo]]
 
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |
@@ -74,7 +74,7 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 
 ## 03 — Aportes, Pagos QR y Conciliación
 
-> Que "pagué" signifique "el banco lo confirmó" · [[03_aportes_pagos_qr|ficha de negocio]]
+> Que "pagué" signifique "el banco lo confirmó" · [[03_aportes_pagos_qr|ficha de negocio]] · [[_Entidades 03|índice del módulo]]
 
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |
@@ -103,7 +103,7 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 
 ## 04 — Entregas de Fondo
 
-> Que la bolsa llegue completa, a la persona correcta, una sola vez · [[04_entregas_fondo|ficha de negocio]]
+> Que la bolsa llegue completa, a la persona correcta, una sola vez · [[04_entregas_fondo|ficha de negocio]] · [[_Entidades 04|índice del módulo]]
 
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |
@@ -120,7 +120,7 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 
 ## 05 — Notificaciones y Comunicaciones
 
-> WhatsApp como canal real de cobro, sin spam ni doble aviso · [[05_notificaciones|ficha de negocio]]
+> WhatsApp como canal real de cobro, sin spam ni doble aviso · [[05_notificaciones|ficha de negocio]] · [[_Entidades 05|índice del módulo]]
 
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |
@@ -142,7 +142,7 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 
 ## 06 — Transparencia y Reputación
 
-> Que nadie tenga que "creerle" al organizador · [[06_transparencia_reputacion|ficha de negocio]]
+> Que nadie tenga que "creerle" al organizador · [[06_transparencia_reputacion|ficha de negocio]] · [[_Entidades 06|índice del módulo]]
 
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |
@@ -165,7 +165,7 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 
 ## 07 — Organizador y Automatización
 
-> Administrar es un rol, no un negocio: sin comisión y sin custodia · [[07_organizador_automatizacion|ficha de negocio]]
+> Administrar es un rol, no un negocio: sin comisión y sin custodia · [[07_organizador_automatizacion|ficha de negocio]] · [[_Entidades 07|índice del módulo]]
 
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |
@@ -184,7 +184,7 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 
 ## 08 — Garantía, Incumplimiento, Cobranza y Sanciones
 
-> El grupo no se detiene, pero la deuda no se perdona sola · [[08_garantia_incumplimiento|ficha de negocio]]
+> El grupo no se detiene, pero la deuda no se perdona sola · [[08_garantia_incumplimiento|ficha de negocio]] · [[_Entidades 08|índice del módulo]]
 
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |
@@ -224,7 +224,7 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 
 ## 09 — Auditoría, Reportes y Cumplimiento
 
-> Poder demostrar todo lo anterior ante un reclamo o un regulador · [[09_auditoria_reportes|ficha de negocio]]
+> Poder demostrar todo lo anterior ante un reclamo o un regulador · [[09_auditoria_reportes|ficha de negocio]] · [[_Entidades 09|índice del módulo]]
 
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |

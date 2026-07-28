@@ -185,6 +185,8 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 
 ## 01 — Identidad, Usuarios y Seguridad
 
+> [[_Relaciones 01|índice del módulo]]
+
 | Relación | Destino | Cruza | Opcional |
 | --- | --- | :-: | :-: |
 | [[asignacion_rol.otorgada_por → usuario]] | [[usuario]] | — | no |
@@ -221,6 +223,8 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[verificacion_kyc.usuario_id → usuario]] | [[usuario]] | — | no |
 
 ## 02 — Grupos, Cupos, Turnos y Gobernanza
+
+> [[_Relaciones 02|índice del módulo]]
 
 | Relación | Destino | Cruza | Opcional |
 | --- | --- | :-: | :-: |
@@ -275,6 +279,8 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 
 ## 03 — Aportes, Pagos QR y Conciliación
 
+> [[_Relaciones 03|índice del módulo]]
+
 | Relación | Destino | Cruza | Opcional |
 | --- | --- | :-: | :-: |
 | [[asiento_contable.asiento_reversa_id → asiento_contable]] | [[asiento_contable]] | — | sí |
@@ -325,6 +331,8 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 
 ## 04 — Entregas de Fondo
 
+> [[_Relaciones 04|índice del módulo]]
+
 | Relación | Destino | Cruza | Opcional |
 | --- | --- | :-: | :-: |
 | [[confirmacion_recepcion.entrega_id → entrega_fondo]] | [[entrega_fondo]] | — | no |
@@ -354,6 +362,8 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 
 ## 05 — Notificaciones y Comunicaciones
 
+> [[_Relaciones 05|índice del módulo]]
+
 | Relación | Destino | Cruza | Opcional |
 | --- | --- | :-: | :-: |
 | [[bandeja_entrada.notificacion_id → notificacion]] | [[notificacion]] | — | no |
@@ -379,6 +389,8 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[version_plantilla.plantilla_id → plantilla_mensaje]] | [[plantilla_mensaje]] | — | no |
 
 ## 06 — Transparencia y Reputación
+
+> [[_Relaciones 06|índice del módulo]]
 
 | Relación | Destino | Cruza | Opcional |
 | --- | --- | :-: | :-: |
@@ -407,6 +419,8 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 
 ## 07 — Organizador y Automatización
 
+> [[_Relaciones 07|índice del módulo]]
+
 | Relación | Destino | Cruza | Opcional |
 | --- | --- | :-: | :-: |
 | [[apelacion_sancion_org.resuelta_por → usuario]] | [[usuario]] | ↗ | sí |
@@ -428,6 +442,8 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[tarea_automatizada.regla_id → regla_automatizacion]] | [[regla_automatizacion]] | — | no |
 
 ## 08 — Garantía, Incumplimiento, Cobranza y Sanciones
+
+> [[_Relaciones 08|índice del módulo]]
 
 | Relación | Destino | Cruza | Opcional |
 | --- | --- | :-: | :-: |
@@ -532,6 +548,8 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[subrogacion.deuda_id → deuda_participante]] | [[deuda_participante]] | — | no |
 
 ## 09 — Auditoría, Reportes y Cumplimiento
+
+> [[_Relaciones 09|índice del módulo]]
 
 | Relación | Destino | Cruza | Opcional |
 | --- | --- | :-: | :-: |

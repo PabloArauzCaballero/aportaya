@@ -21,15 +21,20 @@ modulos: 9
 docs/
 ├── Index.md                 ← estás acá
 ├── Modelos/
-│   ├── Entidades/           ← una nota por tabla (174)
-│   └── Relaciones/          ← una nota por clave foránea (334)
+│   ├── Entidades/           ← una nota por tabla (174), en 9 carpetas
+│   │   ├── 01 - Identidad, Usuarios y Seguridad/
+│   │   ├── 02 - Grupos, Cupos, Turnos y Gobernanza/
+│   │   └── ...
+│   └── Relaciones/          ← una nota por clave foránea (334), en 9 carpetas
+│       ├── 01 - Identidad, Usuarios y Seguridad/
+│       └── ...
 └── entidades/               ← justificación de negocio + diagramas .puml
 ```
 
 | Carpeta | Qué contiene | Índice |
 | --- | --- | --- |
-| **Entidades** | Una nota por tabla: columnas, claves, FK salientes y entrantes, entidades vecinas y las notas del diagrama. | [[_Entidades]] |
-| **Relaciones** | Una nota por FK: origen, destino, cardinalidad, si es opcional y si cruza módulos. | [[_Relaciones]] |
+| **Entidades** | Una nota por tabla, agrupadas en una carpeta por módulo: columnas, claves, FK salientes y entrantes, entidades vecinas y las notas del diagrama. | [[_Entidades]] |
+| **Relaciones** | Una nota por FK, agrupadas por el módulo de la tabla de origen: destino, cardinalidad, si es opcional y si cruza módulos. | [[_Relaciones]] |
 | **entidades/** | Por qué existe cada entidad, a nivel de negocio y de sistema. Un documento por módulo. | [[docs/entidades/README\|Fichas de negocio]] |
 
 ## Los tres registros que conviene entender primero

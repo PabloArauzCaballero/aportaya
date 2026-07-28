@@ -7,11 +7,41 @@
   "showOrphans": true,
   "collapse-color-groups": false,
   "colorGroups": [
-    { "query": "tag:#entidad", "color": { "a": 1, "rgb": 2201331 } },
-    { "query": "tag:#relacion", "color": { "a": 1, "rgb": 8811589 } },
-    { "query": "tag:#cross-modulo", "color": { "a": 1, "rgb": 14701138 } },
-    { "query": "tag:#append-only", "color": { "a": 1, "rgb": 5025616 } },
-    { "query": "tag:#moc", "color": { "a": 1, "rgb": 16007990 } }
+    {
+      "query": "tag:#entidad",
+      "color": {
+        "a": 1,
+        "rgb": 2201331
+      }
+    },
+    {
+      "query": "tag:#relacion",
+      "color": {
+        "a": 1,
+        "rgb": 8811589
+      }
+    },
+    {
+      "query": "tag:#cross-modulo",
+      "color": {
+        "a": 1,
+        "rgb": 14701138
+      }
+    },
+    {
+      "query": "tag:#append-only",
+      "color": {
+        "a": 1,
+        "rgb": 5025616
+      }
+    },
+    {
+      "query": "tag:#moc",
+      "color": {
+        "a": 1,
+        "rgb": 16007990
+      }
+    }
   ],
   "collapse-display": false,
   "showArrow": true,
@@ -23,6 +53,6 @@
   "repelStrength": 11,
   "linkStrength": 1,
   "linkDistance": 190,
-  "scale": 0.5,
-  "close": false
+  "scale": 0.3918817988140454,
+  "close": true
 }

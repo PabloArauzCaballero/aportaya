@@ -250,6 +250,11 @@ def rel_nombre(f):
     return f'{f["origen"]}.{f["columna"]} → {f["destino"] or "SIN_RESOLVER"}'
 
 
+def carpeta_modulo(k):
+    """Subcarpeta por módulo dentro de Entidades/ y Relaciones/."""
+    return f"{k} - {MODULOS[k][0]}"
+
+
 def _sin_acentos(s):
     for a, b in zip("áéíóúüñÁÉÍÓÚÜÑ", "aeiouunAEIOUUN"):
         s = s.replace(a, b)
@@ -266,6 +271,8 @@ for p in (ENT, REL):
     if p.exists():
         shutil.rmtree(p)
     p.mkdir(parents=True)
+    for k in MODULOS:
+        (p / carpeta_modulo(k)).mkdir()
 
 # --- Entidades ---
 for k, d in mods.items():
@@ -351,7 +358,7 @@ for k, d in mods.items():
         L.append(f"- Justificación de negocio: [[{MODULOS[k][1]}]]")
         L.append(f"- Diagramas: `docs/entidades/{MODULOS[k][1]}.puml`")
         L.append(f"- Índice: [[_Entidades]] · [[Index]]")
-        (ENT / f"{t}.md").write_text("\n".join(L) + "\n")
+        (ENT / carpeta_modulo(k) / f"{t}.md").write_text("\n".join(L) + "\n")
 
 # --- Relaciones ---
 for f in fks:
@@ -401,7 +408,7 @@ for f in fks:
     if dst and f["modulo_destino"]:
         L.append(f"- [[{MODULOS[f['modulo_destino']][1]}]] — justificación de negocio del destino")
     L.append("- [[_Relaciones]] · [[Index]]")
-    (REL / f"{nombre}.md").write_text("\n".join(L) + "\n")
+    (REL / carpeta_modulo(f["modulo_origen"]) / f"{nombre}.md").write_text("\n".join(L) + "\n")
 
 resumen = {
     "entidades": sum(len(d["entidades"]) for d in mods.values()),
@@ -409,6 +416,38 @@ resumen = {
     "sin_resolver": sorted({f'{f["origen"]}.{f["columna"]}' for f in fks if not f["destino"]}),
     "cross_modulo": sum(1 for f in fks if f["modulo_destino"] and f["modulo_destino"] != f["modulo_origen"]),
 }
+
+# ---------------- indices por modulo ----------------
+for k, d in sorted(mods.items()):
+    tablas_mod = [d["entidades"][a]["tabla"] for a in d["orden"]]
+    fks_mod = sorted([f for f in fks if f["modulo_origen"] == k],
+                     key=lambda x: (x["origen"], x["columna"]))
+
+    L = ["---", f"tags:\n  - moc\n  - {tag_modulo(k)}",
+         f'modulo: "{k} — {MODULOS[k][0]}"', f"entidades: {len(tablas_mod)}", "---\n",
+         f"# {k} — {MODULOS[k][0]} · entidades\n",
+         f"Las **{len(tablas_mod)} tablas** de este módulo. "
+         f"Justificación de negocio en [[{MODULOS[k][1]}]].\n",
+         "[[_Entidades|← Todas las entidades]] · [[Index]]\n",
+         "| Tabla | Columnas | FK sal. | FK ent. |", "| --- | --: | --: | --: |"]
+    for a in d["orden"]:
+        e = d["entidades"][a]
+        tb = e["tabla"]
+        L.append(f'| [[{tb}]] | {len(e["cols"])} | {len(salientes[tb])} | {len(entrantes[tb])} |')
+    (ENT / carpeta_modulo(k) / f"_Entidades {k}.md").write_text("\n".join(L) + "\n")
+
+    L = ["---", f"tags:\n  - moc\n  - {tag_modulo(k)}",
+         f'modulo: "{k} — {MODULOS[k][0]}"', f"relaciones_fk: {len(fks_mod)}", "---\n",
+         f"# {k} — {MODULOS[k][0]} · relaciones\n",
+         f"Las **{len(fks_mod)} claves foráneas** que salen de las tablas de este módulo.\n",
+         "[[_Relaciones|← Todas las relaciones]] · [[Index]]\n",
+         "| Relación | Destino | Cruza | Opcional |", "| --- | --- | :-: | :-: |"]
+    for f in fks_mod:
+        cruza = "↗ " + f["modulo_destino"] if f["modulo_destino"] != k else "—"
+        L.append(f'| [[{f["origen"]}.{f["columna"]} → {f["destino"]}]] | [[{f["destino"]}]] | '
+                 f'{cruza} | {"sí" if f["opcional"] else "no"} |')
+    (REL / carpeta_modulo(k) / f"_Relaciones {k}.md").write_text("\n".join(L) + "\n")
+
 
 # ---------------- contexto para los indices ----------------
 mods = {k: {"entidades": d["entidades"], "orden": d["orden"],
@@ -464,14 +503,19 @@ L = ["---",
      "docs/",
      "├── Index.md                 ← estás acá",
      "├── Modelos/",
-     "│   ├── Entidades/           ← una nota por tabla (174)",
-     "│   └── Relaciones/          ← una nota por clave foránea (334)",
+     "│   ├── Entidades/           ← una nota por tabla (174), en 9 carpetas",
+     "│   │   ├── 01 - Identidad, Usuarios y Seguridad/",
+     "│   │   ├── 02 - Grupos, Cupos, Turnos y Gobernanza/",
+     "│   │   └── ...",
+     "│   └── Relaciones/          ← una nota por clave foránea (334), en 9 carpetas",
+     "│       ├── 01 - Identidad, Usuarios y Seguridad/",
+     "│       └── ...",
      "└── entidades/               ← justificación de negocio + diagramas .puml",
      "```\n",
      "| Carpeta | Qué contiene | Índice |",
      "| --- | --- | --- |",
-     "| **Entidades** | Una nota por tabla: columnas, claves, FK salientes y entrantes, entidades vecinas y las notas del diagrama. | [[_Entidades]] |",
-     "| **Relaciones** | Una nota por FK: origen, destino, cardinalidad, si es opcional y si cruza módulos. | [[_Relaciones]] |",
+     "| **Entidades** | Una nota por tabla, agrupadas en una carpeta por módulo: columnas, claves, FK salientes y entrantes, entidades vecinas y las notas del diagrama. | [[_Entidades]] |",
+     "| **Relaciones** | Una nota por FK, agrupadas por el módulo de la tabla de origen: destino, cardinalidad, si es opcional y si cruza módulos. | [[_Relaciones]] |",
      "| **entidades/** | Por qué existe cada entidad, a nivel de negocio y de sistema. Un documento por módulo. | [[docs/entidades/README\\|Fichas de negocio]] |",
      "\n## Los tres registros que conviene entender primero\n",
      "Casi todo el modelo se explica con tres ideas. Si vas a leer solo tres notas, que sean estas:\n",
@@ -538,7 +582,8 @@ L = ["---", "tags:\n  - moc\n  - indice", f"entidades: {len(tablas)}", "---\n",
      "[[Index|← Índice general]] · [[_Relaciones|Relaciones →]]\n"]
 for k, d in sorted(mods.items()):
     L.append(f'## {k} — {d["nombre"]}\n')
-    L.append(f'> {FOCO[k]} · [[{fichero(k)}|ficha de negocio]]\n')
+    L.append(f'> {FOCO[k]} · [[{fichero(k)}|ficha de negocio]] · '
+             f'[[_Entidades {k}|índice del módulo]]\n')
     L.append("| Tabla | Columnas | Sal. | Ent. | Notas |")
     L.append("| --- | --: | --: | --: | --- |")
     for alias in d["orden"]:
@@ -581,6 +626,7 @@ for k, d in sorted(mods.items()):
     if not propias:
         continue
     L.append(f'## {k} — {d["nombre"]}\n')
+    L.append(f'> [[_Relaciones {k}|índice del módulo]]\n')
     L.append("| Relación | Destino | Cruza | Opcional |")
     L.append("| --- | --- | :-: | :-: |")
     for f in propias:
