@@ -1,0 +1,7 @@
+# macOS
+.DS_Store
+
+# Obsidian: estado local del editor, no del modelo
+docs/.obsidian/workspace.json
+docs/.obsidian/workspace-mobile.json
+docs/.obsidian/cache
