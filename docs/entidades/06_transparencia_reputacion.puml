@@ -434,8 +434,8 @@ end note
 note bottom of PanelTransparencia
   Vista de solo lectura: agrega grupo, cupo y
   turno (M2), obligaciones y pagos (M3),
-  entregas (M4), fondo de garantia (M8) y
-  comisiones (M7). No tiene tabla propia; se
+  entregas (M4) y fondo de garantia (M8).
+  No tiene tabla propia; se
   materializa en vistas para rendimiento.
 end note
 

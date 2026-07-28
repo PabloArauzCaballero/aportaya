@@ -65,7 +65,6 @@ package "Obligacion de Aporte" {
     APORTE_PERIODICO
     RECARGO_MORA
     APORTE_FONDO_GARANTIA
-    COMISION_ORGANIZADOR
     REPOSICION_COBERTURA
     AJUSTE_MANUAL
   }
@@ -462,7 +461,7 @@ package "Contabilidad de doble partida" {
     - numero: Long <<correlativo>>
     - fecha: DateTime
     - glosa: String
-    - origenTipo: String <<PAGO | ENTREGA | COMISION | COBERTURA | AJUSTE>>
+    - origenTipo: String <<PAGO | ENTREGA | COBERTURA | AJUSTE>>
     - origenId: UUID
     - grupoId: UUID
     - estado: String <<BORRADOR | CONFIRMADO | REVERSADO>>
@@ -566,7 +565,7 @@ note right of AsientoContable
   <b>Por que doble partida</b>
   El sistema custodia expectativas de dinero
   ajeno. Con debe/haber por cada evento
-  (aporte, entrega, comision, cobertura) el
+  (aporte, entrega, cobertura) el
   panel de transparencia del modulo 6 se
   calcula desde el mayor y no desde sumas
   ad-hoc; cualquier descuadre se detecta el
@@ -974,9 +973,8 @@ note bottom of asiento
   Trigger AFTER: por cada asiento CONFIRMADO,
   SUM(debe) = SUM(haber). Los asientos no se
   editan ni borran: se reversan (asiento_reversa_id).
-  origen_id es polimorfica: pago.id, entrega.id (M4),
-  liquidacion_comision.id (M7),
-  cobertura_incumplimiento.id (M8).
+  origen_id es polimorfica: pago.id, entrega.id (M4)
+  y cobertura_incumplimiento.id (M8).
 end note
 
 note bottom of oblig

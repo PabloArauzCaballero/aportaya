@@ -1,31 +1,34 @@
-# Modelo de Clases y Relacional por Módulo — Pasanaku Digital v2.0 + Parche A
+# Pasanaku — Modelo de datos
 
-Este paquete contiene, para cada módulo del sistema, **un archivo `.puml`** con
-dos diagramas: el **modelo de clases** (diseño orientado a objetos, con
-estereotipos DDD) y el **modelo relacional** (entidad-relación listo para
-traducir a DDL). Ambos viven en el mismo archivo; al renderizar se generan dos
-imágenes por módulo.
+Sistema web destinado a la creación, administración y seguimiento de grupos de
+pasanaku. Esta rama contiene el **modelo de datos completo** del sistema.
+
+Para cada módulo hay dos archivos en [`docs/entidades/`](docs/entidades/README.md):
+
+- un **`.puml`** con dos diagramas: el **modelo de clases** (diseño orientado a
+  objetos, con estereotipos DDD) y el **modelo relacional** (entidad-relación
+  listo para traducir a DDL);
+- un **`.md`** que documenta, entidad por entidad, **qué hace y por qué debería
+  existir**: qué problema real del pasanaku resuelve, qué se rompería si se
+  elimina, y qué papel cumple en el sistema.
 
 Cubre el Documento de Requerimientos v2.0 (pago QR, WhatsApp, transparencia,
 reputación) **más** el Parche A (organizador digital automatizado, organizador
-humano con comisión y fondo de garantía).
-
-**Tamaño del modelo:** 200 clases, 62 enumeraciones y 184 tablas en 18
-diagramas. Los 18 renderizan sin errores con PlantUML 1.2025.4.
+humano sin comisión y fondo de garantía).
 
 ## Módulos incluidos
 
-| Archivo | Módulo | Clases | Tablas | Requerimientos |
-| --- | --- | ---: | ---: | --- |
-| `01_identidad_usuarios.puml` | Identidad, Usuarios y Seguridad de Acceso | 30 | 25 | RF-01, RF-18 (base), RN-01, RN-17 |
-| `02_grupos_turnos.puml` | Grupos, Cupos, Turnos y Gobernanza | 22 | 22 | Núcleo + RF-19 |
-| `03_aportes_pagos_qr.puml` | Aportes, Pagos QR, Conciliación y Contabilidad | 22 | 22 | RF-15, RN-05, RN-17 |
-| `04_entregas_fondo.puml` | Entregas de Fondo (liquidación y desembolso) | 11 | 10 | Núcleo, RN-05 |
-| `05_notificaciones.puml` | Notificaciones y Comunicaciones | 17 | 15 | RF-16 |
-| `06_transparencia_reputacion.puml` | Transparencia, Reputación y Confianza | 21 | 16 | RF-17, RF-18 |
-| `07_organizador_comision.puml` | Organizador, Comisión y Automatización | 23 | 22 | RF-20, RN-18 a RN-20, RN-22 |
-| `08_garantia_incumplimiento.puml` | Garantía, Incumplimiento, Cobranza y Sanciones | 34 | 33 | RF-21, RN-21 |
-| `09_auditoria_reportes.puml` | Auditoría, Reportes y Cumplimiento | 20 | 19 | RN-17 |
+| Módulo | Diagramas | Fichas de entidades | Requerimientos |
+| --- | --- | --- | --- |
+| Identidad, Usuarios y Seguridad de Acceso | [`.puml`](docs/entidades/01_identidad_usuarios.puml) | [`.md`](docs/entidades/01_identidad_usuarios.md) | RF-01, RF-18 (base), RN-01, RN-17 |
+| Grupos, Cupos, Turnos y Gobernanza | [`.puml`](docs/entidades/02_grupos_turnos.puml) | [`.md`](docs/entidades/02_grupos_turnos.md) | Núcleo + RF-19 |
+| Aportes, Pagos QR, Conciliación y Contabilidad | [`.puml`](docs/entidades/03_aportes_pagos_qr.puml) | [`.md`](docs/entidades/03_aportes_pagos_qr.md) | RF-15, RN-05, RN-17 |
+| Entregas de Fondo (liquidación y desembolso) | [`.puml`](docs/entidades/04_entregas_fondo.puml) | [`.md`](docs/entidades/04_entregas_fondo.md) | Núcleo, RN-05 |
+| Notificaciones y Comunicaciones | [`.puml`](docs/entidades/05_notificaciones.puml) | [`.md`](docs/entidades/05_notificaciones.md) | RF-16 |
+| Transparencia, Reputación y Confianza | [`.puml`](docs/entidades/06_transparencia_reputacion.puml) | [`.md`](docs/entidades/06_transparencia_reputacion.md) | RF-17, RF-18 |
+| Organizador y Automatización | [`.puml`](docs/entidades/07_organizador_automatizacion.puml) | [`.md`](docs/entidades/07_organizador_automatizacion.md) | RF-20, RN-18, RN-22 |
+| Garantía, Incumplimiento, Cobranza y Sanciones | [`.puml`](docs/entidades/08_garantia_incumplimiento.puml) | [`.md`](docs/entidades/08_garantia_incumplimiento.md) | RF-21, RN-21 |
+| Auditoría, Reportes y Cumplimiento | [`.puml`](docs/entidades/09_auditoria_reportes.puml) | [`.md`](docs/entidades/09_auditoria_reportes.md) | RN-17 |
 
 ## Decisiones de diseño que atraviesan todo el modelo
 
@@ -63,11 +66,12 @@ aguanta producción con dinero de terceros:
    *insert-only* con `hash_anterior`, auditoría de lectura separada de la de
    escritura, y `EventoDominio` escrito en la misma transacción que el cambio.
 9. **Entrega como liquidación, no como transferencia (M4).** Bolsa bruta,
-   deducciones línea a línea (comisión, deuda propia, reposición de cobertura)
-   y neto contra cuenta bancaria verificada con periodo de enfriamiento.
-10. **Comisión en tres tiempos (M7).** Devengo → liquidación → pago, con
-    retenciones impositivas y tope regulatorio validado antes de activar el
-    esquema.
+   deducciones línea a línea (deuda propia, reposición de cobertura) y neto
+   contra cuenta bancaria verificada con periodo de enfriamiento.
+10. **El organizador no cobra ni custodia (M7).** No existe comisión: el
+    organizador es un participante más, con funciones administrativas y
+    responsabilidad de desempeño, pero sin ingreso por administrar y sin ser
+    cuenta de paso del dinero del grupo (RN-18).
 
 ## Cómo se relacionan los módulos entre sí
 
@@ -88,7 +92,7 @@ diagrama. Mapa general de dependencias:
         │                          ▼
         └────────────────► 6. Transparencia y Reputación ◄──── eventos
                                    ▲
-2. Grupos ──► 7. Organizador y Comisión ──► 3 (cobro) y 4 (deducción)
+2. Grupos ──► 7. Organizador y Automatización ──► 3 (cobro) y 4 (entrega)
 
 5. Notificaciones consume eventos de 2, 3, 4, 7 y 8 (cobranza)
 3 / 4 / 7 / 8 ──► 9. Auditoría, Reportes y Cumplimiento (transversal)
@@ -101,7 +105,7 @@ Puntos de integración concretos más usados:
 - `obligacion_aporte` (M3) es el eje: la cubre el fondo (M8), la deduce la
   entrega (M4) y la puntúa la reputación (M6).
 - `acuerdo` (M2) autoriza lo que no puede ser unilateral: condonaciones,
-  expulsiones, permutas, cambio de esquema de comisión y disolución.
+  expulsiones, permutas, cambio de reglamento y disolución.
 - `evento_dominio` (M9) es el canal por el que M5, M6 y el cumplimiento se
   enteran de lo que pasa, sin acoplar los módulos entre sí.
 
@@ -140,7 +144,7 @@ generan dos vistas por archivo, una por cada `@startuml`).
 **Línea de comandos** (requiere Java + `plantuml.jar`):
 
 ```bash
-java -jar plantuml.jar -tsvg -charset UTF-8 *.puml
+java -jar plantuml.jar -tsvg -charset UTF-8 docs/entidades/*.puml
 ```
 
 Genera un `.svg` por diagrama, nombrado según el título interno del `@startuml`
