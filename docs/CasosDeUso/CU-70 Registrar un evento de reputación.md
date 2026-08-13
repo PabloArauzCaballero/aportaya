@@ -78,6 +78,12 @@ export const ErroresCU70 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SIN_REGLA_VIGENTE` | No hay regla de impacto para ese `tipo_evento` en la fecha del hecho |
+| `EVENTO_DUPLICADO` | Ya existe ese evento para la misma referencia (`R-REP-01`); el reintento del outbox no suma puntos |
+| `REFERENCIA_INVALIDA` | `referencia_tipo`/`referencia_id` no apunta a un hecho existente: un evento sin hecho no es auditable |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |
@@ -127,4 +133,4 @@ Y el evento original sigue existiendo
 
 ## Ver también
 
-[[CU-71 Recalcular el puntaje de reputación]] · [[CU-80 Despachar una notificación]]
+[[CU-71 Recalcular el puntaje de reputación]] · [[CU-74 Otorgar y revocar una insignia]] · [[CU-76 Reseñar a un participante y moderar la reseña]] · [[CU-80 Despachar una notificación]]

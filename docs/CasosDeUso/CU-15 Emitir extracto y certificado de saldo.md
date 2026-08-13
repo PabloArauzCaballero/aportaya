@@ -52,6 +52,8 @@ normas: [ASFI Consumidor Financiero]
 | 2a | El extracto no cuadra con el saldo diario | Se bloquea la emisión, se abre [[descuadre_custodia]] o [[incidente_operativo]] |
 | 1a | Período sin cierres diarios completos | Se emite hasta la última fecha cerrada y se informa el corte |
 | — | Cuenta cerrada | El extracto histórico sigue disponible durante el período de conservación |
+| 3a | El período pedido tiene reversas posteriores a su cierre | Se emite tal como quedó el período y la reversa figura en su fecha real: **un extracto no se reescribe hacia atrás** |
+| — | Se pide el certificado para un trámite con tercero | Se emite a nombre del solicitante con folio y hash verificables en línea, sin exponer movimientos |
 
 ## Postcondiciones
 
@@ -139,4 +141,4 @@ Entonces la emisión se bloquea y se registra el descuadre
 
 ## Ver también
 
-[[CU-50 Conciliar la custodia y verificar el encaje]] · [[CU-52 Atender un reclamo en plazo]]
+[[CU-50 Conciliar la custodia y verificar el encaje]] · [[CU-52 Atender un reclamo en plazo]] · [[CU-58 Definir, programar y exportar un reporte]]

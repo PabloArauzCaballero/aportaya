@@ -76,6 +76,11 @@ export const ErroresCU61 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SORTEO_NO_REVELADO` | El sorteo está `COMPROMETIDO`: se devuelve el hash y la fecha, y nada más |
+| `SORTEO_INEXISTENTE` | El grupo no llegó a sortear turnos |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |

@@ -85,6 +85,14 @@ export const ErroresCU62 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `TURNO_NO_PERMUTABLE` | El turno ya fue cobrado o está en curso (`R-GRP-07`) |
+| `SOLICITANTE_EN_MORA` | Quien pide la permuta tiene deuda vencida: primero se pone al día |
+| `CONTRAPARTE_EN_MORA` | La contraparte tiene deuda vencida y aceptar adelantaría su cobro |
+| `REGLAMENTO_NO_PERMITE` | El reglamento del grupo prohíbe permutar, o lo prohíbe en esta etapa |
+| `ACUERDO_SIN_QUORUM` | El reglamento exigía votación y venció el plazo sin alcanzarla |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |

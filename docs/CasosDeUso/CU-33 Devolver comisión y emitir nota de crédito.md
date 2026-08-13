@@ -141,4 +141,4 @@ Entonces el cierre se rechaza (R-CON-04)
 
 ## Ver también
 
-[[CU-52 Atender un reclamo en plazo]] · [[CU-14 Reversar una transacción]]
+[[CU-14 Reversar una transacción]] · [[CU-19 Reembolsar un pago y atender una disputa]] · [[CU-32 Emitir factura electrónica]] · [[CU-52 Atender un reclamo en plazo]]

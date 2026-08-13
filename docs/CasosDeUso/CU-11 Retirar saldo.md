@@ -164,4 +164,4 @@ Entonces la operación se rechaza por período de enfriamiento
 
 ## Ver también
 
-[[CU-10 Recargar saldo]] · [[CU-13 Retener y liberar saldo]] · [[CU-17 Bloquear saldo por orden de autoridad]]
+[[CU-04 Autenticar con MFA y registrar dispositivo]] · [[CU-10 Recargar saldo]] · [[CU-13 Retener y liberar saldo]] · [[CU-16 Cerrar billetera y devolver saldo]] · [[CU-17 Bloquear saldo por orden de autoridad]] · [[CU-18 Registrar y verificar una cuenta bancaria de destino]] · [[CU-28 Emitir la orden de desembolso y ejecutar el intento]] · [[CU-40 Evaluar límites antes de una operación]] · [[CU-57 Operar un punto de atención y arquear el efectivo]]

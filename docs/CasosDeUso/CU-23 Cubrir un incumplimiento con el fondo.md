@@ -139,4 +139,4 @@ Entonces existe una deducción REPOSICION_FONDO_GARANTIA por el saldo de su deud
 
 ## Ver también
 
-[[CU-22 Liquidar y entregar el fondo]] · [[CU-54 Registrar un evento de riesgo operativo]]
+[[CU-22 Liquidar y entregar el fondo]] · [[CU-25 Declarar el incumplimiento con descargo y evidencia]] · [[CU-26 Ejecutar el aval y subrogar la deuda]] · [[CU-29 Devolver los aportes del fondo de garantía]] · [[CU-54 Registrar un evento de riesgo operativo]] · [[CU-66 Reemplazar a un participante moroso]]

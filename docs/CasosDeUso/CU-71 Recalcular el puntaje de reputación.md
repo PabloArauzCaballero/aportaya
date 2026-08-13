@@ -79,6 +79,11 @@ export const ErroresCU71 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SIN_MODELO_VIGENTE` | Ningún modelo de reputación está vigente en la fecha de cálculo |
+| `USUARIO_INEXISTENTE` | El usuario no existe o su cuenta fue eliminada por derecho de supresión |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |
@@ -132,4 +137,4 @@ Y el anterior conserva su modelo_id original
 
 ## Ver también
 
-[[CU-70 Registrar un evento de reputación]] · [[CU-72 Sellar el bloque de transparencia]]
+[[CU-70 Registrar un evento de reputación]] · [[CU-72 Sellar el bloque de transparencia]] · [[CU-74 Otorgar y revocar una insignia]] · [[CU-75 Emitir un certificado de reputación verificable]] · [[CU-76 Reseñar a un participante y moderar la reseña]]

@@ -143,4 +143,4 @@ Entonces queda enlazado al contrato_tercero correspondiente
 
 ## Ver también
 
-[[CU-54 Registrar un evento de riesgo operativo]] · [[CU-07 Ejercer derechos sobre datos personales]]
+[[CU-04 Autenticar con MFA y registrar dispositivo]] · [[CU-07 Ejercer derechos sobre datos personales]] · [[CU-08 Asignar y revocar roles de operador]] · [[CU-09 Cambiar credenciales y solicitar la baja]] · [[CU-54 Registrar un evento de riesgo operativo]]

@@ -102,6 +102,13 @@ export const ErroresCU67 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SIN_ACUERDO_NI_CAUSAL` | No hay acuerdo aprobado ni causal del reglamento que habilite disolver |
+| `ENTREGA_EN_CURSO` | Hay una entrega autorizada sin ejecutar: no se liquida con dinero en tránsito |
+| `LIQUIDACION_NO_CUADRA` | La suma de liquidaciones no coincide con la bolsa. **La transacción no confirma** (`R-GRP-13`) |
+| `GRUPO_YA_DISUELTO` | Reintento sobre un grupo cerrado; se devuelve la liquidación existente |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |
@@ -161,4 +168,4 @@ Entonces la transacción no confirma y se abre un incidente
 
 ## Ver también
 
-[[CU-66 Reemplazar a un participante moroso]] · [[CU-65 Retirarse de un grupo]] · [[CU-24 Registrar el asiento contable de una operación]]
+[[CU-24 Registrar el asiento contable de una operación]] · [[CU-29 Devolver los aportes del fondo de garantía]] · [[CU-63 Proponer y votar un acuerdo]] · [[CU-65 Retirarse de un grupo]] · [[CU-66 Reemplazar a un participante moroso]]

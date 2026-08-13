@@ -158,4 +158,4 @@ Entonces la operación se rechaza por segregación de funciones
 
 ## Ver también
 
-[[CU-31 Devengar y cobrar la comisión]] · [[CU-32 Emitir factura electrónica]] · [[CU-23 Cubrir un incumplimiento con el fondo]]
+[[CU-13 Retener y liberar saldo]] · [[CU-18 Registrar y verificar una cuenta bancaria de destino]] · [[CU-20 Crear grupo y congelar tarifario]] · [[CU-21 Cobrar el aporte del período]] · [[CU-23 Cubrir un incumplimiento con el fondo]] · [[CU-28 Emitir la orden de desembolso y ejecutar el intento]] · [[CU-31 Devengar y cobrar la comisión]] · [[CU-32 Emitir factura electrónica]] · [[CU-62 Permutar turnos entre participantes]]

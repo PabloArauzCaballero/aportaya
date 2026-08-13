@@ -47,6 +47,8 @@ normas: [ASFI — central de reclamos / segunda instancia]
 | 4a | Resolución en contra de la entidad con multa | Se registra [[observacion_regulatoria]] tipo `MULTA` y se abre [[plan_accion_riesgo]] |
 | 2a | Falta evidencia técnica | Es un hallazgo en sí mismo: significa que el flujo no dejó rastro suficiente |
 | — | Varios reclamos por la misma causa | Se agrupan y se trata como falla sistémica ([[CU-54 Registrar un evento de riesgo operativo]]) |
+| 1a | El cliente eleva fuera del plazo de la norma | Se registra igual y se responde: el plazo vencido lo evalúa el supervisor, no lo filtramos nosotros |
+| 3a | El supervisor pide información adicional con plazo | El plazo se guarda al recibirlo y se controla como cualquier otro vencimiento regulatorio |
 
 ## Postcondiciones
 
@@ -122,6 +124,15 @@ Entonces existe una instancia_reclamo con fecha_elevacion
 Dada una resolución favorable al cliente con resarcimiento
 Cuando se registra
 Entonces existe la transacción o devolución que materializa el monto_resarcido
+
+Dado un reclamo elevado fuera del plazo de la norma
+Cuando se registra la elevación
+Entonces la instancia queda abierta con el plazo vencido marcado
+Y no se rechaza en la plataforma
+
+Dada una instancia con pedido de información del supervisor
+Cuando se recibe el pedido
+Entonces su fecha límite queda guardada y aparece en el tablero de vencimientos
 ```
 
 ## Ver también

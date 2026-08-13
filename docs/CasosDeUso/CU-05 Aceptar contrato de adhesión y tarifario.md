@@ -134,4 +134,4 @@ Y la aceptación de la versión 3 sigue existiendo
 
 ## Ver también
 
-[[CU-01 Registro y apertura de billetera]] · [[CU-34 Publicar un tarifario nuevo con preaviso]] · [[Cumplimiento]]
+[[CU-01 Registro y apertura de billetera]] · [[CU-34 Publicar un tarifario nuevo con preaviso]] · [[CU-91 Firmar y rescindir el contrato de organizador]] · [[Cumplimiento]]

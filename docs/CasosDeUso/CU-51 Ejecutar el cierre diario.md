@@ -125,8 +125,16 @@ Y existen saldo_diario_billetera para todas las cuentas activas
 Dado un día con una excepción de conciliación abierta
 Cuando se ejecuta el cierre
 Entonces cuadrado es false
+
+Dado un día ya cerrado
+Cuando el trabajo programado se ejecuta de nuevo
+Entonces devuelve el cierre existente y no reescribe los saldos diarios
+
+Dado un asiento_contable sin confirmar en la fecha
+Cuando se ejecuta el cierre
+Entonces el cierre no procede y el asiento queda señalado como bloqueante
 ```
 
 ## Ver también
 
-[[CU-50 Conciliar la custodia y verificar el encaje]] · [[CU-35 Cerrar la liquidación mensual de ingresos]]
+[[CU-21 Cobrar el aporte del período]] · [[CU-24 Registrar el asiento contable de una operación]] · [[CU-35 Cerrar la liquidación mensual de ingresos]] · [[CU-50 Conciliar la custodia y verificar el encaje]] · [[CU-57 Operar un punto de atención y arquear el efectivo]] · [[CU-72 Sellar el bloque de transparencia]] · [[CU-98 Publicar el tablero de indicadores]]

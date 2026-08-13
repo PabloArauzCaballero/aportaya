@@ -142,4 +142,4 @@ Entonces existe un hallazgo_auditoria abierto
 
 ## Ver también
 
-[[CU-50 Conciliar la custodia y verificar el encaje]] · [[CU-55 Gestionar un incidente de seguridad]]
+[[CU-14 Reversar una transacción]] · [[CU-19 Reembolsar un pago y atender una disputa]] · [[CU-23 Cubrir un incumplimiento con el fondo]] · [[CU-50 Conciliar la custodia y verificar el encaje]] · [[CU-55 Gestionar un incidente de seguridad]] · [[CU-56 Ejecutar una prueba de continuidad]] · [[CU-57 Operar un punto de atención y arquear el efectivo]] · [[CU-73 Verificar la cadena de transparencia]] · [[CU-93 Sancionar al organizador y resolver su apelación]] · [[CU-94 Elevar una decisión al comité de gobierno]]

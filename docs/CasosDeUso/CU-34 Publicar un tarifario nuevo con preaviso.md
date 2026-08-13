@@ -144,4 +144,4 @@ Entonces la comisión se calcula con el snapshot congelado
 
 ## Ver también
 
-[[CU-20 Crear grupo y congelar tarifario]] · [[CU-05 Aceptar contrato de adhesión y tarifario]]
+[[CU-05 Aceptar contrato de adhesión y tarifario]] · [[CU-20 Crear grupo y congelar tarifario]] · [[CU-30 Cotizar la comisión antes de operar]] · [[CU-36 Segmentar comercialmente y aplicar precio diferenciado]]

@@ -140,4 +140,4 @@ Entonces la base de datos lo rechaza (R-BIL-14)
 
 ## Ver también
 
-[[CU-45 Atender un requerimiento de autoridad]] · [[CU-13 Retener y liberar saldo]]
+[[CU-11 Retirar saldo]] · [[CU-13 Retener y liberar saldo]] · [[CU-27 Restringir al deudor e incluirlo en la lista interna]] · [[CU-45 Atender un requerimiento de autoridad]]

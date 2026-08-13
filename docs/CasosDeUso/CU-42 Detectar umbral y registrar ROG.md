@@ -125,4 +125,4 @@ Entonces existen dos registros distintos
 
 ## Ver también
 
-[[CU-41 Detectar umbral y registrar formulario PCC-01]] · [[CU-12 Transferir saldo entre billeteras]]
+[[CU-12 Transferir saldo entre billeteras]] · [[CU-41 Detectar umbral y registrar formulario PCC-01]] · [[CU-43 Remitir los reportes mensuales a la UIF]]

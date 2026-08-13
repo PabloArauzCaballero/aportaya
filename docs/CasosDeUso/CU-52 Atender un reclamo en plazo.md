@@ -143,4 +143,4 @@ Entonces el cierre se rechaza
 
 ## Ver también
 
-[[CU-53 Elevar un reclamo a segunda instancia]] · [[CU-33 Devolver comisión y emitir nota de crédito]] · [[Cumplimiento]]
+[[CU-15 Emitir extracto y certificado de saldo]] · [[CU-19 Reembolsar un pago y atender una disputa]] · [[CU-27 Restringir al deudor e incluirlo en la lista interna]] · [[CU-33 Devolver comisión y emitir nota de crédito]] · [[CU-53 Elevar un reclamo a segunda instancia]] · [[CU-59 Mantener el calendario de días no hábiles]] · [[CU-76 Reseñar a un participante y moderar la reseña]] · [[CU-82 Procesar una respuesta entrante]] · [[Cumplimiento]]

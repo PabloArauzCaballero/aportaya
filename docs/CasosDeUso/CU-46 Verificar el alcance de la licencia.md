@@ -133,4 +133,4 @@ Y cuando intenta retirar su saldo, se permite
 
 ## Ver también
 
-[[CU-01 Registro y apertura de billetera]] · [[Cumplimiento]] · [[Restricciones]]
+[[CU-01 Registro y apertura de billetera]] · [[CU-47 Evaluar el riesgo del producto antes de lanzarlo]] · [[CU-49 Designar al oficial de cumplimiento y capacitar]] · [[Cumplimiento]] · [[Restricciones]]

@@ -141,4 +141,4 @@ Entonces existe un bloqueo_cuenta vigente para ese usuario
 
 ## Ver también
 
-[[CU-11 Retirar saldo]] · [[CU-55 Gestionar un incidente de seguridad]] · [[Restricciones]]
+[[CU-08 Asignar y revocar roles de operador]] · [[CU-09 Cambiar credenciales y solicitar la baja]] · [[CU-11 Retirar saldo]] · [[CU-55 Gestionar un incidente de seguridad]] · [[Restricciones]]

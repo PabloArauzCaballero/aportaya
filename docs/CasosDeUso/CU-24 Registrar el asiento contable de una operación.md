@@ -128,4 +128,4 @@ Entonces existe un asiento nuevo con asiento_reversa_id apuntando al original
 
 ## Ver también
 
-[[CU-51 Ejecutar el cierre diario]] · [[CU-50 Conciliar la custodia y verificar el encaje]] · [[CU-35 Cerrar la liquidación mensual de ingresos]]
+[[CU-35 Cerrar la liquidación mensual de ingresos]] · [[CU-50 Conciliar la custodia y verificar el encaje]] · [[CU-51 Ejecutar el cierre diario]] · [[CU-67 Disolver el grupo anticipadamente]]

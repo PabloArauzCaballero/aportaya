@@ -137,4 +137,4 @@ Y una recarga del mismo usuario sí se acepta
 
 ## Ver también
 
-[[CU-51 Ejecutar el cierre diario]] · [[CU-54 Registrar un evento de riesgo operativo]]
+[[CU-10 Recargar saldo]] · [[CU-15 Emitir extracto y certificado de saldo]] · [[CU-24 Registrar el asiento contable de una operación]] · [[CU-28 Emitir la orden de desembolso y ejecutar el intento]] · [[CU-51 Ejecutar el cierre diario]] · [[CU-54 Registrar un evento de riesgo operativo]] · [[CU-57 Operar un punto de atención y arquear el efectivo]] · [[CU-99 Dar de alta un proveedor de pago y enrutar el cobro]]

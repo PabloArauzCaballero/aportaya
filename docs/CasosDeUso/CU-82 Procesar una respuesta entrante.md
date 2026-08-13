@@ -88,6 +88,12 @@ export const ErroresCU82 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `FIRMA_INVALIDA` | La firma del webhook no valida. Se descarta y se registra el intento |
+| `REMITENTE_DESCONOCIDO` | El número o la dirección no corresponde a ningún canal verificado; **no se revela información** |
+| `MENSAJE_DUPLICADO` | Mismo `id_externo` del proveedor: ya fue procesado |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |
@@ -145,4 +151,4 @@ Entonces se descarta y queda registrado el intento
 
 ## Ver también
 
-[[CU-81 Programar recordatorios de aporte]] · [[CU-52 Atender un reclamo en plazo]] · [[CU-21 Cobrar el aporte del período]]
+[[CU-21 Cobrar el aporte del período]] · [[CU-52 Atender un reclamo en plazo]] · [[CU-80 Despachar una notificación]] · [[CU-81 Programar recordatorios de aporte]] · [[CU-83 Enrutar el envío por proveedor de mensajería]]

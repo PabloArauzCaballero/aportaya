@@ -142,4 +142,4 @@ Entonces la operación es rechazada y la cuenta figura LIMITADA
 
 ## Ver también
 
-[[CU-01 Registro y apertura de billetera]] · [[CU-40 Evaluar límites antes de una operación]] · [[Restricciones]]
+[[CU-01 Registro y apertura de billetera]] · [[CU-06 Revisión periódica de conocimiento del cliente]] · [[CU-40 Evaluar límites antes de una operación]] · [[Restricciones]]

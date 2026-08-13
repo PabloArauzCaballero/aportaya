@@ -73,6 +73,11 @@ export const ErroresCU73 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `GRUPO_INEXISTENTE` | El identificador no corresponde a ningún grupo publicado |
+| `SIN_BLOQUES` | El grupo todavía no selló historia. **No es un error de integridad**, y así se informa |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |
@@ -125,4 +130,4 @@ Entonces el componente fallido es SECUENCIA
 
 ## Ver también
 
-[[CU-72 Sellar el bloque de transparencia]] · [[CU-61 Verificar públicamente el sorteo]] · [[CU-54 Registrar un evento de riesgo operativo]]
+[[CU-54 Registrar un evento de riesgo operativo]] · [[CU-61 Verificar públicamente el sorteo]] · [[CU-72 Sellar el bloque de transparencia]] · [[CU-75 Emitir un certificado de reputación verificable]]

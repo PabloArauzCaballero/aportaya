@@ -131,4 +131,4 @@ Entonces el importe reversado no cuenta contra el límite
 
 ## Ver también
 
-[[CU-02 Elevar nivel de debida diligencia]] · [[CU-11 Retirar saldo]] · [[Restricciones]]
+[[CU-02 Elevar nivel de debida diligencia]] · [[CU-10 Recargar saldo]] · [[CU-11 Retirar saldo]] · [[CU-48 Calibrar reglas de cumplimiento y triar sus alertas]] · [[Restricciones]]

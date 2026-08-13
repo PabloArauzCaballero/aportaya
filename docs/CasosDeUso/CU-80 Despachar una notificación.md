@@ -94,6 +94,13 @@ export const ErroresCU80 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SIN_PLANTILLA_APROBADA` | No hay plantilla vigente y aprobada para ese evento y canal: no se improvisa el texto |
+| `CANAL_NO_VERIFICADO` | El teléfono o el correo del destinatario no está verificado |
+| `DESTINATARIO_SUPRIMIDO` | Está en [[lista_supresion]] para esa categoría; **nunca se fuerza el envío** |
+| `EVENTO_RESERVADO` | Otra réplica lo tomó con `SKIP LOCKED`; no es falla, es concurrencia sana |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |
@@ -150,4 +157,4 @@ Entonces queda REPROGRAMADA para la primera hora hábil
 
 ## Ver también
 
-[[CU-81 Programar recordatorios de aporte]] · [[CU-82 Procesar una respuesta entrante]]
+[[CU-69 Invitar a un contacto y registrar sus referencias]] · [[CU-70 Registrar un evento de reputación]] · [[CU-81 Programar recordatorios de aporte]] · [[CU-82 Procesar una respuesta entrante]] · [[CU-83 Enrutar el envío por proveedor de mensajería]]
