@@ -26,7 +26,7 @@
       "conflicto": [
         "numero_cuenta"
       ],
-      "comentario": "Cuentas técnicas: contrapartida de todo movimiento de dinero",
+      "comentario": "Cuentas técnicas: contrapartida de todo movimiento. Son las únicas con permite_saldo_negativo, porque representan la posición del sistema, no el dinero de una persona (R-BIL-02).",
       "filas": [
         {
           "numero_cuenta": "SYS-INGRESOS",
@@ -40,7 +40,8 @@
           "cuenta_contable_id": {
             "$ref": "cuenta_contable",
             "codigo": "4.1.01"
-          }
+          },
+          "permite_saldo_negativo": true
         },
         {
           "numero_cuenta": "SYS-IMPUESTOS",
@@ -54,7 +55,8 @@
           "cuenta_contable_id": {
             "$ref": "cuenta_contable",
             "codigo": "2.2.01"
-          }
+          },
+          "permite_saldo_negativo": true
         },
         {
           "numero_cuenta": "SYS-CUSTODIA",
@@ -68,7 +70,8 @@
           "cuenta_contable_id": {
             "$ref": "cuenta_contable",
             "codigo": "1.1.01"
-          }
+          },
+          "permite_saldo_negativo": true
         },
         {
           "numero_cuenta": "SYS-SUSPENSO",
@@ -82,7 +85,8 @@
           "cuenta_contable_id": {
             "$ref": "cuenta_contable",
             "codigo": "2.1.04"
-          }
+          },
+          "permite_saldo_negativo": true
         }
       ]
     },

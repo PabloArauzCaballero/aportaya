@@ -24,7 +24,6 @@ CREATE TABLE IF NOT EXISTS cuenta_billetera (
   CONSTRAINT ck_cuenta_billetera_tipo CHECK (tipo IN ('FONDO_GARANTIA', 'GRUPO', 'LIQUIDACION_PROVEEDOR', 'PLATAFORMA_IMPUESTOS_POR_PAGAR', 'PLATAFORMA_INGRESOS', 'PUENTE_CUSTODIA', 'SUSPENSO_NO_IDENTIFICADO', 'USUARIO')),
   CONSTRAINT ck_cuenta_billetera_estado CHECK (estado IN ('ACTIVA', 'BLOQUEADA_AUTORIDAD', 'CERRADA', 'CONGELADA', 'EN_APERTURA', 'EN_CIERRE', 'LIMITADA')),
   CONSTRAINT ck_cuenta_billetera_nivel_debida_diligencia CHECK (nivel_debida_diligencia IN ('AMPLIADA', 'ESTANDAR', 'REFORZADA', 'SIMPLIFICADA')),
-  CONSTRAINT ck_cuenta_billetera_saldo_disponible CHECK (saldo_disponible >= 0),
   CONSTRAINT ck_cuenta_billetera_saldo_retenido CHECK (saldo_retenido >= 0)
 );
 
@@ -38,7 +37,6 @@ COMMENT ON COLUMN cuenta_billetera.politica_billetera_id IS 'FK, NULL';
 COMMENT ON COLUMN cuenta_billetera.cuenta_contable_id IS 'FK, NULL, M3';
 COMMENT ON COLUMN cuenta_billetera.estado IS 'CK, IDX';
 COMMENT ON COLUMN cuenta_billetera.nivel_debida_diligencia IS 'CK';
-COMMENT ON COLUMN cuenta_billetera.saldo_disponible IS 'CK: >= 0';
 COMMENT ON COLUMN cuenta_billetera.saldo_retenido IS 'CK: >= 0';
 COMMENT ON COLUMN cuenta_billetera.saldo_total IS 'GENERATED';
 COMMENT ON COLUMN cuenta_billetera.fecha_cierre IS 'NULL';

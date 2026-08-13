@@ -6,12 +6,12 @@ INSERT INTO tipo_cambio (moneda_origen, moneda_destino, fecha, tipo_cambio, fuen
   ('BOB', 'USD', current_date, 0.143678, 'MANUAL', now())
 ON CONFLICT DO NOTHING;
 
--- Cuentas técnicas: contrapartida de todo movimiento de dinero
-INSERT INTO cuenta_billetera (numero_cuenta, tipo, moneda, estado, nivel_debida_diligencia, fecha_apertura, cuenta_contable_id) VALUES
-  ('SYS-INGRESOS', 'PLATAFORMA_INGRESOS', 'BOB', 'ACTIVA', 'REFORZADA', now(), (SELECT id FROM cuenta_contable WHERE codigo = '4.1.01')),
-  ('SYS-IMPUESTOS', 'PLATAFORMA_IMPUESTOS_POR_PAGAR', 'BOB', 'ACTIVA', 'REFORZADA', now(), (SELECT id FROM cuenta_contable WHERE codigo = '2.2.01')),
-  ('SYS-CUSTODIA', 'PUENTE_CUSTODIA', 'BOB', 'ACTIVA', 'REFORZADA', now(), (SELECT id FROM cuenta_contable WHERE codigo = '1.1.01')),
-  ('SYS-SUSPENSO', 'SUSPENSO_NO_IDENTIFICADO', 'BOB', 'ACTIVA', 'REFORZADA', now(), (SELECT id FROM cuenta_contable WHERE codigo = '2.1.04'))
+-- Cuentas técnicas: contrapartida de todo movimiento. Son las únicas con permite_saldo_negativo, porque representan la posición del sistema, no el dinero de una persona (R-BIL-02).
+INSERT INTO cuenta_billetera (numero_cuenta, tipo, moneda, estado, nivel_debida_diligencia, fecha_apertura, cuenta_contable_id, permite_saldo_negativo) VALUES
+  ('SYS-INGRESOS', 'PLATAFORMA_INGRESOS', 'BOB', 'ACTIVA', 'REFORZADA', now(), (SELECT id FROM cuenta_contable WHERE codigo = '4.1.01'), TRUE),
+  ('SYS-IMPUESTOS', 'PLATAFORMA_IMPUESTOS_POR_PAGAR', 'BOB', 'ACTIVA', 'REFORZADA', now(), (SELECT id FROM cuenta_contable WHERE codigo = '2.2.01'), TRUE),
+  ('SYS-CUSTODIA', 'PUENTE_CUSTODIA', 'BOB', 'ACTIVA', 'REFORZADA', now(), (SELECT id FROM cuenta_contable WHERE codigo = '1.1.01'), TRUE),
+  ('SYS-SUSPENSO', 'SUSPENSO_NO_IDENTIFICADO', 'BOB', 'ACTIVA', 'REFORZADA', now(), (SELECT id FROM cuenta_contable WHERE codigo = '2.1.04'), TRUE)
 ON CONFLICT (numero_cuenta) DO NOTHING;
 
 INSERT INTO cuenta_custodia (tipo, entidad_financiera, numero_cuenta_cifrado, numero_enmascarado, moneda, saldo_segun_banco, saldo_segun_libro, fecha_saldo, contrato_referencia, es_principal, estado, abierta_en) VALUES
