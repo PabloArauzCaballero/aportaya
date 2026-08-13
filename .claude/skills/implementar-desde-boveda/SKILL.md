@@ -1,6 +1,6 @@
 ---
 name: implementar-desde-boveda
-description: "Programar una funcionalidad de Pasanaku usando la bóveda de Obsidian como especificación: en qué orden leer, qué garantizar en la base antes de escribir código de aplicación, cómo estructurar el servicio y qué pruebas exigir. Úsala al empezar a implementar cualquier flujo con dinero, cumplimiento o plazos legales, o cuando alguien pregunte por dónde empezar a codificar."
+description: "Programar una funcionalidad de AportaYa usando la bóveda de Obsidian como especificación: en qué orden leer, qué garantizar en la base antes de escribir código de aplicación, cómo estructurar el servicio y qué pruebas exigir. Úsala al empezar a implementar cualquier flujo con dinero, cumplimiento o plazos legales, o cuando alguien pregunte por dónde empezar a codificar."
 ---
 
 # Implementar a partir de la bóveda
@@ -17,10 +17,18 @@ resuelve **agregándolo al caso de uso primero**.
 3. docs/Modelos/Entidades/<tabla>  ← columnas, claves, FK entrantes y salientes
 4. docs/entidades/NN_modulo.md     ← por qué la entidad existe (evita rediseñarla mal)
 5. docs/Cumplimiento.md            ← qué norma obliga el flujo, si aplica
+6. docs/Stack.md + los ADR         ← con qué se construye y por qué
 ```
 
-Si algo de esos cinco falta o se contradice, **eso es el primer bug**: se corrige
+Si algo de esos seis falta o se contradice, **eso es el primer bug**: se corrige
 la bóveda antes de escribir código.
+
+El caso de uso ya trae, escritas, las cuatro decisiones que normalmente se
+improvisan: el **contrato** (entrada, salida y códigos de error), la
+**descomposición atómica** (qué pieza en qué nivel), los **eventos, trabajos y
+permisos**, y la **interfaz**. No se rediseñan al programar: se implementan. Si al
+implementar se descubre que estaban mal, se corrige el caso de uso **en el mismo
+PR**.
 
 ## Orden de construcción
 
@@ -31,10 +39,14 @@ la bóveda antes de escribir código.
 2. **Semillas de catálogo.** Umbrales, límites, tarifario, impuestos, catálogo de
    reportes y licencia. Sin catálogo sembrado, la regla de *denegar por omisión*
    bloquea todo, y eso es correcto.
-3. **Servicio de dominio**, en una transacción por caso de uso.
-4. **Adaptadores** (pasarela, mensajería, servicio fiscal) detrás de una interfaz,
-   con idempotencia en el borde.
-5. **Pruebas**: los criterios de aceptación del caso de uso, traducidos uno a uno.
+3. **Contrato** en `packages/contratos/CU-NN.ts`, copiado del caso de uso
+   (skill `contratos-api`). Se escribe antes que la implementación.
+4. **Átomos** puros del dominio, con sus pruebas en milisegundos.
+5. **Moléculas**: repositorios Kysely y adaptadores externos, cada uno contra un
+   solo colaborador y sin abrir transacción.
+6. **Organismo**: el caso de uso, única frontera transaccional.
+7. **Página**: el controlador, que traduce y delega, sin lógica.
+8. **Pruebas**: los criterios de aceptación del caso de uso, traducidos uno a uno.
 
 ## Reglas no negociables al codificar
 
@@ -52,16 +64,20 @@ la bóveda antes de escribir código.
 ## Estructura sugerida por caso de uso
 
 ```
-<modulo>/
-  aplicacion/CU31DevengarComision.ts      ← orquesta la transacción
-  dominio/DevengoComision.ts              ← invariantes de negocio
-  infraestructura/DevengoRepositorio.ts   ← SQL, sin lógica
-  infraestructura/PasarelaAdapter.ts      ← borde externo, idempotente
+packages/contratos/CU-31.ts               ← entrada, salida, códigos de error
+apps/api/src/<modulo>/
+  aplicacion/CU31DevengarComision.ts      ← ORGANISMO: orquesta la transacción
+  dominio/DevengoComision.ts              ← ÁTOMO: invariantes, sin IO
+  infraestructura/DevengoRepositorio.ts   ← MOLÉCULA: SQL, sin lógica
+  infraestructura/PasarelaAdapter.ts      ← MOLÉCULA de borde, idempotente
+  comisiones.controller.ts                ← PÁGINA: traduce y delega
   pruebas/CU31.spec.ts                    ← criterios de aceptación del caso
 ```
 
 Un archivo de aplicación por caso de uso, con el código `CU-NN` en el nombre: hace
-que la trazabilidad especificación → código sea obvia sin herramientas.
+que la trazabilidad especificación → contrato → código → prueba sea obvia sin
+herramientas. El nivel de cada archivo es el que declara el caso de uso en su
+tabla de descomposición.
 
 ## Definición de terminado
 
@@ -87,4 +103,7 @@ que la trazabilidad especificación → código sea obvia sin herramientas.
 
 ## Ver también
 
-`docs/CasosDeUso/_CasosDeUso.md` · `docs/Restricciones.md` · `docs/Cumplimiento.md`
+`docs/CasosDeUso/_CasosDeUso.md` · `docs/Restricciones.md` · `docs/Cumplimiento.md` ·
+`docs/Stack.md` · skills `arquitectura-atomica`, `contratos-api`, `datos-kysely`,
+`dinero-decimal`, `trabajos-outbox`, `pruebas-cu`, `errores-api`,
+`idempotencia-reintentos`.

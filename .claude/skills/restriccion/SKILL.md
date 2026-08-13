@@ -34,8 +34,10 @@ La aplicación valida igual, pero **para dar buen mensaje**, no para garantizar.
 | `R-CON` | Consumidor financiero |
 | `R-SEG` | Seguridad y datos personales |
 | `R-LIC` | Licencia y gobierno |
-| `R-GRP` | Circuito del pasanaku |
+| `R-GRP` | Circuito del pasanaku y gobernanza del grupo |
 | `R-RIS` | Riesgo operativo y continuidad |
+| `R-REP` | Transparencia verificable y reputación |
+| `R-NOT` | Notificaciones y consentimiento de contacto |
 
 Los códigos **no se reutilizan**. Si una restricción se retira, se marca como
 derogada indicando desde cuándo y por qué.
@@ -97,7 +99,15 @@ python3 scripts/extraer_sql.py     # → scripts/sql/restricciones.sql
 3. **Diferir los invariantes multi-fila.** Un trigger inmediato sobre partida
    doble rompe inserciones legítimas: usar `DEFERRABLE INITIALLY DEFERRED`.
 4. **El rol de aplicación no edita catálogos regulatorios.** Umbrales, límites,
-   tarifarios, licencias y políticas se cargan por seeder versionado.
+   tarifarios, licencias y políticas se cargan por seeder versionado
+   (`seeders/minimos/`, skill `semillas-catalogos`).
+5. **La restricción se prueba por su rechazo.** Toda `R-XXX-nn` nueva necesita una
+   prueba que provoque la violación **saltándose la capa de aplicación** y espere el
+   error de la base (skill `pruebas-cu`). Una restricción que solo se probó por el
+   camino feliz no está probada.
+6. **El código de la restricción se cita donde vive.** En el caso de uso
+   ("Restricciones aplicables"), en el comentario del DDL y en el mensaje de error
+   traducido de la API. Así el `409` que ve el usuario se rastrea hasta la norma.
 
 ## Verificación
 
@@ -109,4 +119,5 @@ corresponde agregar también su consulta de verificación.
 
 ## Ver también
 
-Skills `boveda-modelo`, `caso-de-uso`, `norma-nueva`.
+Skills `boveda-modelo`, `caso-de-uso`, `norma-nueva`, `pruebas-cu`,
+`contabilidad-partida-doble`, `seguridad-sesion-rls`, `semillas-catalogos`.
