@@ -1,0 +1,1044 @@
+@startuml 03_aportes_pagos_clases
+' ============================================================
+'  MODULO 3: Aportes, Pagos QR, Conciliacion y Contabilidad
+'  Diagrama de CLASES  (modelo detallado)
+'  Cubre: RF-15 (pago QR y conciliacion automatica), RN-05, RN-17
+'  Principio rector: el dinero nunca se representa con un solo
+'  campo "monto_pagado". Se modela obligacion -> intento -> pago
+'  -> conciliacion -> asiento contable, con idempotencia extremo
+'  a extremo y doble partida para que las cuentas siempre cuadren.
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 3 - Aportes, Pagos QR y Conciliacion (clases)
+
+legend top right
+  <b>Flujo del dinero</b>
+  ObligacionAporte --> OrdenCobro/QR --> IntentoPago
+   --> Pago --> Conciliacion --> AsientoContable
+  Cada paso es idempotente y auditable por separado.
+  Un aporte solo pasa a PAGADO cuando existe pago
+  conciliado; nunca por declaracion del usuario.
+endlegend
+
+' ============================================================
+package "Obligacion de Aporte" {
+
+  enum EstadoAporte {
+    PROGRAMADO
+    PENDIENTE
+    REPORTADO_POR_USUARIO
+    EN_VERIFICACION
+    PAGADO_PARCIAL
+    PAGADO
+    VENCIDO
+    EN_MORA
+    CUBIERTO_POR_GARANTIA
+    EXONERADO
+    CONDONADO
+    REPROGRAMADO
+    ANULADO
+  }
+
+  enum TipoObligacion {
+    APORTE_PERIODICO
+    RECARGO_MORA
+    APORTE_FONDO_GARANTIA
+    REPOSICION_COBERTURA
+    COMISION_PLATAFORMA
+    AJUSTE_MANUAL
+  }
+
+  note top of TipoObligacion
+    COMISION_PLATAFORMA solo se usa cuando el concepto
+    tarifario define sujeto_obligado = PRORRATEO_ENTRE_
+    PARTICIPANTES (M11): la comision se cobra como una
+    obligacion mas en vez de deducirse de la entrega.
+    Nunca representa un ingreso del organizador (RN-18).
+  end note
+
+  class ObligacionAporte <<AR>> {
+    - id: UUID
+    - grupoId: UUID
+    - periodoId: UUID
+    - cupoId: UUID
+    - participanteId: UUID
+    - tipo: TipoObligacion
+    - montoEsperado: Decimal
+    - moneda: String
+    - montoPagado: Decimal
+    - montoRecargo: Decimal
+    - montoCondonado: Decimal
+    - montoCubiertoGarantia: Decimal
+    - saldoPendiente: Decimal <<derivado>>
+    - estado: EstadoAporte
+    - fechaVencimiento: Date
+    - fechaFinGracia: Date
+    - fechaPagoEfectivo: DateTime
+    - diasMora: Integer <<derivado>>
+    - obligacionOrigenId: UUID <<recargos apuntan al aporte base>>
+    - version: Integer
+    --
+    + generarOrdenCobro(canal): OrdenCobro
+    + aplicarPago(pago): ResultadoAplicacion
+    + recalcularSaldo()
+    + evaluarVencimiento(): EstadoAporte
+    + aplicarRecargo(politica): ObligacionAporte
+    + exonerar(acuerdoId, motivo)
+    + condonar(acuerdoId, monto)
+    + reprogramar(nuevaFecha, acuerdoId)
+    + anular(motivo)
+    + estaSaldada(): Boolean
+  }
+
+  class PoliticaMora <<Pol>> {
+    - id: UUID
+    - grupoId: UUID <<null = politica global>>
+    - diasGracia: Integer
+    - tipoRecargo: String <<FIJO | PORCENTUAL | DIARIO_COMPUESTO>>
+    - valorRecargo: Decimal
+    - topeRecargo: Decimal
+    - diasParaMoraGrave: Integer
+    - diasParaIncumplimiento: Integer
+    - aplicaAutomatico: Boolean
+    - vigenteDesde: DateTime
+    --
+    + calcularRecargo(obligacion, fechaCorte): Decimal
+    + clasificarMora(diasMora): String
+  }
+
+  class PlanRegularizacion {
+    - id: UUID
+    - participanteId: UUID
+    - obligacionesIds: List<UUID>
+    - montoTotal: Decimal
+    - numCuotas: Integer
+    - estado: String <<VIGENTE | CUMPLIDO | INCUMPLIDO | ANULADO>>
+    - aprobadoPor: UUID
+    - creadoEn: DateTime
+    --
+    + generarCuotas(): List<ObligacionAporte>
+    + registrarIncumplimiento()
+  }
+}
+
+' ============================================================
+package "Cobro: QR y ordenes" {
+
+  enum CanalPago {
+    QR_INTEROPERABLE
+    TRANSFERENCIA_BANCARIA
+    BILLETERA_MOVIL
+    TARJETA
+    EFECTIVO_AL_ORGANIZADOR
+    COMPENSACION_INTERNA
+    FONDO_GARANTIA
+  }
+
+  enum EstadoOrdenCobro {
+    GENERADA
+    ENTREGADA
+    ESCANEADA
+    PAGADA
+    EXPIRADA
+    ANULADA
+  }
+
+  class OrdenCobro <<AR>> {
+    - id: UUID
+    - obligacionId: UUID
+    - proveedorId: UUID
+    - montoExacto: Decimal
+    - moneda: String
+    - permiteMontoAbierto: Boolean
+    - referenciaUnica: String <<glosa conciliable>>
+    - estado: EstadoOrdenCobro
+    - emitidaEn: DateTime
+    - expiraEn: DateTime
+    - claveIdempotencia: String
+    --
+    + generar(): QRCobro
+    + regenerarPorExpiracion(): OrdenCobro
+    + anular(motivo)
+    + estaVigente(): Boolean
+  }
+
+  class QRCobro {
+    - id: UUID
+    - ordenCobroId: UUID
+    - payloadEMV: String <<EMVCo / QR interoperable>>
+    - urlImagen: String
+    - crc: String
+    - bancoEmisor: String
+    - cuentaAbono: String <<enmascarada>>
+    - esReutilizable: Boolean
+    - escaneos: Integer
+    --
+    + renderizar(formato): Imagen
+    + registrarEscaneo()
+    + validarCRC(): Boolean
+  }
+
+  class ProveedorPago {
+    - id: UUID
+    - codigo: String
+    - nombre: String
+    - tipo: String <<PASARELA | BANCO | BILLETERA>>
+    - urlBase: String
+    - referenciaCredenciales: String <<puntero a boveda, nunca la llave>>
+    - comisionFija: Decimal
+    - comisionPorcentual: Decimal
+    - soportaWebhook: Boolean
+    - soportaConsultaEstado: Boolean
+    - activo: Boolean
+    - prioridad: Integer
+    --
+    + generarQR(orden): QRCobro
+    + consultarEstado(referencia): EstadoTransaccion
+    + solicitarReembolso(pago): Reembolso
+    + costoDe(monto): Decimal
+  }
+
+  class EnlacePagoRapido {
+    - id: UUID
+    - ordenCobroId: UUID
+    - tokenId: UUID <<TokenEnlaceFirmado, modulo 1>>
+    - urlCorta: String
+    - clicks: Integer
+    - expiraEn: DateTime
+    --
+    + generar(): String
+  }
+}
+
+' ============================================================
+package "Ejecucion del Pago" {
+
+  enum EstadoPago {
+    INICIADO
+    EN_PROCESO
+    ACREDITADO
+    RECHAZADO
+    REVERSADO
+    EN_DISPUTA
+    ANULADO
+  }
+
+  enum EstadoTransaccion {
+    PENDIENTE
+    APROBADA
+    RECHAZADA
+    EXPIRADA
+    DESCONOCIDA
+  }
+
+  class IntentoPago {
+    - id: UUID
+    - ordenCobroId: UUID
+    - numeroIntento: Integer
+    - canal: CanalPago
+    - iniciadoEn: DateTime
+    - finalizadoEn: DateTime
+    - estado: EstadoTransaccion
+    - codigoError: String
+    - mensajeProveedor: String
+    - claveIdempotencia: String
+    --
+    + ejecutar(): Pago
+    + reintentarConRespaldo(): IntentoPago
+  }
+
+  class Pago <<AR>> {
+    - id: UUID
+    - obligacionId: UUID
+    - intentoPagoId: UUID
+    - proveedorId: UUID
+    - monto: Decimal
+    - moneda: String
+    - montoComisionProveedor: Decimal
+    - montoNetoAcreditado: Decimal
+    - canal: CanalPago
+    - estado: EstadoPago
+    - fechaHoraPago: DateTime
+    - fechaHoraAcreditacion: DateTime
+    - referenciaProveedor: String <<unica por proveedor>>
+    - pagadorNombre: String
+    - pagadorDocumento: String
+    - cuentaOrigenEnmascarada: String
+    - registradoPor: UUID <<null si es automatico>>
+    - esManual: Boolean
+    - claveIdempotencia: String
+    --
+    + acreditar()
+    + rechazar(motivo)
+    + reversar(motivo): Reembolso
+    + generarConstancia(): ConstanciaPago
+    + aplicarAObligacion()
+  }
+
+  class Reembolso {
+    - id: UUID
+    - pagoId: UUID
+    - monto: Decimal
+    - motivo: String <<DUPLICADO | ERROR_MONTO | GRUPO_CANCELADO | DISPUTA>>
+    - estado: String <<SOLICITADO | APROBADO | EJECUTADO | RECHAZADO>>
+    - referenciaProveedor: String
+    - solicitadoPor: UUID
+    - aprobadoPor: UUID
+    - fechaSolicitud: DateTime
+    - fechaEjecucion: DateTime
+    --
+    + aprobar(aprobadorId)
+    + ejecutar()
+  }
+
+  class DisputaPago {
+    - id: UUID
+    - pagoId: UUID
+    - tipo: String <<CONTRACARGO | DESCONOCIMIENTO | MONTO_INCORRECTO>>
+    - descripcion: String
+    - montoDisputado: Decimal
+    - estado: String <<ABIERTA | EN_ANALISIS | RESUELTA_A_FAVOR | RESUELTA_EN_CONTRA>>
+    - evidencias: List<String>
+    - abiertaEn: DateTime
+    - fechaLimiteRespuesta: DateTime
+    - resueltaEn: DateTime
+    --
+    + adjuntarEvidencia(url)
+    + resolver(resultado, motivo)
+  }
+
+  class ConstanciaPago {
+    - id: UUID
+    - pagoId: UUID
+    - codigoVerificacion: String <<unico, publico>>
+    - hashContenido: String
+    - urlPublica: String
+    - urlPDF: String
+    - fechaGeneracion: DateTime
+    --
+    + exportar(formato): Documento
+    + verificar(codigo): Boolean
+  }
+}
+
+' ============================================================
+package "Conciliacion" {
+
+  enum EstadoConciliacion {
+    PENDIENTE
+    CONCILIADO_AUTOMATICO
+    CONCILIADO_MANUAL
+    EN_EXCEPCION
+    NO_IDENTIFICADO
+    DESCARTADO
+  }
+
+  enum TipoExcepcion {
+    MONTO_DISTINTO
+    REFERENCIA_AUSENTE
+    PAGO_DUPLICADO
+    PAGO_SIN_OBLIGACION
+    OBLIGACION_SIN_PAGO
+    FUERA_DE_PLAZO
+    MONEDA_DISTINTA
+  }
+
+  class MovimientoBancario {
+    - id: UUID
+    - extractoId: UUID
+    - fechaMovimiento: Date
+    - monto: Decimal
+    - moneda: String
+    - glosa: String
+    - referenciaBanco: String
+    - cuentaOrigen: String
+    - conciliado: Boolean
+    --
+    + buscarCoincidencias(): List<Pago>
+  }
+
+  class ExtractoBancario {
+    - id: UUID
+    - proveedorId: UUID
+    - cuenta: String
+    - fechaDesde: Date
+    - fechaHasta: Date
+    - saldoInicial: Decimal
+    - saldoFinal: Decimal
+    - archivoUrl: String
+    - importadoEn: DateTime
+    - importadoPor: UUID
+    --
+    + importar(archivo): List<MovimientoBancario>
+    + cuadrar(): Boolean
+  }
+
+  class Conciliacion {
+    - id: UUID
+    - pagoId: UUID
+    - movimientoBancarioId: UUID
+    - estado: EstadoConciliacion
+    - metodo: String <<REFERENCIA_EXACTA | MONTO_FECHA | MANUAL>>
+    - diferenciaMonto: Decimal
+    - conciliadoPor: UUID
+    - fechaConciliacion: DateTime
+    --
+    + conciliarAutomaticamente(): Boolean
+    + derivarAExcepcion(tipo)
+    + forzarManual(usuarioId, justificacion)
+  }
+
+  class ExcepcionConciliacion {
+    - id: UUID
+    - conciliacionId: UUID
+    - tipo: TipoExcepcion
+    - descripcion: String
+    - montoDiferencia: Decimal
+    - estado: String <<ABIERTA | EN_GESTION | RESUELTA | ESCALADA>>
+    - asignadaA: UUID
+    - resolucion: String
+    - abiertaEn: DateTime
+    - resueltaEn: DateTime
+    --
+    + asignar(usuarioId)
+    + resolver(accion, nota)
+    + escalar()
+  }
+
+  class WebhookPasarela {
+    - id: UUID
+    - proveedorId: UUID
+    - evento: String
+    - payloadCrudo: JSON
+    - firma: String
+    - firmaValida: Boolean
+    - recibidoEn: DateTime
+    - procesadoEn: DateTime
+    - intentosProcesamiento: Integer
+    - estado: String <<RECIBIDO | PROCESADO | FALLIDO | DUPLICADO | DESCARTADO>>
+    - claveIdempotencia: String <<unica>>
+    - errorProcesamiento: String
+    --
+    + validarFirma(): Boolean
+    + procesar(): Pago
+    + reintentar()
+    + enviarAColaMuerta()
+  }
+}
+
+' ============================================================
+package "Contabilidad de doble partida" {
+
+  class TipoCambio <<VO>> {
+    - id: UUID
+    - monedaOrigen: String <<ISO-4217>>
+    - monedaDestino: String <<ISO-4217>>
+    - fecha: Date
+    - tipoCambio: Decimal
+    - fuente: String <<BCB | PROVEEDOR | MANUAL>>
+    - cargadoEn: DateTime
+    --
+    + convertir(monto): Decimal {static}
+  }
+
+  note bottom of TipoCambio
+    Los umbrales de reporte estan expresados en dolares y las
+    operaciones ocurren en bolivianos: sin el tipo de cambio del
+    dia guardado, el calculo del umbral no es reproducible.
+  end note
+
+  class CuentaContable {
+    - id: UUID
+    - codigo: String <<ej. 1.1.01 Caja grupo>>
+    - nombre: String
+    - tipo: String <<ACTIVO | PASIVO | PATRIMONIO | INGRESO | EGRESO>>
+    - naturaleza: String <<DEUDORA | ACREEDORA>>
+    - grupoId: UUID <<null si es cuenta del sistema>>
+    - participanteId: UUID <<cuenta corriente del participante>>
+    - saldo: Decimal
+    --
+    + debitar(monto)
+    + acreditar(monto)
+    + saldoA(fecha): Decimal
+  }
+
+  class AsientoContable {
+    - id: UUID
+    - numero: Long <<correlativo>>
+    - fecha: DateTime
+    - glosa: String
+    - origenTipo: String <<PAGO | ENTREGA | COBERTURA | COMISION | BILLETERA | AJUSTE>>
+    - origenId: UUID
+    - grupoId: UUID
+    - estado: String <<BORRADOR | CONFIRMADO | REVERSADO>>
+    - asientoReversaId: UUID
+    - registradoPor: UUID
+    --
+    + agregarMovimiento(cuenta, debe, haber)
+    + confirmar()
+    + reversar(motivo): AsientoContable
+    + estaCuadrado(): Boolean
+  }
+
+  class MovimientoContable {
+    - id: UUID
+    - asientoId: UUID
+    - cuentaId: UUID
+    - debe: Decimal
+    - haber: Decimal
+    - descripcion: String
+    --
+    + importe(): Decimal
+  }
+
+  class ServicioConciliacion <<Svc>> {
+    --
+    + procesarWebhook(payload): Pago
+    + conciliarLote(fecha): ResumenConciliacion
+    + detectarDuplicados(): List<Pago>
+    + cerrarDia(fecha): CierreDiario
+  }
+
+  class CierreDiario {
+    - id: UUID
+    - fecha: Date
+    - totalRecaudado: Decimal
+    - totalConciliado: Decimal
+    - totalExcepciones: Decimal
+    - cantidadPagos: Integer
+    - cuadrado: Boolean
+    - cerradoPor: UUID
+    - cerradoEn: DateTime
+    --
+    + ejecutar(): Boolean
+    + reabrir(motivo, adminId)
+  }
+}
+
+' ---------- Relaciones ----------
+ObligacionAporte "1" *-- "0..*" OrdenCobro
+ObligacionAporte "1" o-- "0..*" Pago : se salda con >
+ObligacionAporte "0..*" --> "1" PoliticaMora : evaluada por >
+ObligacionAporte "0..*" --> "0..1" PlanRegularizacion
+ObligacionAporte "1" --> "0..1" ObligacionAporte : recargo de >
+
+OrdenCobro "1" *-- "0..1" QRCobro
+OrdenCobro "1" *-- "0..1" EnlacePagoRapido
+OrdenCobro "1" *-- "0..*" IntentoPago
+OrdenCobro "*" --> "1" ProveedorPago
+
+IntentoPago "1" *-- "0..1" Pago
+Pago "1" *-- "0..1" ConstanciaPago
+Pago "1" *-- "0..*" Reembolso
+Pago "1" *-- "0..*" DisputaPago
+Pago "1" *-- "0..1" Conciliacion
+
+Conciliacion "1" --> "0..1" MovimientoBancario
+Conciliacion "1" *-- "0..*" ExcepcionConciliacion
+ExtractoBancario "1" *-- "0..*" MovimientoBancario
+ProveedorPago "1" *-- "0..*" WebhookPasarela
+WebhookPasarela ..> Pago : crea / actualiza >
+
+AsientoContable "1" *-- "2..*" MovimientoContable
+MovimientoContable "*" --> "1" CuentaContable
+Pago ..> AsientoContable : genera >
+Reembolso ..> AsientoContable : genera >
+
+ServicioConciliacion ..> WebhookPasarela : consume >
+ServicioConciliacion ..> Conciliacion : ejecuta >
+ServicioConciliacion ..> CierreDiario : produce >
+
+ObligacionAporte --> EstadoAporte
+ObligacionAporte --> TipoObligacion
+OrdenCobro --> EstadoOrdenCobro
+Pago --> EstadoPago
+Pago --> CanalPago
+IntentoPago --> EstadoTransaccion
+Conciliacion --> EstadoConciliacion
+ExcepcionConciliacion --> TipoExcepcion
+
+note right of WebhookPasarela
+  <b>Idempotencia (RF-15)</b>
+  claveIdempotencia es UNIQUE: si la pasarela
+  reenvia el mismo evento (cosa que hace),
+  el segundo se marca DUPLICADO y no genera
+  un segundo Pago. Sin esto, un reintento de
+  la pasarela acredita el aporte dos veces.
+  La firma se valida ANTES de confiar en el payload.
+end note
+
+note right of AsientoContable
+  <b>Por que doble partida</b>
+  El sistema custodia expectativas de dinero
+  ajeno. Con debe/haber por cada evento
+  (aporte, entrega, cobertura) el
+  panel de transparencia del modulo 6 se
+  calcula desde el mayor y no desde sumas
+  ad-hoc; cualquier descuadre se detecta el
+  mismo dia en CierreDiario.
+end note
+
+note bottom of ObligacionAporte
+  cupoId/participanteId -> modulo 2.
+  Un recargo por mora es OTRA obligacion
+  (tipo = RECARGO_MORA) que apunta a la
+  original: nunca se "ensucia" el monto
+  esperado del aporte base.
+end note
+
+note bottom of ProveedorPago
+  Multi-proveedor con prioridad y respaldo:
+  si el QR del banco A falla, IntentoPago
+  reintenta con el proveedor B sin perder
+  la trazabilidad del intento anterior.
+end note
+
+@enduml
+
+@startuml 03_aportes_pagos_relacional
+' ============================================================
+'  MODULO 3: Aportes, Pagos QR, Conciliacion y Contabilidad
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 3 - Aportes, Pagos QR y Conciliacion (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> CHECK    <<NULL>> admite nulos
+  Importes: DECIMAL(14,2) + moneda CHAR(3) ISO-4217.
+  Ninguna fila de dinero se actualiza en sitio: se reversa
+  con un asiento contrario (contabilidad append-only).
+endlegend
+
+entity "politica_mora" as polmora {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, NULL>>
+  dias_gracia : SMALLINT
+  tipo_recargo : VARCHAR(20) <<CK>>
+  valor_recargo : DECIMAL(10,2)
+  tope_recargo : DECIMAL(14,2)
+  dias_para_mora_grave : SMALLINT
+  dias_para_incumplimiento : SMALLINT
+  aplica_automatico : BOOLEAN
+  vigente_desde : TIMESTAMPTZ
+}
+
+entity "obligacion_aporte" as oblig {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  # periodo_id : UUID <<FK, IDX>>
+  # cupo_id : UUID <<FK, IDX>>
+  # participante_id : UUID <<FK, IDX>>
+  # politica_mora_id : UUID <<FK, NULL>>
+  # obligacion_origen_id : UUID <<FK, NULL>>
+  # plan_regularizacion_id : UUID <<FK, NULL>>
+  tipo : VARCHAR(30) <<CK>>
+  monto_esperado : DECIMAL(14,2) <<CK: > 0>>
+  moneda : CHAR(3)
+  monto_pagado : DECIMAL(14,2)
+  monto_recargo : DECIMAL(14,2)
+  monto_condonado : DECIMAL(14,2)
+  monto_cubierto_garantia : DECIMAL(14,2)
+  saldo_pendiente : DECIMAL(14,2) <<GENERATED>>
+  estado : VARCHAR(30) <<CK, IDX>>
+  fecha_vencimiento : DATE <<IDX>>
+  fecha_fin_gracia : DATE
+  fecha_pago_efectivo : TIMESTAMPTZ <<NULL>>
+  dias_mora : SMALLINT
+  version : INTEGER
+}
+
+entity "plan_regularizacion" as plan {
+  * id : UUID <<PK>>
+  --
+  # participante_id : UUID <<FK, IDX>>
+  monto_total : DECIMAL(14,2)
+  num_cuotas : SMALLINT
+  estado : VARCHAR(15) <<CK>>
+  # aprobado_por : UUID <<FK>>
+  creado_en : TIMESTAMPTZ
+}
+
+entity "proveedor_pago" as prov {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(30) <<UQ>>
+  nombre : VARCHAR(80)
+  tipo : VARCHAR(15) <<CK>>
+  url_base : VARCHAR(200)
+  referencia_credenciales : VARCHAR(120)
+  comision_fija : DECIMAL(10,2)
+  comision_porcentual : DECIMAL(5,3)
+  soporta_webhook : BOOLEAN
+  soporta_consulta_estado : BOOLEAN
+  activo : BOOLEAN
+  prioridad : SMALLINT
+}
+
+entity "orden_cobro" as orden {
+  * id : UUID <<PK>>
+  --
+  # obligacion_id : UUID <<FK, IDX>>
+  # proveedor_id : UUID <<FK>>
+  monto_exacto : DECIMAL(14,2)
+  moneda : CHAR(3)
+  permite_monto_abierto : BOOLEAN
+  referencia_unica : VARCHAR(60) <<UQ>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  emitida_en : TIMESTAMPTZ
+  expira_en : TIMESTAMPTZ <<IDX>>
+  clave_idempotencia : VARCHAR(80) <<UQ>>
+}
+
+entity "qr_cobro" as qr {
+  * id : UUID <<PK>>
+  --
+  # orden_cobro_id : UUID <<FK, UQ>>
+  payload_emv : TEXT
+  url_imagen : VARCHAR(255)
+  crc : VARCHAR(8)
+  banco_emisor : VARCHAR(60)
+  cuenta_abono : VARCHAR(40)
+  es_reutilizable : BOOLEAN
+  escaneos : SMALLINT
+}
+
+entity "enlace_pago_rapido" as enlace {
+  * id : UUID <<PK>>
+  --
+  # orden_cobro_id : UUID <<FK, UQ>>
+  # token_id : UUID <<FK, UQ, M1>>
+  url_corta : VARCHAR(60) <<UQ>>
+  clicks : SMALLINT
+  expira_en : TIMESTAMPTZ
+}
+
+entity "intento_pago" as intento {
+  * id : UUID <<PK>>
+  --
+  # orden_cobro_id : UUID <<FK, IDX>>
+  numero_intento : SMALLINT
+  canal : VARCHAR(30) <<CK>>
+  iniciado_en : TIMESTAMPTZ
+  finalizado_en : TIMESTAMPTZ <<NULL>>
+  estado : VARCHAR(15) <<CK>>
+  codigo_error : VARCHAR(40) <<NULL>>
+  mensaje_proveedor : VARCHAR(255) <<NULL>>
+  clave_idempotencia : VARCHAR(80) <<UQ>>
+}
+
+entity "pago" as pago {
+  * id : UUID <<PK>>
+  --
+  # obligacion_id : UUID <<FK, IDX>>
+  # intento_pago_id : UUID <<FK, NULL, UQ>>
+  # proveedor_id : UUID <<FK, NULL, IDX>>
+  monto : DECIMAL(14,2) <<CK: > 0>>
+  moneda : CHAR(3)
+  monto_comision_proveedor : DECIMAL(10,2)
+  monto_neto_acreditado : DECIMAL(14,2)
+  canal : VARCHAR(30) <<CK>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  fecha_hora_pago : TIMESTAMPTZ <<IDX>>
+  fecha_hora_acreditacion : TIMESTAMPTZ <<NULL>>
+  referencia_proveedor : VARCHAR(80) <<UQ+proveedor_id>>
+  pagador_nombre : VARCHAR(120) <<NULL>>
+  pagador_documento : VARCHAR(30) <<NULL>>
+  cuenta_origen_enmascarada : VARCHAR(40) <<NULL>>
+  # registrado_por : UUID <<FK, NULL>>
+  es_manual : BOOLEAN
+  clave_idempotencia : VARCHAR(80) <<UQ>>
+}
+
+entity "comprobante_manual" as comp {
+  * id : UUID <<PK>>
+  --
+  # pago_id : UUID <<FK, UQ>>
+  archivo_url : VARCHAR(255)
+  hash_archivo : VARCHAR(64)
+  estado_revision : VARCHAR(15) <<CK>>
+  # revisado_por : UUID <<FK, NULL>>
+  # segunda_revision_por : UUID <<FK, NULL>>
+  motivo_rechazo : VARCHAR(200) <<NULL>>
+  fecha_revision : TIMESTAMPTZ <<NULL>>
+}
+
+entity "constancia_pago" as constancia {
+  * id : UUID <<PK>>
+  --
+  # pago_id : UUID <<FK, UQ>>
+  codigo_verificacion : VARCHAR(40) <<UQ>>
+  hash_contenido : VARCHAR(64)
+  url_publica : VARCHAR(255)
+  url_pdf : VARCHAR(255)
+  fecha_generacion : TIMESTAMPTZ
+}
+
+entity "reembolso" as reemb {
+  * id : UUID <<PK>>
+  --
+  # pago_id : UUID <<FK, IDX>>
+  monto : DECIMAL(14,2)
+  motivo : VARCHAR(30) <<CK>>
+  estado : VARCHAR(15) <<CK>>
+  referencia_proveedor : VARCHAR(80) <<NULL>>
+  # solicitado_por : UUID <<FK>>
+  # aprobado_por : UUID <<FK, NULL>>
+  fecha_solicitud : TIMESTAMPTZ
+  fecha_ejecucion : TIMESTAMPTZ <<NULL>>
+}
+
+entity "disputa_pago" as disp {
+  * id : UUID <<PK>>
+  --
+  # pago_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(25) <<CK>>
+  descripcion : TEXT
+  monto_disputado : DECIMAL(14,2)
+  estado : VARCHAR(25) <<CK>>
+  evidencias : JSONB
+  abierta_en : TIMESTAMPTZ
+  fecha_limite_respuesta : TIMESTAMPTZ
+  resuelta_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "extracto_bancario" as extracto {
+  * id : UUID <<PK>>
+  --
+  # proveedor_id : UUID <<FK>>
+  cuenta : VARCHAR(40)
+  fecha_desde : DATE
+  fecha_hasta : DATE
+  saldo_inicial : DECIMAL(14,2)
+  saldo_final : DECIMAL(14,2)
+  archivo_url : VARCHAR(255)
+  importado_en : TIMESTAMPTZ
+  # importado_por : UUID <<FK>>
+}
+
+entity "movimiento_bancario" as movban {
+  * id : UUID <<PK>>
+  --
+  # extracto_id : UUID <<FK, IDX>>
+  fecha_movimiento : DATE <<IDX>>
+  monto : DECIMAL(14,2)
+  moneda : CHAR(3)
+  glosa : VARCHAR(200) <<IDX full-text>>
+  referencia_banco : VARCHAR(80) <<UQ+extracto_id>>
+  cuenta_origen : VARCHAR(40) <<NULL>>
+  conciliado : BOOLEAN <<IDX>>
+}
+
+entity "conciliacion" as conc {
+  * id : UUID <<PK>>
+  --
+  # pago_id : UUID <<FK, UQ>>
+  # movimiento_bancario_id : UUID <<FK, NULL, UQ>>
+  estado : VARCHAR(25) <<CK, IDX>>
+  metodo : VARCHAR(20) <<CK>>
+  diferencia_monto : DECIMAL(14,2)
+  # conciliado_por : UUID <<FK, NULL>>
+  fecha_conciliacion : TIMESTAMPTZ <<NULL>>
+}
+
+entity "excepcion_conciliacion" as excep {
+  * id : UUID <<PK>>
+  --
+  # conciliacion_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(30) <<CK>>
+  descripcion : VARCHAR(300)
+  monto_diferencia : DECIMAL(14,2)
+  estado : VARCHAR(15) <<CK, IDX>>
+  # asignada_a : UUID <<FK, NULL>>
+  resolucion : VARCHAR(300) <<NULL>>
+  abierta_en : TIMESTAMPTZ
+  resuelta_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "webhook_pasarela" as webh {
+  * id : UUID <<PK>>
+  --
+  # proveedor_id : UUID <<FK, IDX>>
+  evento : VARCHAR(60)
+  payload_crudo : JSONB
+  firma : VARCHAR(255)
+  firma_valida : BOOLEAN
+  recibido_en : TIMESTAMPTZ <<IDX>>
+  procesado_en : TIMESTAMPTZ <<NULL>>
+  intentos_procesamiento : SMALLINT
+  estado : VARCHAR(15) <<CK, IDX>>
+  clave_idempotencia : VARCHAR(120) <<UQ>>
+  error_procesamiento : TEXT <<NULL>>
+  # pago_id : UUID <<FK, NULL>>
+}
+
+entity "tipo_cambio" as tcambio {
+  * id : UUID <<PK>>
+  --
+  moneda_origen : CHAR(3) <<UQ+moneda_destino+fecha>>
+  moneda_destino : CHAR(3)
+  fecha : DATE <<IDX>>
+  tipo_cambio : DECIMAL(12,6) <<CK: > 0>>
+  fuente : VARCHAR(15) <<CK>>
+  cargado_en : TIMESTAMPTZ
+}
+
+entity "cuenta_contable" as cta {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(20) <<UQ>>
+  nombre : VARCHAR(80)
+  tipo : VARCHAR(15) <<CK>>
+  naturaleza : VARCHAR(12) <<CK>>
+  # grupo_id : UUID <<FK, NULL>>
+  # participante_id : UUID <<FK, NULL>>
+  saldo : DECIMAL(16,2)
+}
+
+entity "asiento_contable" as asiento {
+  * id : UUID <<PK>>
+  --
+  numero : BIGSERIAL <<UQ>>
+  fecha : TIMESTAMPTZ <<IDX>>
+  glosa : VARCHAR(200)
+  origen_tipo : VARCHAR(20) <<CK>>
+  origen_id : UUID <<IDX, polimorfica>>
+  # grupo_id : UUID <<FK, NULL, IDX>>
+  estado : VARCHAR(15) <<CK>>
+  # asiento_reversa_id : UUID <<FK, NULL>>
+  # registrado_por : UUID <<FK, NULL>>
+}
+
+entity "movimiento_contable" as movcta {
+  * id : UUID <<PK>>
+  --
+  # asiento_id : UUID <<FK, IDX>>
+  # cuenta_id : UUID <<FK, IDX>>
+  debe : DECIMAL(16,2)
+  haber : DECIMAL(16,2)
+  descripcion : VARCHAR(160)
+}
+
+entity "cierre_diario" as cierre {
+  * id : UUID <<PK>>
+  --
+  fecha : DATE <<UQ>>
+  total_recaudado : DECIMAL(16,2)
+  total_conciliado : DECIMAL(16,2)
+  total_excepciones : DECIMAL(16,2)
+  cantidad_pagos : INTEGER
+  cuadrado : BOOLEAN
+  # cerrado_por : UUID <<FK>>
+  cerrado_en : TIMESTAMPTZ
+  reabierto_en : TIMESTAMPTZ <<NULL>>
+}
+
+polmora ||--o{ oblig : "rige"
+plan ||--o{ oblig : "reprograma"
+oblig ||--o{ orden : "cobra con"
+oblig ||--o{ pago : "se salda con"
+oblig |o--o{ oblig : "recargo de"
+prov ||--o{ orden : "procesa"
+prov ||--o{ webh : "notifica"
+prov ||--o{ extracto : "emite"
+orden ||--o| qr : "materializa"
+orden ||--o| enlace : "difunde"
+orden ||--o{ intento : "acumula"
+intento ||--o| pago : "produce"
+pago ||--o| comp : "respalda (manual)"
+pago ||--o| constancia : "certifica"
+pago ||--o{ reemb : "devuelve"
+pago ||--o{ disp : "disputa"
+pago ||--o| conc : "concilia"
+conc }o--o| movban : "cruza con"
+conc ||--o{ excep : "levanta"
+extracto ||--o{ movban : "contiene"
+webh }o--o| pago : "genera"
+asiento ||--|{ movcta : "detalla"
+cta ||--o{ movcta : "afecta"
+
+note bottom of tcambio
+  UNIQUE (moneda_origen, moneda_destino, fecha).
+  Lo consume fn_fx_a_usd() del motor de umbrales de la UIF
+  (M12): el tipo de cambio aplicado se copia al registro de
+  la operacion para que el calculo sea reproducible.
+end note
+
+note top of pago
+  <b>Reglas duras</b>
+  - UNIQUE (proveedor, referencia_proveedor):
+    el mismo cobro no entra dos veces.
+  - UNIQUE (clave_idempotencia).
+  - Trigger: SUM(pago.monto ACREDITADO) por
+    obligacion no puede superar
+    monto_esperado + monto_recargo salvo que
+    exista un reembolso compensatorio.
+end note
+
+note bottom of asiento
+  <b>Invariante contable</b>
+  Trigger AFTER: por cada asiento CONFIRMADO,
+  SUM(debe) = SUM(haber). Los asientos no se
+  editan ni borran: se reversan (asiento_reversa_id).
+  origen_id es polimorfica: pago.id, entrega.id (M4)
+  y cobertura_incumplimiento.id (M8).
+end note
+
+note bottom of oblig
+  grupo_id, periodo_id, cupo_id y participante_id
+  referencian al modulo 2.
+  UNIQUE (periodo_id, cupo_id, tipo)
+  para tipo = 'APORTE_PERIODICO': un cupo debe
+  exactamente un aporte por periodo.
+  saldo_pendiente = monto_esperado + monto_recargo
+    - monto_pagado - monto_condonado
+    - monto_cubierto_garantia  (columna generada).
+end note
+
+note bottom of excep
+  Toda excepcion abierta bloquea el cierre_diario:
+  cuadrado = FALSE mientras exista al menos una
+  excepcion sin resolver de esa fecha.
+end note
+
+@enduml

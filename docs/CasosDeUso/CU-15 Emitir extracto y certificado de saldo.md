@@ -1,0 +1,87 @@
+---
+tags:
+  - caso-uso
+  - modulo/10-billetera-custodia-y-dinero-electronico
+codigo: CU-15
+criticidad: media
+actores: [Usuario, Sistema]
+normas: [ASFI Consumidor Financiero]
+---
+
+# CU-15 — Emitir extracto y certificado de saldo
+
+> **Objetivo.** Poner a disposición del titular la información de su cuenta, con
+> integridad verificable, y **dejar constancia de que se puso a disposición**.
+
+## Actores y disparador
+
+- **Actor principal:** titular.
+- **Disparadores:** cierre de período (mensual); solicitud del titular; trámite
+  ante un tercero que exige certificado.
+
+## Precondiciones
+
+1. La cuenta existe y el solicitante es el titular o está autorizado.
+2. Existen [[saldo_diario_billetera]] cerrados para el período pedido.
+
+## Flujo principal — extracto
+
+1. Se arma el extracto desde [[movimiento_billetera]] del período, con
+   `saldo_disponible_posterior` como columna de saldo corrido.
+2. Se calculan totales y se contrasta con `saldo_diario_billetera` de la fecha de
+   inicio y fin: si no coinciden, **no se emite** y se abre incidente.
+3. Se crea [[estado_cuenta_billetera]] con `saldo_inicial`, `total_creditos`,
+   `total_debitos`, `saldo_final`, `url_archivo` y `hash_archivo`.
+4. Se registra `entregado_en` cuando el titular lo descarga o se le envía.
+5. Se registra el acceso en [[registro_acceso_datos]] si lo genera un operador y no
+   el propio titular.
+
+## Flujo principal — certificado de saldo
+
+1. Se toma el saldo a `fecha_corte` desde `saldo_diario_billetera` (no recalculado
+   al vuelo).
+2. Se crea [[certificado_saldo]] con `folio` único, `hash_documento` y
+   `url_documento`.
+3. El tercero receptor puede verificar folio + hash contra un endpoint público de
+   verificación.
+
+## Flujos alternativos
+
+| # | Situación | Resultado |
+| :-: | --- | --- |
+| 2a | El extracto no cuadra con el saldo diario | Se bloquea la emisión, se abre [[descuadre_custodia]] o [[incidente_operativo]] |
+| 1a | Período sin cierres diarios completos | Se emite hasta la última fecha cerrada y se informa el corte |
+| — | Cuenta cerrada | El extracto histórico sigue disponible durante el período de conservación |
+
+## Postcondiciones
+
+- Existe el documento archivado con su hash: se puede probar qué se entregó.
+
+## Restricciones aplicables
+
+`R-CON-08` · `R-AUD-07` · `R-SEG-02`
+
+## Evidencia que deja
+
+[[estado_cuenta_billetera]] · [[certificado_saldo]] · [[registro_acceso_datos]]
+
+## Criterios de aceptación
+
+```gherkin
+Dado un período con cierres diarios completos
+Cuando se emite el extracto
+Entonces saldo_final coincide con el saldo_diario_billetera de la fecha final
+Y existe hash_archivo no nulo
+
+Dado un certificado emitido
+Cuando un tercero verifica folio y hash
+Entonces el sistema confirma su autenticidad
+
+Dada una diferencia entre el extracto calculado y el saldo diario
+Cuando se intenta emitir
+Entonces la emisión se bloquea y se registra el descuadre
+```
+
+## Ver también
+
+[[CU-50 Conciliar la custodia y verificar el encaje]] · [[CU-52 Atender un reclamo en plazo]]

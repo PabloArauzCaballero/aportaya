@@ -1,0 +1,10 @@
+{
+  "entorno": "prueba",
+  "descripcion": "Datos de prueba para desarrollo y QA. NO aplicar en producción.",
+  "orden": [
+    "01-entorno-tecnico.json",
+    "02-usuarios-y-billeteras.json",
+    "03-grupo-demo.json",
+    "04-fondo-y-cuenta-del-grupo.json"
+  ]
+}

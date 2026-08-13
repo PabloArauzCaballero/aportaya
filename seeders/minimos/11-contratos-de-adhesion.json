@@ -1,0 +1,72 @@
+{
+  "descripcion": "Contratos de adhesión. Sin contrato vigente aceptado no se puede operar (R-CON-06).",
+  "entorno": "minimo",
+  "estado": "los documentos deben redactarse y registrarse ante ASFI",
+  "bloques": [
+    {
+      "tabla": "contrato_adhesion",
+      "conflicto": [
+        "codigo",
+        "version"
+      ],
+      "filas": [
+        {
+          "codigo": "CTO-BILLETERA",
+          "version": 1,
+          "tipo": "BILLETERA",
+          "estado": "BORRADOR",
+          "url_documento": "https://pasanaku.bo/legal/contrato-billetera-v1.pdf",
+          "hash_documento": {
+            "$sql": "repeat('0', 64)"
+          },
+          "registrado_ante_regulador": false,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        },
+        {
+          "codigo": "CTO-GRUPO",
+          "version": 1,
+          "tipo": "GRUPO_PASANAKU",
+          "estado": "BORRADOR",
+          "url_documento": "https://pasanaku.bo/legal/contrato-grupo-v1.pdf",
+          "hash_documento": {
+            "$sql": "repeat('0', 64)"
+          },
+          "registrado_ante_regulador": false,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        },
+        {
+          "codigo": "CTO-TARIFAS",
+          "version": 1,
+          "tipo": "TARIFAS",
+          "estado": "BORRADOR",
+          "url_documento": "https://pasanaku.bo/legal/tarifario-v1.pdf",
+          "hash_documento": {
+            "$sql": "repeat('0', 64)"
+          },
+          "registrado_ante_regulador": false,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        },
+        {
+          "codigo": "CTO-DATOS",
+          "version": 1,
+          "tipo": "TRATAMIENTO_DATOS",
+          "estado": "BORRADOR",
+          "url_documento": "https://pasanaku.bo/legal/politica-privacidad-v1.pdf",
+          "hash_documento": {
+            "$sql": "repeat('0', 64)"
+          },
+          "registrado_ante_regulador": false,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,336 @@
+{
+  "descripcion": "Gobierno, licencia y atención al consumidor financiero.",
+  "entorno": "minimo",
+  "nota": "La licencia se siembra EN_TRAMITE a propósito: es el estado real mientras no exista resolución de ASFI. Con ese estado fn_lic_servicio_habilitado() devuelve false y ningún servicio financiero se habilita (R-LIC-01). No es un defecto: es la regla funcionando.",
+  "al_otorgarse_la_licencia": "UPDATE licencia_regulatoria SET estado='OTORGADA', numero_resolucion='ASFI/xxx/AAAA', fecha_otorgamiento=current_date, alcance_autorizado='[\"BILLETERA\",\"RECARGA\",\"RETIRO\",\"TRANSFERENCIA_P2P\",\"GRUPO_PASANAKU\"]'::jsonb WHERE tipo='LICENCIA_FUNCIONAMIENTO';",
+  "bloques": [
+    {
+      "tabla": "licencia_regulatoria",
+      "solo_si_vacia": true,
+      "conflicto": "ninguno",
+      "filas": [
+        {
+          "organismo": "ASFI",
+          "tipo": "CERTIFICADO_ADECUACION",
+          "categoria_actividad": "PAGOS_Y_PLATAFORMAS_DE_PAGO",
+          "estado": "EN_TRAMITE",
+          "fecha_solicitud": {
+            "$sql": "current_date"
+          },
+          "alcance_autorizado": [],
+          "garantia_seriedad": null
+        }
+      ]
+    },
+    {
+      "tabla": "comite_gobierno",
+      "conflicto": [
+        "tipo"
+      ],
+      "filas": [
+        {
+          "tipo": "DIRECTORIO",
+          "periodicidad_minima": "MENSUAL",
+          "quorum_minimo": 3,
+          "activo": true,
+          "composicion_requerida": [
+            "Presidente",
+            "Directores titulares"
+          ]
+        },
+        {
+          "tipo": "RIESGOS",
+          "periodicidad_minima": "MENSUAL",
+          "quorum_minimo": 3,
+          "activo": true,
+          "composicion_requerida": [
+            "Miembro del Directorio (preside)",
+            "Gerente General",
+            "Responsable de Gestión de Riesgos",
+            "Gerente de Operaciones (con derecho a voz)"
+          ]
+        },
+        {
+          "tipo": "CUMPLIMIENTO",
+          "periodicidad_minima": "MENSUAL",
+          "quorum_minimo": 2,
+          "activo": true,
+          "composicion_requerida": [
+            "Oficial de Cumplimiento",
+            "Gerente General",
+            "Miembro del Directorio"
+          ]
+        },
+        {
+          "tipo": "AUDITORIA",
+          "periodicidad_minima": "TRIMESTRAL",
+          "quorum_minimo": 2,
+          "activo": true,
+          "composicion_requerida": [
+            "Auditor Interno",
+            "Miembro del Directorio"
+          ]
+        },
+        {
+          "tipo": "SEGURIDAD_INFORMACION",
+          "periodicidad_minima": "TRIMESTRAL",
+          "quorum_minimo": 2,
+          "activo": true,
+          "composicion_requerida": [
+            "Responsable de Seguridad de la Información",
+            "Responsable de Tecnología",
+            "Responsable de Riesgos"
+          ]
+        }
+      ]
+    },
+    {
+      "tabla": "punto_reclamo",
+      "conflicto": [
+        "codigo"
+      ],
+      "filas": [
+        {
+          "codigo": "PR-APP",
+          "tipo": "APP",
+          "descripcion": "Punto de Reclamo — aplicación móvil",
+          "horario": "24/7",
+          "activo": true
+        },
+        {
+          "codigo": "PR-WEB",
+          "tipo": "WEB",
+          "descripcion": "Punto de Reclamo — sitio web",
+          "horario": "24/7",
+          "activo": true
+        },
+        {
+          "codigo": "PR-TEL",
+          "tipo": "TELEFONO",
+          "descripcion": "Punto de Reclamo — línea de atención",
+          "horario": "Lunes a viernes 08:30-18:30",
+          "activo": true
+        },
+        {
+          "codigo": "PR-MAIL",
+          "tipo": "CORREO",
+          "descripcion": "Punto de Reclamo — correo electrónico",
+          "horario": "24/7 (respuesta en horario hábil)",
+          "activo": true
+        }
+      ]
+    },
+    {
+      "tabla": "matriz_riesgo_lft",
+      "conflicto": [
+        "version",
+        "dimension",
+        "factor"
+      ],
+      "filas": [
+        {
+          "version": 1,
+          "dimension": "CLIENTE",
+          "factor": "Condición de persona expuesta políticamente",
+          "ponderacion": 25,
+          "escala": {
+            "NO": 0,
+            "ALLEGADO": 15,
+            "FAMILIAR": 20,
+            "NACIONAL": 25,
+            "EXTRANJERO": 25
+          },
+          "base_normativa": "Instructivo EIF — enfoque basado en riesgo",
+          "vigente_desde": {
+            "$sql": "current_date"
+          }
+        },
+        {
+          "version": 1,
+          "dimension": "CLIENTE",
+          "factor": "Actividad económica declarada",
+          "ponderacion": 20,
+          "escala": {
+            "ASALARIADO": 5,
+            "COMERCIO_MINORISTA": 10,
+            "CAMBISTA": 25,
+            "NO_DECLARADA": 25
+          },
+          "base_normativa": "Instructivo EIF — enfoque basado en riesgo",
+          "vigente_desde": {
+            "$sql": "current_date"
+          }
+        },
+        {
+          "version": 1,
+          "dimension": "CLIENTE",
+          "factor": "Nivel de debida diligencia alcanzado",
+          "ponderacion": 15,
+          "escala": {
+            "REFORZADA": 5,
+            "AMPLIADA": 8,
+            "ESTANDAR": 12,
+            "SIMPLIFICADA": 15
+          },
+          "base_normativa": "Instructivo EIF — enfoque basado en riesgo",
+          "vigente_desde": {
+            "$sql": "current_date"
+          }
+        },
+        {
+          "version": 1,
+          "dimension": "PRODUCTO",
+          "factor": "Producto contratado",
+          "ponderacion": 15,
+          "escala": {
+            "GRUPO_PASANAKU": 10,
+            "BILLETERA": 15,
+            "TRANSFERENCIA_P2P": 20
+          },
+          "base_normativa": "Instructivo EIF — enfoque basado en riesgo",
+          "vigente_desde": {
+            "$sql": "current_date"
+          }
+        },
+        {
+          "version": 1,
+          "dimension": "CANAL",
+          "factor": "Canal de vinculación",
+          "ponderacion": 10,
+          "escala": {
+            "PRESENCIAL": 5,
+            "APP": 15,
+            "AGENTE": 12
+          },
+          "base_normativa": "Instructivo EIF — enfoque basado en riesgo",
+          "vigente_desde": {
+            "$sql": "current_date"
+          }
+        },
+        {
+          "version": 1,
+          "dimension": "ZONA_GEOGRAFICA",
+          "factor": "Zona de residencia u operación",
+          "ponderacion": 15,
+          "escala": {
+            "URBANA": 5,
+            "RURAL": 8,
+            "FRONTERA": 20,
+            "ZONA_DE_RIESGO": 25
+          },
+          "base_normativa": "Instructivo EIF — enfoque basado en riesgo",
+          "vigente_desde": {
+            "$sql": "current_date"
+          }
+        }
+      ]
+    },
+    {
+      "tabla": "regla_monitoreo_lft",
+      "conflicto": [
+        "codigo"
+      ],
+      "comentario": "Tipologías parametrizables: cargar una nueva es un INSERT",
+      "filas": [
+        {
+          "codigo": "FRACCIONAMIENTO",
+          "tipologia": "Fraccionamiento para eludir el umbral",
+          "descripcion": "Varias operaciones por debajo del umbral que sumadas lo superan dentro de la ventana",
+          "expresion": {
+            "tipo": "acumulado",
+            "porcentaje_del_umbral": 0.9,
+            "minimo_operaciones": 3
+          },
+          "ventana_evaluacion": "3 dias",
+          "umbral_monto": 1000,
+          "umbral_cantidad": 3,
+          "severidad": "ALTA",
+          "accion_automatica": "SOLO_ALERTAR",
+          "fuente_normativa": "Tipología de pitufeo — instructivo UIF",
+          "activa": true,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        },
+        {
+          "codigo": "ENTRADA_SALIDA_INMEDIATA",
+          "tipologia": "Entrada y salida inmediata del mismo monto",
+          "descripcion": "Carga y retiro del mismo importe en un lapso corto, sin uso del saldo",
+          "expresion": {
+            "tipo": "entrada_salida",
+            "tolerancia_monto": 0.05,
+            "minutos": 120
+          },
+          "ventana_evaluacion": "1 dia",
+          "umbral_monto": 500,
+          "umbral_cantidad": 1,
+          "severidad": "ALTA",
+          "accion_automatica": "RETENER_OPERACION",
+          "fuente_normativa": "Tipología de uso de la billetera como puente",
+          "activa": true,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        },
+        {
+          "codigo": "CIRCULARIDAD",
+          "tipologia": "Circularidad entre cuentas del mismo círculo",
+          "descripcion": "A envía a B y B devuelve a A dentro de la ventana",
+          "expresion": {
+            "tipo": "circular",
+            "saltos_maximos": 3,
+            "horas": 48
+          },
+          "ventana_evaluacion": "2 dias",
+          "umbral_monto": 0,
+          "umbral_cantidad": 2,
+          "severidad": "MEDIA",
+          "accion_automatica": "SOLO_ALERTAR",
+          "fuente_normativa": "Tipología de estructuración",
+          "activa": true,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        },
+        {
+          "codigo": "GRUPO_PANTALLA",
+          "tipologia": "Grupo de pasanaku usado como pantalla",
+          "descripcion": "Grupo entre personas sin vínculo con aportes muy superiores al perfil declarado",
+          "expresion": {
+            "tipo": "desvio_perfil_grupo",
+            "factor": 3
+          },
+          "ventana_evaluacion": "1 mes",
+          "umbral_monto": 0,
+          "umbral_cantidad": 0,
+          "severidad": "ALTA",
+          "accion_automatica": "SOLO_ALERTAR",
+          "fuente_normativa": "Tipología específica del producto",
+          "activa": true,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        },
+        {
+          "codigo": "DESVIO_PERFIL",
+          "tipologia": "Desvío severo del perfil transaccional declarado",
+          "descripcion": "El movimiento observado supera en más de tres veces el declarado",
+          "expresion": {
+            "tipo": "desvio",
+            "factor": 3
+          },
+          "ventana_evaluacion": "1 mes",
+          "umbral_monto": 0,
+          "umbral_cantidad": 0,
+          "severidad": "MEDIA",
+          "accion_automatica": "SOLO_ALERTAR",
+          "fuente_normativa": "Instructivo EIF — perfil transaccional",
+          "activa": true,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        }
+      ]
+    }
+  ]
+}

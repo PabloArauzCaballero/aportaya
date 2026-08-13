@@ -1,0 +1,178 @@
+{
+  "descripcion": "Reglas de validación previa a la entrega y reglas antifraude en línea.",
+  "entorno": "minimo",
+  "revisar_con": "área de riesgos",
+  "bloques": [
+    {
+      "tabla": "regla_entrega",
+      "conflicto": [
+        "codigo"
+      ],
+      "filas": [
+        {
+          "codigo": "BOLSA_COMPLETA",
+          "descripcion": "La bolsa del período está completa o cubierta por el fondo",
+          "es_bloqueante": true,
+          "permite_omision": false,
+          "rol_que_puede_omitir": null,
+          "orden": 1,
+          "activa": true
+        },
+        {
+          "codigo": "BENEFICIARIO_KYC_VIGENTE",
+          "descripcion": "El beneficiario tiene debida diligencia vigente",
+          "es_bloqueante": true,
+          "permite_omision": false,
+          "rol_que_puede_omitir": null,
+          "orden": 2,
+          "activa": true
+        },
+        {
+          "codigo": "CUENTA_DESTINO_VERIFICADA",
+          "descripcion": "La cuenta o billetera destino está verificada",
+          "es_bloqueante": true,
+          "permite_omision": false,
+          "rol_que_puede_omitir": null,
+          "orden": 3,
+          "activa": true
+        },
+        {
+          "codigo": "SIN_BLOQUEO_DE_AUTORIDAD",
+          "descripcion": "El beneficiario no tiene bloqueo de saldo vigente",
+          "es_bloqueante": true,
+          "permite_omision": false,
+          "rol_que_puede_omitir": null,
+          "orden": 4,
+          "activa": true
+        },
+        {
+          "codigo": "DEUDA_PROPIA_DEDUCIDA",
+          "descripcion": "La deuda propia del beneficiario fue deducida",
+          "es_bloqueante": true,
+          "permite_omision": false,
+          "rol_que_puede_omitir": null,
+          "orden": 5,
+          "activa": true
+        },
+        {
+          "codigo": "COMISION_DEVENGADA",
+          "descripcion": "La comisión de plataforma fue devengada y deducida",
+          "es_bloqueante": true,
+          "permite_omision": false,
+          "rol_que_puede_omitir": null,
+          "orden": 6,
+          "activa": true
+        },
+        {
+          "codigo": "CONFIRMACION_DATOS",
+          "descripcion": "El beneficiario confirmó sus datos de cobro",
+          "es_bloqueante": false,
+          "permite_omision": true,
+          "rol_que_puede_omitir": "ORGANIZADOR",
+          "orden": 7,
+          "activa": true
+        },
+        {
+          "codigo": "ENCAJE_CUMPLIDO",
+          "descripcion": "La conciliación de custodia del día anterior cumple el encaje",
+          "es_bloqueante": true,
+          "permite_omision": false,
+          "rol_que_puede_omitir": null,
+          "orden": 8,
+          "activa": true
+        }
+      ]
+    },
+    {
+      "tabla": "regla_antifraude",
+      "conflicto": [
+        "codigo"
+      ],
+      "filas": [
+        {
+          "codigo": "RETIRO_INSTRUMENTO_NUEVO",
+          "descripcion": "Retiro hacia un instrumento agregado en las últimas 24 horas",
+          "expresion": {
+            "instrumento_creado_hace_horas": {
+              "<": 24
+            },
+            "operacion": "RETIRO"
+          },
+          "accion": "RECHAZAR",
+          "umbral_puntaje": 90,
+          "prioridad": 1,
+          "activa": true,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        },
+        {
+          "codigo": "DISPOSITIVO_NUEVO_MONTO_ALTO",
+          "descripcion": "Operación de monto alto desde un dispositivo no confiable",
+          "expresion": {
+            "dispositivo_confiable": false,
+            "monto": {
+              ">": 2000
+            }
+          },
+          "accion": "DESAFIAR_MFA",
+          "umbral_puntaje": 60,
+          "prioridad": 2,
+          "activa": true,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        },
+        {
+          "codigo": "VELOCIDAD_RETIROS",
+          "descripcion": "Más de tres retiros en una hora",
+          "expresion": {
+            "operacion": "RETIRO",
+            "cantidad_en_ventana": {
+              ">": 3
+            },
+            "ventana_minutos": 60
+          },
+          "accion": "REVISAR",
+          "umbral_puntaje": 70,
+          "prioridad": 3,
+          "activa": true,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        },
+        {
+          "codigo": "CAMBIO_CREDENCIAL_Y_RETIRO",
+          "descripcion": "Retiro dentro de las 24 horas de un cambio de credencial o de factor",
+          "expresion": {
+            "credencial_cambiada_hace_horas": {
+              "<": 24
+            },
+            "operacion": "RETIRO"
+          },
+          "accion": "REVISAR",
+          "umbral_puntaje": 80,
+          "prioridad": 4,
+          "activa": true,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        },
+        {
+          "codigo": "GEO_INUSUAL",
+          "descripcion": "Operación desde un país distinto al habitual del titular",
+          "expresion": {
+            "pais_distinto_al_habitual": true
+          },
+          "accion": "DESAFIAR_MFA",
+          "umbral_puntaje": 50,
+          "prioridad": 5,
+          "activa": true,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        }
+      ]
+    }
+  ]
+}

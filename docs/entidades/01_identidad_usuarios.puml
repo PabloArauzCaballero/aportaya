@@ -1,0 +1,1123 @@
+@startuml 01_identidad_usuarios_clases
+' ============================================================
+'  MODULO 1: Identidad, Usuarios y Seguridad de Acceso
+'  Diagrama de CLASES  (modelo detallado)
+'  Cubre: RF-01 (onboarding y verificacion), RF-18 (base de reputacion),
+'         RN-01 (telefono unico), RN-17 (trazabilidad de acceso)
+'  Contexto: Pasanaku Digital - manejo de dinero de terceros, por lo que
+'            identidad, tokens y autorizacion son criticos.
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 1 - Identidad, Usuarios y Seguridad (clases)
+
+legend top right
+  <b>Convenciones</b>
+  - (privado)  # (protegido)  + (publico)  {static}
+  <<AR>> Aggregate Root   <<VO>> Value Object
+  <<Svc>> Servicio de dominio   <<Pol>> Politica configurable
+  Todo agregado persistente lleva: creadoEn, actualizadoEn,
+  creadoPor, version (bloqueo optimista) y eliminadoEn (borrado logico).
+endlegend
+
+' ============================================================
+package "Nucleo de Identidad" {
+
+  enum EstadoUsuario {
+    PRE_REGISTRO
+    PENDIENTE_VERIFICACION
+    ACTIVO
+    INCOMPLETO_KYC
+    SUSPENDIDO
+    BLOQUEADO_SEGURIDAD
+    BAJA_VOLUNTARIA
+    ELIMINADO
+  }
+
+  enum IdiomaPreferido {
+    ES_BO
+    QU_BO
+    AY_BO
+    EN_US
+  }
+
+  class Usuario <<AR>> {
+    - id: UUID
+    - codigoPublico: String <<unico, visible en UI>>
+    - nombres: String
+    - apellidos: String
+    - telefono: Telefono <<unico, E.164>>
+    - correo: CorreoElectronico <<opcional, unico>>
+    - fechaNacimiento: Date
+    - estado: EstadoUsuario
+    - nivelKYC: NivelKYC
+    - idioma: IdiomaPreferido
+    - zonaHoraria: String <<IANA, ej. America/La_Paz>>
+    - urlAvatar: String
+    - telefonoVerificadoEn: DateTime
+    - correoVerificadoEn: DateTime
+    - ultimoAccesoEn: DateTime
+    - fechaRegistro: DateTime
+    - version: Integer
+    --
+    + iniciarRegistro(telefono): TokenVerificacion
+    + confirmarTelefono(codigo): Boolean
+    + completarPerfil(datos)
+    + solicitarCambioTelefono(nuevo): TokenVerificacion
+    + suspender(motivo, hasta)
+    + reactivar()
+    + solicitarBaja(): SolicitudBaja
+    + puedeOperar(): Boolean
+    + limiteOperativoVigente(): Decimal
+  }
+
+  class Telefono <<VO>> {
+    - codigoPais: String
+    - numeroNacional: String
+    - e164: String
+    - operadora: String
+    --
+    + {static} desde(texto): Telefono
+    + normalizar(): String
+    + enmascarar(): String
+    + esValido(): Boolean
+  }
+
+  class CorreoElectronico <<VO>> {
+    - valor: String
+    - dominio: String
+    --
+    + {static} desde(texto): CorreoElectronico
+    + enmascarar(): String
+  }
+
+  class Direccion <<VO>> {
+    - departamento: String
+    - ciudad: String
+    - zona: String
+    - detalle: String
+    - latitud: Decimal
+    - longitud: Decimal
+  }
+
+  class PerfilFinanciero {
+    - id: UUID
+    - usuarioId: UUID
+    - ocupacion: String
+    - ingresoMensualDeclarado: Decimal
+    - capacidadAporteDeclarada: Decimal
+    - fuenteIngresos: String
+    - esPEP: Boolean <<persona expuesta politicamente>>
+    - actualizadoEn: DateTime
+    --
+    + validarCapacidad(montoAporte): Boolean
+  }
+
+  class SolicitudBaja {
+    - id: UUID
+    - usuarioId: UUID
+    - motivo: String
+    - solicitadaEn: DateTime
+    - fechaEfectiva: DateTime
+    - bloqueadaPorObligaciones: Boolean
+    --
+    + verificarObligacionesAbiertas(): List
+    + ejecutar()
+  }
+}
+
+' ============================================================
+package "Tokens de Verificacion y Credenciales" {
+
+  enum PropositoToken {
+    VERIFICACION_TELEFONO
+    VERIFICACION_CORREO
+    RECUPERACION_CONTRASENA
+    CAMBIO_TELEFONO
+    CAMBIO_CORREO
+    SEGUNDO_FACTOR
+    INICIO_SESION_SIN_CONTRASENA
+    INVITACION_GRUPO
+    ENLACE_PAGO
+    CONFIRMACION_ENTREGA
+    AUTORIZACION_DISPOSITIVO
+    FIRMA_REGLAMENTO
+    EXPORTACION_DATOS
+  }
+
+  enum EstadoToken {
+    EMITIDO
+    ENVIADO
+    CONSUMIDO
+    EXPIRADO
+    INVALIDADO
+    BLOQUEADO_POR_INTENTOS
+  }
+
+  enum CanalEntrega {
+    SMS
+    WHATSAPP
+    CORREO
+    LLAMADA_VOZ
+    APP_AUTENTICADORA
+    PUSH_APP
+  }
+
+  enum ResultadoValidacion {
+    VALIDO
+    NO_ENCONTRADO
+    EXPIRADO
+    YA_CONSUMIDO
+    CODIGO_INCORRECTO
+    BLOQUEADO_POR_INTENTOS
+    CANAL_NO_COINCIDE
+    DISPOSITIVO_NO_COINCIDE
+  }
+
+  abstract class TokenVerificacion <<AR>> {
+    # id: UUID
+    # usuarioId: UUID <<null en pre-registro>>
+    # proposito: PropositoToken
+    # hashToken: String <<SHA-256 + pepper; nunca se guarda el valor plano>>
+    # algoritmoHash: String
+    # canalEntrega: CanalEntrega
+    # destinoEnmascarado: String <<ej. +591 7***4321>>
+    # estado: EstadoToken
+    # emitidoEn: DateTime
+    # expiraEn: DateTime
+    # enviadoEn: DateTime
+    # consumidoEn: DateTime
+    # invalidadoEn: DateTime
+    # motivoInvalidacion: String
+    # intentosFallidos: Integer
+    # maxIntentos: Integer
+    # reenvios: Integer
+    # ipOrigen: String
+    # agenteUsuario: String
+    # dispositivoId: UUID <<opcional, ata el token al dispositivo>>
+    # correlationId: UUID <<traza el flujo completo>>
+    # claveIdempotencia: String <<unica, evita doble emision>>
+    --
+    + {abstract} generarValor(): String
+    + {abstract} ttlPorDefecto(): Integer
+    + validar(valorPlano, contexto): ResultadoValidacion
+    + consumir()
+    + invalidar(motivo)
+    + estaVigente(): Boolean
+    + registrarIntentoFallido()
+    + puedeReenviar(): Boolean
+    + segundosParaReenvio(): Integer
+  }
+
+  class TokenOTP extends TokenVerificacion {
+    - longitud: Integer <<6 por defecto>>
+    - soloNumerico: Boolean
+    - permiteAutollenado: Boolean <<SMS Retriever / WebOTP>>
+    --
+    + generarValor(): String
+    + ttlPorDefecto(): Integer
+  }
+
+  class TokenEnlaceFirmado extends TokenVerificacion {
+    - urlDestino: String
+    - firmaHMAC: String
+    - usoUnico: Boolean
+    - clicks: Integer
+    - primerClickEn: DateTime
+    --
+    + generarValor(): String
+    + construirDeepLink(): String
+    + registrarClick(ip, agente)
+  }
+
+  class TokenRefresco extends TokenVerificacion {
+    - familiaId: UUID <<cadena de rotacion>>
+    - rotadoDeId: UUID
+    - generacion: Integer
+    --
+    + rotar(): TokenRefresco
+    + detectarReuso(): Boolean
+    + revocarFamilia(motivo)
+  }
+
+  class PoliticaToken <<Pol>> {
+    - id: UUID
+    - proposito: PropositoToken
+    - ttlSegundos: Integer
+    - longitudCodigo: Integer
+    - maxIntentosValidacion: Integer
+    - maxReenviosPorHora: Integer
+    - cooldownReenvioSegundos: Integer
+    - maxEmisionesPorDia: Integer
+    - canalesPermitidos: List<CanalEntrega>
+    - exigeDispositivoConocido: Boolean
+    - invalidaAnterioresAlEmitir: Boolean
+    - vigenteDesde: DateTime
+    --
+    + aplicarA(token): void
+    + permiteCanal(canal): Boolean
+  }
+
+  class IntentoValidacionToken {
+    - id: UUID
+    - tokenId: UUID
+    - fechaHora: DateTime
+    - resultado: ResultadoValidacion
+    - ipOrigen: String
+    - agenteUsuario: String
+    - huellaDispositivo: String
+    --
+    + esSospechoso(): Boolean
+  }
+
+  class ServicioVerificacion <<Svc>> {
+    --
+    + emitir(usuario, proposito, canal): TokenVerificacion
+    + reenviar(tokenId): TokenVerificacion
+    + validar(proposito, valorPlano, contexto): ResultadoValidacion
+    + invalidarVigentes(usuarioId, proposito)
+    + purgarExpirados(): Integer
+  }
+
+  class CredencialAcceso {
+    - id: UUID
+    - usuarioId: UUID
+    - hashContrasena: String <<argon2id / bcrypt>>
+    - algoritmo: String
+    - parametrosKDF: JSON
+    - salt: String
+    - requiereCambio: Boolean
+    - cambiadaEn: DateTime
+    - expiraEn: DateTime
+    --
+    + verificar(contrasenaPlana): Boolean
+    + cambiar(nueva): void
+    + cumplePolitica(nueva): Boolean
+    + estaComprometida(): Boolean
+  }
+
+  class HistorialCredencial {
+    - id: UUID
+    - usuarioId: UUID
+    - hashContrasena: String
+    - reemplazadaEn: DateTime
+    --
+    + fueUsadaAntes(candidata): Boolean
+  }
+
+  class FactorMFA {
+    - id: UUID
+    - usuarioId: UUID
+    - tipo: String <<TOTP | SMS | WHATSAPP | RESPALDO>>
+    - secretoCifrado: String
+    - activo: Boolean
+    - esPrincipal: Boolean
+    - confirmadoEn: DateTime
+    - ultimoUsoEn: DateTime
+    --
+    + activar(codigo): Boolean
+    + generarCodigosRespaldo(): List<String>
+    + desactivar(motivo)
+  }
+}
+
+' ============================================================
+package "Sesiones, Dispositivos y Defensa" {
+
+  class Sesion {
+    - id: UUID
+    - usuarioId: UUID
+    - dispositivoId: UUID
+    - refrescoFamiliaId: UUID
+    - iniciadaEn: DateTime
+    - ultimaActividadEn: DateTime
+    - expiraEn: DateTime
+    - ipOrigen: String
+    - geolocalizacionAprox: String
+    - revocadaEn: DateTime
+    - motivoRevocacion: String
+    --
+    + refrescar(): Sesion
+    + revocar(motivo)
+    + estaActiva(): Boolean
+  }
+
+  class Dispositivo {
+    - id: UUID
+    - usuarioId: UUID
+    - huella: String <<fingerprint>>
+    - plataforma: String <<ANDROID | IOS | WEB>>
+    - modelo: String
+    - versionApp: String
+    - tokenPush: String
+    - esConfiable: Boolean
+    - autorizadoEn: DateTime
+    - ultimoUsoEn: DateTime
+    --
+    + marcarConfiable(token)
+    + revocar()
+  }
+
+  class IntentoAutenticacion {
+    - id: UUID
+    - usuarioId: UUID <<null si el identificador no existe>>
+    - identificadorUsado: String
+    - fechaHora: DateTime
+    - exitoso: Boolean
+    - motivoFallo: String
+    - ipOrigen: String
+    - agenteUsuario: String
+    - huellaDispositivo: String
+    - puntajeRiesgo: Decimal
+    --
+    + evaluarRiesgo(): Decimal
+  }
+
+  class BloqueoCuenta {
+    - id: UUID
+    - usuarioId: UUID
+    - motivo: String <<INTENTOS_FALLIDOS | FRAUDE | SOLICITUD_USUARIO | ORDEN_ADMIN>>
+    - bloqueadaEn: DateTime
+    - desbloqueaEn: DateTime
+    - liberadaEn: DateTime
+    - liberadaPor: UUID
+    --
+    + estaVigente(): Boolean
+    + liberar(adminId)
+  }
+
+  class RestriccionUsuario {
+    - id: UUID
+    - usuarioId: UUID
+    - tipo: String <<NO_CREAR_GRUPO | NO_UNIRSE | NO_SER_ORGANIZADOR | LIMITE_MONTO>>
+    - origen: String <<INCUMPLIMIENTO | RIESGO | LEGAL>>
+    - referenciaOrigenId: UUID
+    - valorLimite: Decimal
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    - levantadaPor: UUID
+    --
+    + aplica(accion): Boolean
+    + levantar(adminId, motivo)
+  }
+}
+
+' ============================================================
+package "Verificacion de Identidad (KYC)" {
+
+  enum NivelKYC {
+    NINGUNO
+    BASICO
+    INTERMEDIO
+    AVANZADO
+  }
+
+  enum EstadoVerificacion {
+    NO_INICIADA
+    PENDIENTE
+    EN_REVISION
+    APROBADA
+    RECHAZADA
+    VENCIDA
+  }
+
+  class DocumentoIdentidad {
+    - id: UUID
+    - usuarioId: UUID
+    - tipo: String <<CI | PASAPORTE | CARNET_EXTRANJERIA>>
+    - numero: String
+    - complemento: String
+    - paisEmision: String
+    - fechaEmision: Date
+    - fechaExpiracion: Date
+    - urlAnverso: String <<almacenamiento cifrado>>
+    - urlReverso: String
+    - hashArchivo: String
+    - estado: EstadoVerificacion
+    --
+    + estaVigente(): Boolean
+    + enmascararNumero(): String
+  }
+
+  class VerificacionKYC {
+    - id: UUID
+    - usuarioId: UUID
+    - documentoId: UUID
+    - nivelSolicitado: NivelKYC
+    - estado: EstadoVerificacion
+    - proveedor: String
+    - referenciaProveedor: String
+    - puntajeBiometrico: Decimal
+    - urlSelfie: String
+    - motivoRechazo: String
+    - revisadaPor: UUID <<revision manual>>
+    - iniciadaEn: DateTime
+    - resueltaEn: DateTime
+    - vigenteHasta: DateTime
+    --
+    + enviarAProveedor()
+    + aprobar(revisorId)
+    + rechazar(motivo)
+    + requiereRevisionManual(): Boolean
+  }
+
+  class ReferenciaPersonal {
+    - id: UUID
+    - usuarioId: UUID
+    - nombre: String
+    - telefono: String
+    - relacion: String <<FAMILIAR | LABORAL | VECINAL>>
+    - verificada: Boolean
+    - verificadaEn: DateTime
+    - aceptaSerAvalista: Boolean
+    --
+    + solicitarVerificacion(): TokenVerificacion
+  }
+}
+
+' ============================================================
+package "Autorizacion (RBAC) y Cumplimiento" {
+
+  enum AmbitoRol {
+    GLOBAL
+    GRUPO
+    ORGANIZACION
+  }
+
+  class Rol {
+    - id: UUID
+    - codigo: String <<ADMIN | SOPORTE | AUDITOR | ORGANIZADOR | PARTICIPANTE | INVITADO>>
+    - nombre: String
+    - ambito: AmbitoRol
+    - esSistema: Boolean
+    --
+    + permisos(): List<Permiso>
+  }
+
+  class Permiso {
+    - id: UUID
+    - codigo: String <<ej. grupo.crear, aporte.exonerar>>
+    - descripcion: String
+    - recurso: String
+    - accion: String
+    - requiereMFA: Boolean
+  }
+
+  class AsignacionRol {
+    - id: UUID
+    - usuarioId: UUID
+    - rolId: UUID
+    - ambito: AmbitoRol
+    - ambitoId: UUID <<grupoId cuando ambito = GRUPO>>
+    - otorgadaPor: UUID
+    - otorgadaEn: DateTime
+    - vigenteHasta: DateTime
+    - revocadaEn: DateTime
+    - motivoRevocacion: String
+    --
+    + estaVigente(): Boolean
+    + revocar(adminId, motivo)
+  }
+
+  class Consentimiento {
+    - id: UUID
+    - usuarioId: UUID
+    - tipo: String <<TERMINOS | PRIVACIDAD | TRATAMIENTO_DATOS | MARKETING | REGLAMENTO_GRUPO>>
+    - versionDocumento: String
+    - hashDocumento: String
+    - otorgado: Boolean
+    - fechaHora: DateTime
+    - ipOrigen: String
+    - agenteUsuario: String
+    - revocadoEn: DateTime
+    --
+    + otorgar(ip, agente)
+    + revocar()
+    + esVigente(versionActual): Boolean
+  }
+
+  class PreferenciaNotificacion {
+    - id: UUID
+    - usuarioId: UUID
+    - canalPrimario: CanalEntrega
+    - canalRespaldo: CanalEntrega
+    - aceptaWhatsApp: Boolean
+    - aceptaCorreo: Boolean
+    - aceptaSMS: Boolean
+    - aceptaPush: Boolean
+    - horaNoMolestarDesde: Time
+    - horaNoMolestarHasta: Time
+    - frecuenciaResumen: String
+    --
+    + canalEfectivoPara(tipoEvento): CanalEntrega
+    + estaEnHorarioSilencio(momento): Boolean
+  }
+}
+
+' ============================================================
+package "Reputacion (enlace al Modulo 6)" {
+
+  class ReputacionUsuario {
+    - id: UUID
+    - usuarioId: UUID
+    - puntaje: Decimal <<0..1000>>
+    - indicePuntualidad: Decimal <<0..100>>
+    - totalObligaciones: Integer
+    - obligacionesCumplidas: Integer
+    - obligacionesEnMora: Integer
+    - incumplimientosGraves: Integer
+    - gruposCompletados: Integer
+    - versionModelo: String
+    - calculadoEn: DateTime
+    --
+    + recalcular(evento)
+    + nivelConfianza(): String
+    + exportarCertificado(): Documento
+  }
+}
+
+' ---------- Relaciones ----------
+Usuario "1" *-- "1" Telefono
+Usuario "1" *-- "0..1" CorreoElectronico
+Usuario "1" *-- "0..1" Direccion
+Usuario "1" *-- "0..1" PerfilFinanciero
+Usuario "1" *-- "0..1" SolicitudBaja
+Usuario "1" *-- "1" CredencialAcceso
+Usuario "1" *-- "0..*" HistorialCredencial
+Usuario "1" *-- "0..*" FactorMFA
+Usuario "1" *-- "0..*" TokenVerificacion
+Usuario "1" *-- "0..*" Sesion
+Usuario "1" *-- "0..*" Dispositivo
+Usuario "1" o-- "0..*" IntentoAutenticacion
+Usuario "1" *-- "0..*" BloqueoCuenta
+Usuario "1" *-- "0..*" RestriccionUsuario
+Usuario "1" *-- "0..*" DocumentoIdentidad
+Usuario "1" *-- "0..*" VerificacionKYC
+Usuario "1" *-- "0..*" ReferenciaPersonal
+Usuario "1" *-- "0..*" AsignacionRol
+Usuario "1" *-- "0..*" Consentimiento
+Usuario "1" *-- "1" PreferenciaNotificacion
+Usuario "1" *-- "1" ReputacionUsuario
+
+TokenVerificacion "1" *-- "0..*" IntentoValidacionToken
+TokenVerificacion "*" --> "1" PoliticaToken : se rige por >
+TokenVerificacion "0..*" --> "0..1" Dispositivo : atado a >
+ServicioVerificacion ..> TokenVerificacion : emite / valida >
+ServicioVerificacion ..> PoliticaToken : consulta >
+
+Sesion "*" --> "1" Dispositivo
+Sesion "0..1" --> "0..1" TokenRefresco : familia >
+VerificacionKYC "*" --> "1" DocumentoIdentidad
+AsignacionRol "*" --> "1" Rol
+Rol "*" -- "*" Permiso : otorga >
+
+Usuario --> EstadoUsuario
+Usuario --> NivelKYC
+Usuario --> IdiomaPreferido
+TokenVerificacion --> PropositoToken
+TokenVerificacion --> EstadoToken
+TokenVerificacion --> CanalEntrega
+IntentoValidacionToken --> ResultadoValidacion
+VerificacionKYC --> EstadoVerificacion
+AsignacionRol --> AmbitoRol
+PreferenciaNotificacion --> CanalEntrega
+
+note right of TokenVerificacion
+  <b>Diseno de tokens (RF-01, RN-17)</b>
+  1. Nunca se persiste el valor plano: solo
+     hash con pepper del servidor.
+  2. Un solo token vigente por (usuario, proposito):
+     emitir invalida los anteriores.
+  3. La validacion es a prueba de fuerza bruta:
+     maxIntentos + cooldown + bloqueo temporal.
+  4. claveIdempotencia evita emitir dos codigos
+     por doble toque en el boton "enviar".
+  5. El mismo agregado sirve a OTP, enlaces
+     firmados de WhatsApp (modulo 5) y refresh
+     tokens: cambia la subclase, no el flujo.
+end note
+
+note bottom of PoliticaToken
+  Los TTL y limites NO se codifican: se
+  parametrizan por proposito para poder
+  endurecerlos sin desplegar codigo
+  (ej. OTP de pago = 5 min, invitacion = 72 h).
+end note
+
+note bottom of RestriccionUsuario
+  Puente con el modulo 8: un
+  RegistroIncumplimiento grave crea aqui
+  una restriccion NO_UNIRSE que impide
+  entrar a nuevos grupos mientras
+  exista deuda abierta.
+end note
+
+note bottom of AsignacionRol
+  Un usuario es organizador en un grupo y
+  participante en otro: por eso la
+  asignacion lleva ambito + ambitoId,
+  vigencia y trazabilidad de quien la otorgo.
+end note
+
+@enduml
+
+@startuml 01_identidad_usuarios_relacional
+' ============================================================
+'  MODULO 1: Identidad, Usuarios y Seguridad
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 1 - Identidad, Usuarios y Seguridad (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> restriccion CHECK    <<NULL>> admite nulos
+  Todas las tablas incluyen: creado_en TIMESTAMPTZ,
+  actualizado_en TIMESTAMPTZ, version INTEGER.
+endlegend
+
+entity "usuario" as usuario {
+  * id : UUID <<PK>>
+  --
+  codigo_publico : VARCHAR(12) <<UQ>>
+  nombres : VARCHAR(80)
+  apellidos : VARCHAR(80)
+  telefono_e164 : VARCHAR(20) <<UQ, IDX>>
+  correo : VARCHAR(150) <<UQ, NULL>>
+  fecha_nacimiento : DATE
+  estado : VARCHAR(25) <<CK>>
+  nivel_kyc : VARCHAR(15) <<CK>>
+  idioma : VARCHAR(10)
+  zona_horaria : VARCHAR(40)
+  url_avatar : VARCHAR(255) <<NULL>>
+  telefono_verificado_en : TIMESTAMPTZ <<NULL>>
+  correo_verificado_en : TIMESTAMPTZ <<NULL>>
+  ultimo_acceso_en : TIMESTAMPTZ <<NULL>>
+  fecha_registro : TIMESTAMPTZ
+  eliminado_en : TIMESTAMPTZ <<NULL>>
+  version : INTEGER
+}
+
+entity "direccion_usuario" as dir {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, UQ>>
+  departamento : VARCHAR(60)
+  ciudad : VARCHAR(60)
+  zona : VARCHAR(80)
+  detalle : VARCHAR(160)
+  latitud : DECIMAL(9,6) <<NULL>>
+  longitud : DECIMAL(9,6) <<NULL>>
+}
+
+entity "perfil_financiero" as perfin {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, UQ>>
+  ocupacion : VARCHAR(80)
+  ingreso_mensual_declarado : DECIMAL(14,2)
+  capacidad_aporte_declarada : DECIMAL(14,2)
+  fuente_ingresos : VARCHAR(120)
+  es_pep : BOOLEAN
+  actualizado_en : TIMESTAMPTZ
+}
+
+entity "credencial_acceso" as cred {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, UQ>>
+  hash_contrasena : VARCHAR(255)
+  algoritmo : VARCHAR(20)
+  parametros_kdf : JSONB
+  requiere_cambio : BOOLEAN
+  cambiada_en : TIMESTAMPTZ
+  expira_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "historial_credencial" as histcred {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  hash_contrasena : VARCHAR(255)
+  reemplazada_en : TIMESTAMPTZ
+}
+
+entity "politica_token" as poltok {
+  * id : UUID <<PK>>
+  --
+  proposito : VARCHAR(35) <<UQ+vigente_desde>>
+  ttl_segundos : INTEGER
+  longitud_codigo : SMALLINT
+  max_intentos_validacion : SMALLINT
+  max_reenvios_por_hora : SMALLINT
+  cooldown_reenvio_segundos : INTEGER
+  max_emisiones_por_dia : SMALLINT
+  canales_permitidos : VARCHAR(120)
+  exige_dispositivo_conocido : BOOLEAN
+  invalida_anteriores : BOOLEAN
+  vigente_desde : TIMESTAMPTZ
+}
+
+entity "token_verificacion" as token {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, NULL, IDX>>
+  # politica_id : UUID <<FK>>
+  # dispositivo_id : UUID <<FK, NULL>>
+  tipo_token : VARCHAR(20) <<CK: OTP|ENLACE|REFRESCO>>
+  proposito : VARCHAR(35) <<IDX>>
+  hash_token : VARCHAR(128) <<UQ>>
+  algoritmo_hash : VARCHAR(20)
+  canal_entrega : VARCHAR(20)
+  destino_enmascarado : VARCHAR(40)
+  estado : VARCHAR(25) <<IDX>>
+  emitido_en : TIMESTAMPTZ
+  expira_en : TIMESTAMPTZ <<IDX>>
+  enviado_en : TIMESTAMPTZ <<NULL>>
+  consumido_en : TIMESTAMPTZ <<NULL>>
+  invalidado_en : TIMESTAMPTZ <<NULL>>
+  motivo_invalidacion : VARCHAR(120) <<NULL>>
+  intentos_fallidos : SMALLINT
+  max_intentos : SMALLINT
+  reenvios : SMALLINT
+  ip_origen : INET
+  agente_usuario : VARCHAR(255)
+  correlation_id : UUID <<IDX>>
+  clave_idempotencia : VARCHAR(80) <<UQ>>
+  longitud : SMALLINT <<NULL, subtipo OTP>>
+  url_destino : VARCHAR(255) <<NULL, subtipo ENLACE>>
+  firma_hmac : VARCHAR(128) <<NULL, subtipo ENLACE>>
+  uso_unico : BOOLEAN <<NULL, subtipo ENLACE>>
+  clicks : SMALLINT <<NULL, subtipo ENLACE>>
+  familia_id : UUID <<NULL, subtipo REFRESCO>>
+  rotado_de_id : UUID <<FK, NULL, subtipo REFRESCO>>
+}
+
+entity "intento_validacion_token" as intok {
+  * id : UUID <<PK>>
+  --
+  # token_id : UUID <<FK, IDX>>
+  fecha_hora : TIMESTAMPTZ
+  resultado : VARCHAR(30) <<CK>>
+  ip_origen : INET
+  agente_usuario : VARCHAR(255)
+  huella_dispositivo : VARCHAR(128) <<NULL>>
+}
+
+entity "factor_mfa" as mfa {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(20) <<CK>>
+  secreto_cifrado : VARCHAR(255)
+  activo : BOOLEAN
+  es_principal : BOOLEAN
+  confirmado_en : TIMESTAMPTZ <<NULL>>
+  ultimo_uso_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "dispositivo" as disp {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  huella : VARCHAR(128) <<UQ+usuario_id>>
+  plataforma : VARCHAR(15) <<CK>>
+  modelo : VARCHAR(60)
+  version_app : VARCHAR(20)
+  token_push : VARCHAR(255) <<NULL>>
+  es_confiable : BOOLEAN
+  autorizado_en : TIMESTAMPTZ <<NULL>>
+  ultimo_uso_en : TIMESTAMPTZ
+  revocado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "sesion" as sesion {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # dispositivo_id : UUID <<FK>>
+  refresco_familia_id : UUID <<NULL>>
+  iniciada_en : TIMESTAMPTZ
+  ultima_actividad_en : TIMESTAMPTZ
+  expira_en : TIMESTAMPTZ <<IDX>>
+  ip_origen : INET
+  geolocalizacion_aprox : VARCHAR(80) <<NULL>>
+  revocada_en : TIMESTAMPTZ <<NULL>>
+  motivo_revocacion : VARCHAR(80) <<NULL>>
+}
+
+entity "intento_autenticacion" as intaut {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, NULL, IDX>>
+  identificador_usado : VARCHAR(150) <<IDX>>
+  fecha_hora : TIMESTAMPTZ <<IDX>>
+  exitoso : BOOLEAN
+  motivo_fallo : VARCHAR(60) <<NULL>>
+  ip_origen : INET <<IDX>>
+  agente_usuario : VARCHAR(255)
+  huella_dispositivo : VARCHAR(128) <<NULL>>
+  puntaje_riesgo : DECIMAL(5,2)
+}
+
+entity "bloqueo_cuenta" as bloq {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  motivo : VARCHAR(30) <<CK>>
+  bloqueada_en : TIMESTAMPTZ
+  desbloquea_en : TIMESTAMPTZ <<NULL>>
+  liberada_en : TIMESTAMPTZ <<NULL>>
+  # liberada_por : UUID <<FK, NULL>>
+}
+
+entity "restriccion_usuario" as restr {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(30) <<CK>>
+  origen : VARCHAR(20) <<CK>>
+  referencia_origen_id : UUID <<NULL>>
+  valor_limite : DECIMAL(14,2) <<NULL>>
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+  # levantada_por : UUID <<FK, NULL>>
+  motivo_levantamiento : VARCHAR(160) <<NULL>>
+}
+
+entity "documento_identidad" as docid {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(25) <<CK>>
+  numero_cifrado : VARCHAR(255)
+  hash_numero : VARCHAR(64) <<UQ, busqueda sin descifrar>>
+  complemento : VARCHAR(10) <<NULL>>
+  pais_emision : CHAR(2)
+  fecha_emision : DATE <<NULL>>
+  fecha_expiracion : DATE <<NULL>>
+  url_anverso : VARCHAR(255)
+  url_reverso : VARCHAR(255) <<NULL>>
+  hash_archivo : VARCHAR(64)
+  estado : VARCHAR(20) <<CK>>
+}
+
+entity "verificacion_kyc" as kyc {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # documento_id : UUID <<FK, NULL>>
+  nivel_solicitado : VARCHAR(15) <<CK>>
+  estado : VARCHAR(20) <<CK>>
+  proveedor : VARCHAR(40) <<NULL>>
+  referencia_proveedor : VARCHAR(80) <<NULL>>
+  puntaje_biometrico : DECIMAL(5,2) <<NULL>>
+  url_selfie : VARCHAR(255) <<NULL>>
+  motivo_rechazo : VARCHAR(160) <<NULL>>
+  # revisada_por : UUID <<FK, NULL>>
+  iniciada_en : TIMESTAMPTZ
+  resuelta_en : TIMESTAMPTZ <<NULL>>
+  vigente_hasta : DATE <<NULL>>
+}
+
+entity "referencia_personal" as refper {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  nombre : VARCHAR(120)
+  telefono : VARCHAR(20)
+  relacion : VARCHAR(20) <<CK>>
+  verificada : BOOLEAN
+  verificada_en : TIMESTAMPTZ <<NULL>>
+  acepta_ser_avalista : BOOLEAN
+}
+
+entity "rol" as rol {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(30) <<UQ>>
+  nombre : VARCHAR(60)
+  ambito : VARCHAR(15) <<CK>>
+  es_sistema : BOOLEAN
+}
+
+entity "permiso" as perm {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(60) <<UQ>>
+  descripcion : VARCHAR(160)
+  recurso : VARCHAR(40)
+  accion : VARCHAR(30)
+  requiere_mfa : BOOLEAN
+}
+
+entity "rol_permiso" as rolperm {
+  * # rol_id : UUID <<PK, FK>>
+  * # permiso_id : UUID <<PK, FK>>
+}
+
+entity "asignacion_rol" as asigrol {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # rol_id : UUID <<FK>>
+  ambito : VARCHAR(15) <<CK>>
+  ambito_id : UUID <<NULL, grupo_id (M2)>>
+  # otorgada_por : UUID <<FK>>
+  otorgada_en : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+  revocada_en : TIMESTAMPTZ <<NULL>>
+  motivo_revocacion : VARCHAR(120) <<NULL>>
+}
+
+entity "consentimiento" as cons {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(30) <<CK>>
+  version_documento : VARCHAR(20)
+  hash_documento : VARCHAR(64)
+  otorgado : BOOLEAN
+  fecha_hora : TIMESTAMPTZ
+  ip_origen : INET
+  agente_usuario : VARCHAR(255)
+  revocado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "preferencia_notificacion" as pref {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, UQ>>
+  canal_primario : VARCHAR(20) <<CK>>
+  canal_respaldo : VARCHAR(20) <<CK, NULL>>
+  acepta_whatsapp : BOOLEAN
+  acepta_correo : BOOLEAN
+  acepta_sms : BOOLEAN
+  acepta_push : BOOLEAN
+  hora_no_molestar_desde : TIME <<NULL>>
+  hora_no_molestar_hasta : TIME <<NULL>>
+  frecuencia_resumen : VARCHAR(15)
+}
+
+entity "reputacion_usuario" as reput {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, UQ>>
+  puntaje : DECIMAL(6,2)
+  indice_puntualidad : DECIMAL(5,2)
+  total_obligaciones : INTEGER
+  obligaciones_cumplidas : INTEGER
+  obligaciones_en_mora : INTEGER
+  incumplimientos_graves : INTEGER
+  grupos_completados : INTEGER
+  version_modelo : VARCHAR(20)
+  calculado_en : TIMESTAMPTZ
+}
+
+entity "solicitud_baja" as baja {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  motivo : VARCHAR(160)
+  solicitada_en : TIMESTAMPTZ
+  fecha_efectiva : TIMESTAMPTZ <<NULL>>
+  bloqueada_por_obligaciones : BOOLEAN
+}
+
+usuario ||--o| dir : "reside en"
+usuario ||--o| perfin : "declara"
+usuario ||--|| cred : "autentica con"
+usuario ||--o{ histcred : "historico de"
+usuario ||--o{ token : "recibe"
+usuario ||--o{ mfa : "protege con"
+usuario ||--o{ disp : "usa"
+usuario ||--o{ sesion : "abre"
+usuario ||--o{ intaut : "intenta"
+usuario ||--o{ bloq : "sufre"
+usuario ||--o{ restr : "limitado por"
+usuario ||--o{ docid : "acredita"
+usuario ||--o{ kyc : "verifica"
+usuario ||--o{ refper : "declara"
+usuario ||--o{ asigrol : "asume"
+usuario ||--o{ cons : "consiente"
+usuario ||--|| pref : "configura"
+usuario ||--|| reput : "acumula"
+usuario ||--o| baja : "solicita"
+
+poltok ||--o{ token : "parametriza"
+token ||--o{ intok : "registra"
+token }o--o| disp : "atado a"
+disp ||--o{ sesion : "soporta"
+docid ||--o{ kyc : "sustenta"
+rol ||--o{ rolperm : ""
+perm ||--o{ rolperm : ""
+rol ||--o{ asigrol : "se asigna en"
+
+note top of token
+  <b>Tabla unica con herencia por tabla (STI)</b>
+  tipo_token discrimina OTP / ENLACE / REFRESCO.
+  Indice parcial recomendado:
+   UNIQUE (usuario_id, proposito)
+     WHERE estado IN ('EMITIDO','ENVIADO')
+  -> garantiza un solo token vigente por proposito.
+  Indice de limpieza: (estado, expira_en).
+  hash_token es UNIQUE: colision = intento de replay.
+end note
+
+note bottom of asigrol
+  ambito_id apunta a grupo.id (modulo 2)
+  cuando ambito = 'GRUPO'. Es referencia
+  polimorfica: se valida por trigger, no
+  por FK fisica.
+end note
+
+note bottom of restr
+  referencia_origen_id apunta a
+  registro_incumplimiento.id (modulo 8)
+  cuando origen = 'INCUMPLIMIENTO'.
+end note
+
+note bottom of docid
+  numero_cifrado usa cifrado a nivel de columna
+  (pgcrypto / KMS). hash_numero permite buscar
+  duplicados sin descifrar: evita que la misma
+  cedula abra dos cuentas.
+end note
+
+@enduml

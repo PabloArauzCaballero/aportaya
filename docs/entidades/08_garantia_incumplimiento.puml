@@ -1,0 +1,1535 @@
+@startuml 08_garantia_incumplimiento_clases
+' ============================================================
+'  MODULO 8: Garantia, Incumplimiento, Cobranza y Sanciones (Parche A)
+'  Diagrama de CLASES  (modelo detallado)
+'  Cubre: RF-21, RN-21 y todo el ciclo de vida del incumplimiento
+'
+'  Tesis del modulo: la reputacion NO alcanza. Un puntaje resume,
+'  pero no permite cobrar, ni sancionar con debido proceso, ni
+'  probar nada ante un reclamo. Por eso el incumplimiento se
+'  modela como un EXPEDIENTE propio (RegistroIncumplimiento) con
+'  evidencia, gestion de cobranza, deuda exigible, garantia que
+'  la cubre, aval que responde, sancion apelable y cierre trazable.
+'  La reputacion (M6) es apenas UNA de las consecuencias.
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 8 - Garantia, Incumplimiento, Cobranza y Sanciones (clases)
+
+legend top right
+  <b>Cadena completa de un incumplimiento</b>
+  Deteccion -> RegistroIncumplimiento (expediente)
+   -> GestionCobranza (escalonada, con promesas de pago)
+   -> Cobertura desde el FondoGarantia (el grupo no se detiene)
+   -> DeudaParticipante exigible + subrogacion a favor del fondo
+   -> Recuperacion / Ejecucion de aval / Castigo
+   -> Sancion con derecho a apelacion
+   -> Efectos en reputacion (M6) y restricciones (M1)
+endlegend
+
+' ============================================================
+package "Fondo de Garantia" {
+
+  enum AmbitoFondo {
+    POR_GRUPO
+    MUTUAL_PLATAFORMA
+  }
+
+  enum TipoMovimientoFondo {
+    CONSTITUCION
+    APORTE_PERIODICO
+    COBERTURA_APLICADA
+    RECUPERACION_ACREDITADA
+    EJECUCION_AVAL
+    DEVOLUCION_A_PARTICIPANTES
+    CASTIGO_INCOBRABLE
+    AJUSTE_CONTABLE
+    RENDIMIENTO
+  }
+
+  class FondoGarantia <<AR>> {
+    - id: UUID
+    - ambito: AmbitoFondo
+    - grupoId: UUID <<null si es mutual>>
+    - moneda: String
+    - saldoDisponible: Decimal
+    - saldoComprometido: Decimal
+    - totalAportado: Decimal
+    - totalCubierto: Decimal
+    - totalRecuperado: Decimal
+    - totalCastigado: Decimal
+    - cuentaContableId: UUID
+    - estado: String <<ACTIVO | AGOTADO | EN_LIQUIDACION | CERRADO>>
+    - version: Integer
+    --
+    + evaluarDisponibilidad(monto): ResultadoEvaluacion
+    + comprometer(monto): Boolean
+    + debitar(monto, referencia)
+    + acreditar(monto, referencia)
+    + indiceSuficiencia(): Decimal
+    + proyectarAgotamiento(): Date
+    + liquidarYDevolver(): List<DevolucionFondo>
+  }
+
+  class PoliticaCobertura <<Pol>> {
+    - id: UUID
+    - grupoId: UUID <<null = politica global>>
+    - porcentajeConstitucion: Decimal <<% de cada aporte que alimenta el fondo>>
+    - diasMoraParaActivar: Integer
+    - porcentajeMaximoCoberturaPorAporte: Decimal
+    - topeCoberturaPorParticipante: Decimal
+    - topeCoberturaPorPeriodo: Decimal
+    - maxCoberturasPorParticipante: Integer
+    - exigeAvalPrevio: Boolean
+    - requiereAprobacionManualDesde: Decimal
+    - plazoRecuperacionDias: Integer
+    - tasaRecargoRecuperacion: Decimal
+    - vigenteDesde: DateTime
+    --
+    + esCubrible(registro): ResultadoEvaluacion
+    + montoCubrible(obligacion): Decimal
+  }
+
+  class MovimientoFondo {
+    - id: UUID
+    - fondoId: UUID
+    - tipo: TipoMovimientoFondo
+    - monto: Decimal
+    - saldoResultante: Decimal
+    - referenciaTipo: String
+    - referenciaId: UUID
+    - asientoContableId: UUID
+    - descripcion: String
+    - fecha: DateTime
+    - registradoPor: UUID
+    --
+    + revertir(motivo): MovimientoFondo
+  }
+
+  class DevolucionFondo {
+    - id: UUID
+    - fondoId: UUID
+    - participanteId: UUID
+    - montoAportado: Decimal
+    - montoConsumido: Decimal
+    - montoADevolver: Decimal
+    - estado: String <<CALCULADA | PAGADA | RETENIDA>>
+    - motivoRetencion: String
+    - fecha: DateTime
+    --
+    + calcularProrrateo(): Decimal
+  }
+}
+
+' ============================================================
+package "Expediente de Incumplimiento" {
+
+  enum TipoIncumplimiento {
+    APORTE_ATRASADO
+    APORTE_PARCIAL
+    APORTE_IMPAGO
+    PAGO_RECHAZADO_O_REVERSADO
+    COMPROBANTE_FALSO
+    ABANDONO_DE_GRUPO
+    BENEFICIARIO_NO_CONTINUA_APORTANDO
+    INCUMPLIMIENTO_PLAN_REGULARIZACION
+    INCUMPLIMIENTO_AVAL
+    INCUMPLIMIENTO_ORGANIZADOR
+    USO_INDEBIDO_DE_LA_PLATAFORMA
+    FRAUDE_CONFIRMADO
+  }
+
+  enum SeveridadIncumplimiento {
+    LEVE
+    MODERADA
+    GRAVE
+    CRITICA
+  }
+
+  enum EstadoIncumplimiento {
+    DETECTADO
+    NOTIFICADO
+    EN_GESTION_COBRANZA
+    CON_PROMESA_DE_PAGO
+    CUBIERTO_POR_GARANTIA
+    EN_RECUPERACION
+    SUBSANADO
+    REGULARIZADO_CON_PLAN
+    CASTIGADO_INCOBRABLE
+    JUDICIALIZADO
+    ANULADO_POR_ERROR
+    PRESCRITO
+  }
+
+  enum OrigenDeteccion {
+    AUTOMATICO_VENCIMIENTO
+    AUTOMATICO_CONCILIACION
+    REPORTE_DE_PARTICIPANTE
+    REPORTE_DE_ORGANIZADOR
+    AUDITORIA_INTERNA
+    ALERTA_DE_RIESGO
+  }
+
+  class RegistroIncumplimiento <<AR>> {
+    - id: UUID
+    - codigoExpediente: String <<unico y legible: INC-2026-000123>>
+    - usuarioId: UUID
+    - participanteId: UUID
+    - grupoId: UUID
+    - periodoId: UUID
+    - cupoId: UUID
+    - obligacionId: UUID <<null en incumplimientos no dinerarios>>
+    - tipo: TipoIncumplimiento
+    - severidad: SeveridadIncumplimiento
+    - estado: EstadoIncumplimiento
+    - origenDeteccion: OrigenDeteccion
+    - montoInvolucrado: Decimal
+    - montoRecuperado: Decimal
+    - montoCastigado: Decimal
+    - diasMoraAlDetectar: Integer
+    - diasMoraActuales: Integer
+    - esReincidencia: Boolean
+    - numeroReincidencia: Integer
+    - afectoAlaEntrega: Boolean
+    - entregaAfectadaId: UUID
+    - detectadoEn: DateTime
+    - notificadoEn: DateTime
+    - fechaLimiteSubsanacion: DateTime
+    - cerradoEn: DateTime
+    - motivoCierre: String
+    - resumenResolucion: String
+    - reportadoPor: UUID
+    - responsableGestion: UUID
+    - version: Integer
+    --
+    + clasificarSeveridad(politica): SeveridadIncumplimiento
+    + notificarInvolucrados()
+    + abrirGestionCobranza(): GestionCobranza
+    + solicitarCobertura(): CoberturaIncumplimiento
+    + registrarSubsanacion(pagoId)
+    + escalar(nuevaSeveridad, motivo)
+    + anularPorError(motivo, adminId)
+    + prescribir()
+    + cerrar(motivo)
+    + saldoPendiente(): Decimal
+    + lineaDeTiempo(): List<HistorialEstadoIncumplimiento>
+  }
+
+  class EvidenciaIncumplimiento {
+    - id: UUID
+    - registroId: UUID
+    - tipo: String <<CAPTURA_ESTADO | EXTRACTO | COMUNICACION | ACTA_ACUERDO | LOG_SISTEMA | DOCUMENTO>>
+    - descripcion: String
+    - urlArchivo: String
+    - hashArchivo: String
+    - contenidoEstructurado: JSON
+    - aportadaPor: UUID
+    - fechaHora: DateTime
+    - esInmutable: Boolean
+    --
+    + sellar(): String
+    + verificarIntegridad(): Boolean
+  }
+
+  class HistorialEstadoIncumplimiento {
+    - id: UUID
+    - registroId: UUID
+    - estadoAnterior: EstadoIncumplimiento
+    - estadoNuevo: EstadoIncumplimiento
+    - motivo: String
+    - montoAsociado: Decimal
+    - ejecutadoPor: UUID
+    - esAutomatico: Boolean
+    - fechaHora: DateTime
+  }
+
+  class DescargoParticipante {
+    - id: UUID
+    - registroId: UUID
+    - participanteId: UUID
+    - argumento: String
+    - evidencias: List<String>
+    - estado: String <<PRESENTADO | EN_ANALISIS | ACEPTADO | RECHAZADO>>
+    - resolucion: String
+    - resueltoPor: UUID
+    - presentadoEn: DateTime
+    - resueltoEn: DateTime
+    --
+    + presentar()
+    + resolver(decision, nota)
+  }
+
+  class HistorialIncumplimientoUsuario {
+    - usuarioId: UUID
+    - totalIncumplimientos: Integer
+    - incumplimientosLeves: Integer
+    - incumplimientosGraves: Integer
+    - incumplimientosAbiertos: Integer
+    - montoTotalIncumplido: Decimal
+    - montoTotalRecuperado: Decimal
+    - montoCastigadoHistorico: Decimal
+    - gruposAbandonados: Integer
+    - ultimoIncumplimientoEn: DateTime
+    - diasMoraPromedio: Decimal
+    - tasaRegularizacion: Decimal
+    - estaEnListaRestriccion: Boolean
+    - actualizadoEn: DateTime
+    --
+    + recalcular()
+    + esAptoParaNuevoGrupo(): Boolean
+    + exportarReporte(): Documento
+  }
+
+  class ListaRestriccionInterna {
+    - id: UUID
+    - usuarioId: UUID
+    - motivo: String
+    - registroOrigenId: UUID
+    - nivelRestriccion: String <<OBSERVACION | LIMITADO | VETADO>>
+    - montoAdeudado: Decimal
+    - incluidoEn: DateTime
+    - vigenteHasta: DateTime
+    - retiradoEn: DateTime
+    - retiradoPor: UUID
+    - motivoRetiro: String
+    --
+    + incluir(motivo)
+    + retirar(adminId, motivo)
+    + bloqueaAccion(accion): Boolean
+  }
+
+  class DetectorIncumplimiento <<Svc>> {
+    --
+    + barrerVencimientos(fecha): List<RegistroIncumplimiento>
+    + detectarPagosReversados(): List<RegistroIncumplimiento>
+    + detectarAbandonos(): List<RegistroIncumplimiento>
+    + recalcularDiasMora(): Integer
+    + evaluarPrescripcion(): Integer
+  }
+
+  class ScoreRiesgoIncumplimiento {
+    - id: UUID
+    - usuarioId: UUID
+    - grupoId: UUID
+    - probabilidadIncumplimiento: Decimal
+    - factoresPrincipales: JSON
+    - nivelRiesgo: String <<BAJO | MEDIO | ALTO | MUY_ALTO>>
+    - accionSugerida: String
+    - calculadoEn: DateTime
+    --
+    + recalcular()
+    + generarAlertaTemprana(): AlertaTemprana
+  }
+
+  class AlertaTemprana {
+    - id: UUID
+    - usuarioId: UUID
+    - grupoId: UUID
+    - codigo: String <<PAGA_CADA_VEZ_MAS_TARDE | NO_ABRE_MENSAJES | MULTIPLES_GRUPOS_EN_MORA>>
+    - descripcion: String
+    - severidad: String
+    - estado: String <<ABIERTA | ATENDIDA | DESCARTADA>>
+    - generadaEn: DateTime
+    --
+    + accionPreventiva(): String
+  }
+}
+
+' ============================================================
+package "Gestion de Cobranza" {
+
+  enum EtapaCobranza {
+    PREVENTIVA
+    TEMPRANA
+    ADMINISTRATIVA
+    PREJUDICIAL
+    JUDICIAL
+    CASTIGO
+  }
+
+  enum ResultadoContacto {
+    SIN_RESPUESTA
+    CONTACTADO_SE_COMPROMETE
+    CONTACTADO_SE_NIEGA
+    TELEFONO_ERRONEO
+    PAGO_INMEDIATO
+    SOLICITA_PLAN
+    DISPUTA_LA_DEUDA
+  }
+
+  class GestionCobranza <<AR>> {
+    - id: UUID
+    - registroId: UUID
+    - etapaActual: EtapaCobranza
+    - gestorAsignadoId: UUID
+    - montoEnGestion: Decimal
+    - intentosContacto: Integer
+    - ultimoContactoEn: DateTime
+    - proximaAccionEn: DateTime
+    - estado: String <<ACTIVA | PAUSADA | CERRADA_EXITOSA | CERRADA_SIN_EXITO>>
+    - abiertaEn: DateTime
+    - cerradaEn: DateTime
+    --
+    + ejecutarSiguienteAccion(): AccionCobranza
+    + escalarEtapa()
+    + asignarGestor(usuarioId)
+    + registrarPromesa(fecha, monto): PromesaPago
+    + cerrar(resultado)
+    + costoAcumulado(): Decimal
+  }
+
+  class EstrategiaCobranza <<Pol>> {
+    - id: UUID
+    - etapa: EtapaCobranza
+    - diasMoraDesde: Integer
+    - diasMoraHasta: Integer
+    - canalesPermitidos: List<String>
+    - frecuenciaDias: Integer
+    - maxContactosPorSemana: Integer
+    - plantillaNotificacionCodigo: String
+    - requiereGestorHumano: Boolean
+    - permiteQuita: Boolean
+    - quitaMaximaPorcentaje: Decimal
+    - siguienteEtapa: EtapaCobranza
+    --
+    + aplicaA(diasMora): Boolean
+    + siguienteAccion(gestion): AccionCobranza
+  }
+
+  class AccionCobranza {
+    - id: UUID
+    - gestionId: UUID
+    - etapa: EtapaCobranza
+    - tipo: String <<RECORDATORIO_AUTOMATICO | LLAMADA | MENSAJE_DIRECTO | VISITA | CARTA_FORMAL | AVISO_A_AVALISTA | ULTIMATUM>>
+    - canal: String
+    - notificacionId: UUID <<modulo 5>>
+    - resultado: ResultadoContacto
+    - notaGestor: String
+    - costo: Decimal
+    - ejecutadaPor: UUID
+    - ejecutadaEn: DateTime
+    --
+    + registrarResultado(resultado, nota)
+  }
+
+  class PromesaPago {
+    - id: UUID
+    - gestionId: UUID
+    - montoPrometido: Decimal
+    - fechaPrometida: Date
+    - canalCompromiso: String
+    - estado: String <<VIGENTE | CUMPLIDA | INCUMPLIDA | PARCIAL>>
+    - montoEfectivo: Decimal
+    - registradaPor: UUID
+    - creadaEn: DateTime
+    - evaluadaEn: DateTime
+    --
+    + evaluarCumplimiento()
+    + incumplir()
+  }
+
+  class AcuerdoQuita {
+    - id: UUID
+    - registroId: UUID
+    - montoOriginal: Decimal
+    - montoCondonado: Decimal
+    - montoAPagar: Decimal
+    - justificacion: String
+    - aprobadoPor: UUID
+    - acuerdoGrupoId: UUID <<votacion del grupo, M2>>
+    - estado: String <<PROPUESTO | APROBADO | EJECUTADO | RECHAZADO>>
+    - fecha: DateTime
+    --
+    + aprobar(aprobadorId)
+    + ejecutar()
+  }
+}
+
+' ============================================================
+package "Cobertura, Deuda y Recuperacion" {
+
+  enum EstadoCobertura {
+    SOLICITADA
+    APROBADA
+    APLICADA
+    RECHAZADA
+    EN_RECUPERACION
+    RECUPERADA_TOTAL
+    RECUPERADA_PARCIAL
+    INCOBRABLE
+    REVERSADA
+  }
+
+  enum EstadoDeuda {
+    VIGENTE
+    EN_MORA
+    EN_PLAN_DE_PAGO
+    PAGADA
+    CONDONADA
+    CASTIGADA
+    JUDICIALIZADA
+  }
+
+  class CoberturaIncumplimiento <<AR>> {
+    - id: UUID
+    - fondoId: UUID
+    - registroId: UUID
+    - obligacionId: UUID
+    - periodoId: UUID
+    - montoSolicitado: Decimal
+    - montoCubierto: Decimal
+    - porcentajeCobertura: Decimal
+    - estado: EstadoCobertura
+    - requirioAprobacionManual: Boolean
+    - aprobadaPor: UUID
+    - motivoRechazo: String
+    - movimientoFondoId: UUID
+    - asientoContableId: UUID
+    - solicitadaEn: DateTime
+    - aplicadaEn: DateTime
+    --
+    + evaluarElegibilidad(politica): ResultadoEvaluacion
+    + aprobar(aprobadorId)
+    + aplicar()
+    + rechazar(motivo)
+    + reversar(motivo)
+    + generarDeuda(): DeudaParticipante
+  }
+
+  class DeudaParticipante <<AR>> {
+    - id: UUID
+    - usuarioId: UUID
+    - participanteId: UUID
+    - grupoId: UUID
+    - registroId: UUID
+    - coberturaId: UUID <<null si no hubo cobertura>>
+    - acreedor: String <<FONDO_GARANTIA | GRUPO | PLATAFORMA>>
+    - capitalOriginal: Decimal
+    - recargosAcumulados: Decimal
+    - totalAbonado: Decimal
+    - saldoActual: Decimal
+    - moneda: String
+    - estado: EstadoDeuda
+    - esSubrogada: Boolean
+    - fechaExigibilidad: Date
+    - fechaPrescripcion: Date
+    - diasVencida: Integer
+    - version: Integer
+    --
+    + acumularRecargo(politica)
+    + abonar(monto, origen): AbonoRecuperacion
+    + condonar(monto, acuerdoId)
+    + castigar(motivo): CastigoDeuda
+    + estaSaldada(): Boolean
+    + antiguedadDias(): Integer
+  }
+
+  class AbonoRecuperacion {
+    - id: UUID
+    - deudaId: UUID
+    - monto: Decimal
+    - origen: String <<PAGO_VOLUNTARIO | DESCUENTO_DE_ENTREGA | EJECUCION_AVAL | ACUERDO_QUITA | COMPENSACION>>
+    - pagoId: UUID <<modulo 3>>
+    - entregaId: UUID <<modulo 4, si se descuento del cobro>>
+    - aplicadoACapital: Decimal
+    - aplicadoARecargos: Decimal
+    - saldoResultante: Decimal
+    - movimientoFondoId: UUID
+    - fecha: DateTime
+    - registradoPor: UUID
+    --
+    + aplicar()
+    + revertir(motivo)
+  }
+
+  class CastigoDeuda {
+    - id: UUID
+    - deudaId: UUID
+    - montoCastigado: Decimal
+    - motivo: String <<INCOBRABLE | PRESCRIPCION | COSTO_MAYOR_QUE_DEUDA | FALLECIMIENTO | RESOLUCION_LEGAL>>
+    - justificacion: String
+    - aprobadoPor: UUID
+    - asientoContableId: UUID
+    - mantieneRegistroReputacional: Boolean
+    - fecha: DateTime
+    --
+    + ejecutar()
+    + reactivarSiPaga(monto)
+  }
+
+  class Subrogacion {
+    - id: UUID
+    - coberturaId: UUID
+    - deudaId: UUID
+    - acreedorOriginal: String
+    - acreedorSubrogado: String
+    - montoSubrogado: Decimal
+    - fecha: DateTime
+    - documentoRespaldoUrl: String
+    --
+    + formalizar()
+  }
+}
+
+' ============================================================
+package "Aval Solidario" {
+
+  class AvalParticipante {
+    - id: UUID
+    - grupoId: UUID
+    - participanteAvaladoId: UUID
+    - avalistaUsuarioId: UUID
+    - esParticipanteDelGrupo: Boolean
+    - montoMaximoAvalado: Decimal
+    - alcance: String <<TOTAL | UN_PERIODO | PORCENTAJE>>
+    - porcentajeResponsabilidad: Decimal
+    - aceptadoEn: DateTime
+    - tokenAceptacionId: UUID
+    - estado: String <<PENDIENTE | VIGENTE | EJECUTADO | LIBERADO | RECHAZADO>>
+    - liberadoEn: DateTime
+    --
+    + aceptar(tokenId)
+    + montoDisponible(): Decimal
+    + ejecutar(monto): EjecucionAval
+    + liberar(motivo)
+  }
+
+  class EjecucionAval {
+    - id: UUID
+    - avalId: UUID
+    - registroId: UUID
+    - deudaId: UUID
+    - montoEjecutado: Decimal
+    - estado: String <<NOTIFICADA | ACEPTADA | PAGADA | RECHAZADA | EN_DISPUTA>>
+    - notificadaEn: DateTime
+    - plazoRespuesta: DateTime
+    - pagoId: UUID
+    - generaDeudaDelAvalista: Boolean
+    --
+    + notificar()
+    + registrarPago(pagoId)
+    + escalarPorNoPago()
+  }
+}
+
+' ============================================================
+package "Sanciones con Debido Proceso" {
+
+  enum TipoSancion {
+    ADVERTENCIA
+    RECARGO_MONETARIO
+    AFECTACION_REPUTACION
+    PERDIDA_DE_PRIORIDAD_DE_TURNO
+    SUSPENSION_DE_VOTO
+    RETENCION_DE_ENTREGA
+    RESTRICCION_NUEVOS_GRUPOS
+    EXPULSION_DEL_GRUPO
+    INHABILITACION_PLATAFORMA
+  }
+
+  class PoliticaSancion <<Pol>> {
+    - id: UUID
+    - grupoId: UUID <<null = global>>
+    - version: String
+    - requiereAcuerdoGrupo: Boolean
+    - plazoDescargoDias: Integer
+    - plazoApelacionDias: Integer
+    - prescribeEnDias: Integer
+    - vigenteDesde: DateTime
+    --
+    + sancionesPara(tipo, severidad, reincidencia): List<MatrizSancion>
+  }
+
+  class MatrizSancion {
+    - id: UUID
+    - politicaId: UUID
+    - tipoIncumplimiento: TipoIncumplimiento
+    - severidad: SeveridadIncumplimiento
+    - numeroReincidencia: Integer
+    - tipoSancion: TipoSancion
+    - valor: Decimal
+    - duracionDias: Integer
+    - esAutomatica: Boolean
+    - requiereRevisionHumana: Boolean
+    --
+    + instanciar(registro): Sancion
+  }
+
+  class Sancion {
+    - id: UUID
+    - registroId: UUID
+    - usuarioId: UUID
+    - participanteId: UUID
+    - matrizId: UUID
+    - tipo: TipoSancion
+    - descripcion: String
+    - montoRecargo: Decimal
+    - impactoReputacion: Decimal
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    - estado: String <<PROPUESTA | NOTIFICADA | EN_DESCARGO | FIRME | EN_APELACION | REVOCADA | CUMPLIDA | PRESCRITA>>
+    - aplicadaPor: UUID
+    - acuerdoGrupoId: UUID
+    - notificadaEn: DateTime
+    - firmeEn: DateTime
+    --
+    + notificar()
+    + quedarFirme()
+    + ejecutar()
+    + revocar(motivo, resolutorId)
+    + apelar(argumento): ApelacionSancion
+    + estaVigente(): Boolean
+  }
+
+  class ApelacionSancion {
+    - id: UUID
+    - sancionId: UUID
+    - apelanteId: UUID
+    - argumento: String
+    - evidencias: List<String>
+    - estado: String <<PRESENTADA | ADMITIDA | EN_REVISION | ACEPTADA | RECHAZADA | DESISTIDA>>
+    - instancia: String <<ORGANIZADOR | COMITE_GRUPO | SOPORTE_PLATAFORMA>>
+    - resueltaPor: UUID
+    - resolucion: String
+    - presentadaEn: DateTime
+    - fechaLimiteResolucion: DateTime
+    - resueltaEn: DateTime
+    --
+    + admitir()
+    + resolver(decision, fundamento)
+    + escalarInstancia()
+  }
+}
+
+' ============================================================
+package "Continuidad del Grupo" {
+
+  class ReemplazoParticipante {
+    - id: UUID
+    - grupoId: UUID
+    - cupoId: UUID
+    - registroId: UUID
+    - participanteSalienteId: UUID
+    - participanteEntranteId: UUID
+    - deudaAsumidaPorEntrante: Decimal
+    - deudaRetenidaPorSaliente: Decimal
+    - conservaOrdenDeTurno: Boolean
+    - acuerdoGrupoId: UUID
+    - estado: String <<BUSCANDO | PROPUESTO | APROBADO | EJECUTADO | FALLIDO>>
+    - fecha: DateTime
+    --
+    + buscarCandidatos(): List<CandidatoReemplazo>
+    + ejecutar(): TraspasoCupo
+    + revertir(motivo)
+  }
+
+  class CandidatoReemplazo {
+    - id: UUID
+    - reemplazoId: UUID
+    - usuarioId: UUID
+    - puntajeReputacion: Decimal
+    - aceptaCondiciones: Boolean
+    - fuenteCandidato: String <<LISTA_ESPERA | INVITACION | EMPAREJAMIENTO>>
+    - estado: String <<PROPUESTO | ACEPTADO | DESCARTADO>>
+    --
+    + evaluar(): Decimal
+  }
+
+  class PlanContingencia {
+    - id: UUID
+    - grupoId: UUID
+    - disparador: String <<MORA_CRITICA | FONDO_AGOTADO | ABANDONO_MASIVO | ORGANIZADOR_INHABILITADO>>
+    - tipo: String <<PRORRATEO_ENTRE_ACTIVOS | REDUCCION_DE_BOLSA | EXTENSION_DE_PLAZO | REEMPLAZO | DISOLUCION>>
+    - descripcion: String
+    - impactoEstimado: Decimal
+    - requiereAcuerdo: Boolean
+    - acuerdoGrupoId: UUID
+    - estado: String <<PROPUESTO | APROBADO | EJECUTADO | DESCARTADO>>
+    - propuestoEn: DateTime
+    - ejecutadoEn: DateTime
+    --
+    + simularImpacto(): JSON
+    + ejecutar()
+  }
+
+  class DisolucionAnticipada {
+    - id: UUID
+    - grupoId: UUID
+    - motivo: String
+    - acuerdoGrupoId: UUID
+    - totalAportadoGrupo: Decimal
+    - totalEntregado: Decimal
+    - saldoADistribuir: Decimal
+    - estado: String <<INICIADA | CALCULADA | EJECUTADA | CERRADA>>
+    - iniciadaEn: DateTime
+    - cerradaEn: DateTime
+    --
+    + calcularPosicionNeta(): List<LiquidacionParticipante>
+    + ejecutar()
+  }
+
+  class LiquidacionParticipante {
+    - id: UUID
+    - disolucionId: UUID
+    - participanteId: UUID
+    - totalAportado: Decimal
+    - totalCobrado: Decimal
+    - deudaPendiente: Decimal
+    - posicionNeta: Decimal <<positiva = se le devuelve; negativa = debe>>
+    - estado: String <<CALCULADA | PAGADA | EN_COBRANZA>>
+    --
+    + liquidar()
+  }
+}
+
+' ---------- Relaciones ----------
+FondoGarantia "1" *-- "0..*" MovimientoFondo
+FondoGarantia "1" *-- "0..*" CoberturaIncumplimiento
+FondoGarantia "1" *-- "0..*" DevolucionFondo
+FondoGarantia "*" --> "1" PoliticaCobertura : se rige por >
+
+RegistroIncumplimiento "1" *-- "0..*" EvidenciaIncumplimiento
+RegistroIncumplimiento "1" *-- "1..*" HistorialEstadoIncumplimiento
+RegistroIncumplimiento "1" *-- "0..*" DescargoParticipante
+RegistroIncumplimiento "1" *-- "0..1" GestionCobranza
+RegistroIncumplimiento "1" *-- "0..1" CoberturaIncumplimiento
+RegistroIncumplimiento "1" *-- "0..1" DeudaParticipante
+RegistroIncumplimiento "1" *-- "0..*" Sancion
+RegistroIncumplimiento "1" *-- "0..1" AcuerdoQuita
+RegistroIncumplimiento "1" *-- "0..1" ReemplazoParticipante
+RegistroIncumplimiento "0..*" --> "1" HistorialIncumplimientoUsuario : alimenta >
+RegistroIncumplimiento ..> ListaRestriccionInterna : puede originar >
+DetectorIncumplimiento ..> RegistroIncumplimiento : crea >
+ScoreRiesgoIncumplimiento ..> AlertaTemprana : genera >
+
+GestionCobranza "1" *-- "0..*" AccionCobranza
+GestionCobranza "1" *-- "0..*" PromesaPago
+GestionCobranza "*" --> "1" EstrategiaCobranza : sigue >
+
+CoberturaIncumplimiento "1" *-- "0..1" Subrogacion
+CoberturaIncumplimiento ..> DeudaParticipante : origina >
+DeudaParticipante "1" *-- "0..*" AbonoRecuperacion
+DeudaParticipante "1" *-- "0..1" CastigoDeuda
+DeudaParticipante "1" -- "0..1" Subrogacion
+
+AvalParticipante "1" *-- "0..*" EjecucionAval
+EjecucionAval ..> DeudaParticipante : abona / traslada >
+
+PoliticaSancion "1" *-- "1..*" MatrizSancion
+MatrizSancion "1" ..> "0..*" Sancion : instancia >
+Sancion "1" *-- "0..*" ApelacionSancion
+
+ReemplazoParticipante "1" *-- "0..*" CandidatoReemplazo
+PlanContingencia ..> ReemplazoParticipante : puede incluir >
+PlanContingencia ..> DisolucionAnticipada : puede derivar en >
+DisolucionAnticipada "1" *-- "1..*" LiquidacionParticipante
+
+FondoGarantia --> AmbitoFondo
+MovimientoFondo --> TipoMovimientoFondo
+RegistroIncumplimiento --> TipoIncumplimiento
+RegistroIncumplimiento --> SeveridadIncumplimiento
+RegistroIncumplimiento --> EstadoIncumplimiento
+RegistroIncumplimiento --> OrigenDeteccion
+GestionCobranza --> EtapaCobranza
+AccionCobranza --> ResultadoContacto
+CoberturaIncumplimiento --> EstadoCobertura
+DeudaParticipante --> EstadoDeuda
+Sancion --> TipoSancion
+
+note right of RegistroIncumplimiento
+  <b>Por que un expediente y no un flag</b>
+  Un booleano "moroso" no responde: cuanto debe,
+  desde cuando, que se hizo para cobrarle, quien
+  autorizo la cobertura, que dijo el en su
+  descargo, que sancion se le aplico y si la
+  apelo. El expediente responde todo eso y es la
+  prueba ante un reclamo o una auditoria (M9).
+  La reputacion (M6) se alimenta de aqui, no al reves.
+end note
+
+note right of HistorialIncumplimientoUsuario
+  <b>Portabilidad del mal historial</b>
+  Proyeccion agregada por usuario y CROSS-GRUPO:
+  quien abandono un pasanaku no puede entrar
+  limpio al siguiente. Se consulta al evaluar
+  SolicitudIngreso (M2) y en el emparejamiento
+  automatico (RF-19).
+end note
+
+note bottom of MatrizSancion
+  <b>Proporcionalidad y debido proceso</b>
+  La sancion no la decide una persona de humor
+  variable: sale de la matriz
+  (tipo x severidad x reincidencia). El afectado
+  tiene plazo de descargo antes de que quede
+  firme y derecho a apelacion en dos instancias.
+  Sin esto, expulsar a alguien es arbitrario.
+end note
+
+note bottom of AvalParticipante
+  Formaliza la practica real del pasanaku: quien
+  te invita responde por ti. avalistaUsuarioId
+  puede ser el invitadoPorId del participante
+  (M2). La ejecucion del aval abona la deuda del
+  avalado y, si el avalista tampoco paga, se le
+  abre su propio RegistroIncumplimiento
+  (tipo = INCUMPLIMIENTO_AVAL).
+end note
+
+note bottom of CastigoDeuda
+  Castigar (dar de baja contablemente) NO borra
+  el registro reputacional:
+  mantieneRegistroReputacional = true. Si el
+  deudor aparece anos despues, la deuda se
+  reactiva. El castigo es una decision contable,
+  no un perdon.
+end note
+
+@enduml
+
+@startuml 08_garantia_incumplimiento_relacional
+' ============================================================
+'  MODULO 8: Garantia, Incumplimiento, Cobranza y Sanciones
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 8 - Garantia e Incumplimiento (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> CHECK    <<NULL>> admite nulos
+  registro_incumplimiento, movimiento_fondo, abono_recuperacion
+  e historial_estado_incumplimiento son APPEND-ONLY.
+endlegend
+
+entity "politica_cobertura" as polcob {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, NULL>>
+  porcentaje_constitucion : DECIMAL(5,2)
+  dias_mora_para_activar : SMALLINT
+  porcentaje_maximo_cobertura_por_aporte : DECIMAL(5,2)
+  tope_cobertura_por_participante : DECIMAL(14,2)
+  tope_cobertura_por_periodo : DECIMAL(14,2)
+  max_coberturas_por_participante : SMALLINT
+  exige_aval_previo : BOOLEAN
+  requiere_aprobacion_manual_desde : DECIMAL(14,2)
+  plazo_recuperacion_dias : SMALLINT
+  tasa_recargo_recuperacion : DECIMAL(5,2)
+  vigente_desde : TIMESTAMPTZ
+}
+
+entity "fondo_garantia" as fondo {
+  * id : UUID <<PK>>
+  --
+  ambito : VARCHAR(20) <<CK>>
+  # grupo_id : UUID <<FK, NULL, UQ parcial>>
+  # politica_cobertura_id : UUID <<FK>>
+  # cuenta_contable_id : UUID <<FK, M3>>
+  moneda : CHAR(3)
+  saldo_disponible : DECIMAL(16,2) <<CK: >= 0>>
+  saldo_comprometido : DECIMAL(16,2)
+  total_aportado : DECIMAL(16,2)
+  total_cubierto : DECIMAL(16,2)
+  total_recuperado : DECIMAL(16,2)
+  total_castigado : DECIMAL(16,2)
+  estado : VARCHAR(20) <<CK>>
+  version : INTEGER
+}
+
+entity "movimiento_fondo" as movfondo {
+  * id : UUID <<PK>>
+  --
+  # fondo_id : UUID <<FK, IDX>>
+  # asiento_contable_id : UUID <<FK, NULL, M3>>
+  tipo : VARCHAR(30) <<CK, IDX>>
+  monto : DECIMAL(14,2)
+  saldo_resultante : DECIMAL(16,2)
+  referencia_tipo : VARCHAR(30)
+  referencia_id : UUID <<IDX>>
+  descripcion : VARCHAR(200)
+  fecha : TIMESTAMPTZ <<IDX>>
+  # registrado_por : UUID <<FK, NULL>>
+}
+
+entity "devolucion_fondo" as devfondo {
+  * id : UUID <<PK>>
+  --
+  # fondo_id : UUID <<FK, IDX>>
+  # participante_id : UUID <<FK>>
+  monto_aportado : DECIMAL(14,2)
+  monto_consumido : DECIMAL(14,2)
+  monto_a_devolver : DECIMAL(14,2)
+  estado : VARCHAR(15) <<CK>>
+  motivo_retencion : VARCHAR(200) <<NULL>>
+  fecha : TIMESTAMPTZ
+}
+
+entity "registro_incumplimiento" as reginc {
+  * id : UUID <<PK>>
+  --
+  codigo_expediente : VARCHAR(20) <<UQ>>
+  # usuario_id : UUID <<FK, IDX>>
+  # participante_id : UUID <<FK, IDX>>
+  # grupo_id : UUID <<FK, IDX>>
+  # periodo_id : UUID <<FK, NULL>>
+  # cupo_id : UUID <<FK, NULL>>
+  # obligacion_id : UUID <<FK, NULL, UQ parcial>>
+  # entrega_afectada_id : UUID <<FK, NULL, M4>>
+  # responsable_gestion : UUID <<FK, NULL>>
+  tipo : VARCHAR(40) <<CK, IDX>>
+  severidad : VARCHAR(10) <<CK, IDX>>
+  estado : VARCHAR(30) <<CK, IDX>>
+  origen_deteccion : VARCHAR(30) <<CK>>
+  monto_involucrado : DECIMAL(14,2)
+  monto_recuperado : DECIMAL(14,2)
+  monto_castigado : DECIMAL(14,2)
+  dias_mora_al_detectar : SMALLINT
+  dias_mora_actuales : SMALLINT
+  es_reincidencia : BOOLEAN
+  numero_reincidencia : SMALLINT
+  afecto_a_la_entrega : BOOLEAN
+  detectado_en : TIMESTAMPTZ <<IDX>>
+  notificado_en : TIMESTAMPTZ <<NULL>>
+  fecha_limite_subsanacion : TIMESTAMPTZ <<NULL>>
+  cerrado_en : TIMESTAMPTZ <<NULL>>
+  motivo_cierre : VARCHAR(200) <<NULL>>
+  resumen_resolucion : TEXT <<NULL>>
+  # reportado_por : UUID <<FK, NULL>>
+  version : INTEGER
+}
+
+entity "evidencia_incumplimiento" as evid {
+  * id : UUID <<PK>>
+  --
+  # registro_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(25) <<CK>>
+  descripcion : VARCHAR(300)
+  url_archivo : VARCHAR(255) <<NULL>>
+  hash_archivo : VARCHAR(64) <<NULL>>
+  contenido_estructurado : JSONB <<NULL>>
+  # aportada_por : UUID <<FK, NULL>>
+  fecha_hora : TIMESTAMPTZ
+  es_inmutable : BOOLEAN
+}
+
+entity "historial_estado_incumplimiento" as histinc {
+  * id : UUID <<PK>>
+  --
+  # registro_id : UUID <<FK, IDX>>
+  estado_anterior : VARCHAR(30) <<NULL>>
+  estado_nuevo : VARCHAR(30)
+  motivo : VARCHAR(300)
+  monto_asociado : DECIMAL(14,2) <<NULL>>
+  # ejecutado_por : UUID <<FK, NULL>>
+  es_automatico : BOOLEAN
+  fecha_hora : TIMESTAMPTZ <<IDX>>
+}
+
+entity "descargo_participante" as descargo {
+  * id : UUID <<PK>>
+  --
+  # registro_id : UUID <<FK, IDX>>
+  # participante_id : UUID <<FK>>
+  argumento : TEXT
+  evidencias : JSONB
+  estado : VARCHAR(15) <<CK>>
+  resolucion : VARCHAR(400) <<NULL>>
+  # resuelto_por : UUID <<FK, NULL>>
+  presentado_en : TIMESTAMPTZ
+  resuelto_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "historial_incumplimiento_usuario" as histusr {
+  * # usuario_id : UUID <<PK, FK>>
+  --
+  total_incumplimientos : SMALLINT
+  incumplimientos_leves : SMALLINT
+  incumplimientos_graves : SMALLINT
+  incumplimientos_abiertos : SMALLINT <<IDX>>
+  monto_total_incumplido : DECIMAL(16,2)
+  monto_total_recuperado : DECIMAL(16,2)
+  monto_castigado_historico : DECIMAL(16,2)
+  grupos_abandonados : SMALLINT
+  ultimo_incumplimiento_en : TIMESTAMPTZ <<NULL>>
+  dias_mora_promedio : DECIMAL(6,2)
+  tasa_regularizacion : DECIMAL(5,2)
+  esta_en_lista_restriccion : BOOLEAN
+  actualizado_en : TIMESTAMPTZ
+}
+
+entity "lista_restriccion_interna" as listarestr {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # registro_origen_id : UUID <<FK, NULL>>
+  motivo : VARCHAR(300)
+  nivel_restriccion : VARCHAR(15) <<CK>>
+  monto_adeudado : DECIMAL(14,2)
+  incluido_en : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+  retirado_en : TIMESTAMPTZ <<NULL>>
+  # retirado_por : UUID <<FK, NULL>>
+  motivo_retiro : VARCHAR(300) <<NULL>>
+}
+
+entity "score_riesgo_incumplimiento" as scoreriesgo {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # grupo_id : UUID <<FK, NULL>>
+  probabilidad_incumplimiento : DECIMAL(5,4)
+  factores_principales : JSONB
+  nivel_riesgo : VARCHAR(10) <<CK, IDX>>
+  accion_sugerida : VARCHAR(160)
+  calculado_en : TIMESTAMPTZ
+}
+
+entity "alerta_temprana" as alertatemp {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # grupo_id : UUID <<FK, NULL>>
+  codigo : VARCHAR(40) <<CK>>
+  descripcion : VARCHAR(300)
+  severidad : VARCHAR(10) <<CK>>
+  estado : VARCHAR(15) <<CK>>
+  generada_en : TIMESTAMPTZ
+}
+
+entity "estrategia_cobranza" as estrat {
+  * id : UUID <<PK>>
+  --
+  etapa : VARCHAR(20) <<CK, UQ+dias_mora_desde>>
+  dias_mora_desde : SMALLINT
+  dias_mora_hasta : SMALLINT
+  canales_permitidos : VARCHAR(120)
+  frecuencia_dias : SMALLINT
+  max_contactos_por_semana : SMALLINT
+  plantilla_notificacion_codigo : VARCHAR(50) <<NULL, M5>>
+  requiere_gestor_humano : BOOLEAN
+  permite_quita : BOOLEAN
+  quita_maxima_porcentaje : DECIMAL(5,2)
+  siguiente_etapa : VARCHAR(20) <<NULL>>
+}
+
+entity "gestion_cobranza" as gestion {
+  * id : UUID <<PK>>
+  --
+  # registro_id : UUID <<FK, UQ>>
+  # estrategia_id : UUID <<FK>>
+  # gestor_asignado_id : UUID <<FK, NULL, IDX>>
+  etapa_actual : VARCHAR(20) <<CK, IDX>>
+  monto_en_gestion : DECIMAL(14,2)
+  intentos_contacto : SMALLINT
+  ultimo_contacto_en : TIMESTAMPTZ <<NULL>>
+  proxima_accion_en : TIMESTAMPTZ <<IDX>>
+  estado : VARCHAR(25) <<CK, IDX>>
+  abierta_en : TIMESTAMPTZ
+  cerrada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "accion_cobranza" as acccob {
+  * id : UUID <<PK>>
+  --
+  # gestion_id : UUID <<FK, IDX>>
+  # notificacion_id : UUID <<FK, NULL, M5>>
+  etapa : VARCHAR(20) <<CK>>
+  tipo : VARCHAR(30) <<CK>>
+  canal : VARCHAR(20)
+  resultado : VARCHAR(30) <<CK>>
+  nota_gestor : VARCHAR(500) <<NULL>>
+  costo : DECIMAL(10,2)
+  # ejecutada_por : UUID <<FK, NULL>>
+  ejecutada_en : TIMESTAMPTZ <<IDX>>
+}
+
+entity "promesa_pago" as promesa {
+  * id : UUID <<PK>>
+  --
+  # gestion_id : UUID <<FK, IDX>>
+  monto_prometido : DECIMAL(14,2)
+  fecha_prometida : DATE <<IDX>>
+  canal_compromiso : VARCHAR(20)
+  estado : VARCHAR(15) <<CK, IDX>>
+  monto_efectivo : DECIMAL(14,2)
+  # registrada_por : UUID <<FK, NULL>>
+  creada_en : TIMESTAMPTZ
+  evaluada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "acuerdo_quita" as quita {
+  * id : UUID <<PK>>
+  --
+  # registro_id : UUID <<FK, UQ>>
+  # aprobado_por : UUID <<FK>>
+  # acuerdo_grupo_id : UUID <<FK, NULL, M2>>
+  monto_original : DECIMAL(14,2)
+  monto_condonado : DECIMAL(14,2)
+  monto_a_pagar : DECIMAL(14,2)
+  justificacion : VARCHAR(400)
+  estado : VARCHAR(15) <<CK>>
+  fecha : TIMESTAMPTZ
+}
+
+entity "cobertura_incumplimiento" as cobertura {
+  * id : UUID <<PK>>
+  --
+  # fondo_id : UUID <<FK, IDX>>
+  # registro_id : UUID <<FK, UQ>>
+  # obligacion_id : UUID <<FK, UQ, M3>>
+  # periodo_id : UUID <<FK, M2>>
+  # movimiento_fondo_id : UUID <<FK, NULL>>
+  # asiento_contable_id : UUID <<FK, NULL, M3>>
+  # aprobada_por : UUID <<FK, NULL>>
+  monto_solicitado : DECIMAL(14,2)
+  monto_cubierto : DECIMAL(14,2)
+  porcentaje_cobertura : DECIMAL(5,2)
+  estado : VARCHAR(25) <<CK, IDX>>
+  requirio_aprobacion_manual : BOOLEAN
+  motivo_rechazo : VARCHAR(300) <<NULL>>
+  solicitada_en : TIMESTAMPTZ
+  aplicada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "deuda_participante" as deuda {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # participante_id : UUID <<FK>>
+  # grupo_id : UUID <<FK, IDX>>
+  # registro_id : UUID <<FK, UQ>>
+  # cobertura_id : UUID <<FK, NULL, UQ>>
+  acreedor : VARCHAR(20) <<CK>>
+  capital_original : DECIMAL(14,2)
+  recargos_acumulados : DECIMAL(14,2)
+  total_abonado : DECIMAL(14,2)
+  saldo_actual : DECIMAL(14,2) <<CK: >= 0, IDX>>
+  moneda : CHAR(3)
+  estado : VARCHAR(20) <<CK, IDX>>
+  es_subrogada : BOOLEAN
+  fecha_exigibilidad : DATE
+  fecha_prescripcion : DATE <<IDX>>
+  dias_vencida : SMALLINT
+  version : INTEGER
+}
+
+entity "subrogacion" as subrog {
+  * id : UUID <<PK>>
+  --
+  # cobertura_id : UUID <<FK, UQ>>
+  # deuda_id : UUID <<FK, UQ>>
+  acreedor_original : VARCHAR(30)
+  acreedor_subrogado : VARCHAR(30)
+  monto_subrogado : DECIMAL(14,2)
+  fecha : TIMESTAMPTZ
+  documento_respaldo_url : VARCHAR(255) <<NULL>>
+}
+
+entity "abono_recuperacion" as abono {
+  * id : UUID <<PK>>
+  --
+  # deuda_id : UUID <<FK, IDX>>
+  # pago_id : UUID <<FK, NULL, M3>>
+  # entrega_id : UUID <<FK, NULL, M4>>
+  # movimiento_fondo_id : UUID <<FK, NULL>>
+  monto : DECIMAL(14,2) <<CK: > 0>>
+  origen : VARCHAR(30) <<CK>>
+  aplicado_a_capital : DECIMAL(14,2)
+  aplicado_a_recargos : DECIMAL(14,2)
+  saldo_resultante : DECIMAL(14,2)
+  fecha : TIMESTAMPTZ <<IDX>>
+  # registrado_por : UUID <<FK, NULL>>
+  revertido_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "castigo_deuda" as castigo {
+  * id : UUID <<PK>>
+  --
+  # deuda_id : UUID <<FK, UQ>>
+  # aprobado_por : UUID <<FK>>
+  # asiento_contable_id : UUID <<FK, NULL, M3>>
+  monto_castigado : DECIMAL(14,2)
+  motivo : VARCHAR(30) <<CK>>
+  justificacion : VARCHAR(400)
+  mantiene_registro_reputacional : BOOLEAN
+  fecha : TIMESTAMPTZ
+}
+
+entity "aval_participante" as aval {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  # participante_avalado_id : UUID <<FK, IDX>>
+  # avalista_usuario_id : UUID <<FK, IDX>>
+  # token_aceptacion_id : UUID <<FK, NULL, M1>>
+  es_participante_del_grupo : BOOLEAN
+  monto_maximo_avalado : DECIMAL(14,2)
+  alcance : VARCHAR(15) <<CK>>
+  porcentaje_responsabilidad : DECIMAL(5,2)
+  aceptado_en : TIMESTAMPTZ <<NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  liberado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "ejecucion_aval" as ejecaval {
+  * id : UUID <<PK>>
+  --
+  # aval_id : UUID <<FK, IDX>>
+  # registro_id : UUID <<FK, IDX>>
+  # deuda_id : UUID <<FK>>
+  # pago_id : UUID <<FK, NULL, M3>>
+  monto_ejecutado : DECIMAL(14,2)
+  estado : VARCHAR(15) <<CK>>
+  notificada_en : TIMESTAMPTZ
+  plazo_respuesta : TIMESTAMPTZ
+  genera_deuda_del_avalista : BOOLEAN
+}
+
+entity "politica_sancion" as polsanc {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, NULL>>
+  version : VARCHAR(20)
+  requiere_acuerdo_grupo : BOOLEAN
+  plazo_descargo_dias : SMALLINT
+  plazo_apelacion_dias : SMALLINT
+  prescribe_en_dias : SMALLINT
+  vigente_desde : TIMESTAMPTZ
+}
+
+entity "matriz_sancion" as matriz {
+  * id : UUID <<PK>>
+  --
+  # politica_id : UUID <<FK, IDX>>
+  tipo_incumplimiento : VARCHAR(40) <<UQ+severidad+numero_reincidencia>>
+  severidad : VARCHAR(10) <<CK>>
+  numero_reincidencia : SMALLINT
+  tipo_sancion : VARCHAR(35) <<CK>>
+  valor : DECIMAL(12,2)
+  duracion_dias : SMALLINT <<NULL>>
+  es_automatica : BOOLEAN
+  requiere_revision_humana : BOOLEAN
+}
+
+entity "sancion" as sancion {
+  * id : UUID <<PK>>
+  --
+  # registro_id : UUID <<FK, IDX>>
+  # usuario_id : UUID <<FK, IDX>>
+  # participante_id : UUID <<FK, NULL>>
+  # matriz_id : UUID <<FK, NULL>>
+  # acuerdo_grupo_id : UUID <<FK, NULL, M2>>
+  # aplicada_por : UUID <<FK, NULL>>
+  tipo : VARCHAR(35) <<CK, IDX>>
+  descripcion : VARCHAR(300)
+  monto_recargo : DECIMAL(14,2) <<NULL>>
+  impacto_reputacion : DECIMAL(6,2) <<NULL>>
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+  estado : VARCHAR(20) <<CK, IDX>>
+  notificada_en : TIMESTAMPTZ <<NULL>>
+  firme_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "apelacion_sancion" as apel {
+  * id : UUID <<PK>>
+  --
+  # sancion_id : UUID <<FK, IDX>>
+  # apelante_id : UUID <<FK>>
+  # resuelta_por : UUID <<FK, NULL>>
+  argumento : TEXT
+  evidencias : JSONB
+  estado : VARCHAR(15) <<CK>>
+  instancia : VARCHAR(25) <<CK>>
+  resolucion : VARCHAR(500) <<NULL>>
+  presentada_en : TIMESTAMPTZ
+  fecha_limite_resolucion : TIMESTAMPTZ
+  resuelta_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "reemplazo_participante" as reemp {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  # cupo_id : UUID <<FK>>
+  # registro_id : UUID <<FK, NULL>>
+  # participante_saliente_id : UUID <<FK>>
+  # participante_entrante_id : UUID <<FK, NULL>>
+  # acuerdo_grupo_id : UUID <<FK, NULL, M2>>
+  deuda_asumida_por_entrante : DECIMAL(14,2)
+  deuda_retenida_por_saliente : DECIMAL(14,2)
+  conserva_orden_de_turno : BOOLEAN
+  estado : VARCHAR(15) <<CK>>
+  fecha : TIMESTAMPTZ
+}
+
+entity "candidato_reemplazo" as candid {
+  * id : UUID <<PK>>
+  --
+  # reemplazo_id : UUID <<FK, IDX>>
+  # usuario_id : UUID <<FK>>
+  puntaje_reputacion : DECIMAL(6,2)
+  acepta_condiciones : BOOLEAN
+  fuente_candidato : VARCHAR(20) <<CK>>
+  estado : VARCHAR(15) <<CK>>
+}
+
+entity "plan_contingencia" as plancont {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  # acuerdo_grupo_id : UUID <<FK, NULL, M2>>
+  disparador : VARCHAR(30) <<CK>>
+  tipo : VARCHAR(30) <<CK>>
+  descripcion : TEXT
+  impacto_estimado : DECIMAL(14,2)
+  requiere_acuerdo : BOOLEAN
+  estado : VARCHAR(15) <<CK>>
+  propuesto_en : TIMESTAMPTZ
+  ejecutado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "disolucion_anticipada" as disol {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, UQ>>
+  # acuerdo_grupo_id : UUID <<FK, NULL, M2>>
+  motivo : VARCHAR(400)
+  total_aportado_grupo : DECIMAL(16,2)
+  total_entregado : DECIMAL(16,2)
+  saldo_a_distribuir : DECIMAL(16,2)
+  estado : VARCHAR(15) <<CK>>
+  iniciada_en : TIMESTAMPTZ
+  cerrada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "liquidacion_participante" as liqpart {
+  * id : UUID <<PK>>
+  --
+  # disolucion_id : UUID <<FK, IDX>>
+  # participante_id : UUID <<FK>>
+  total_aportado : DECIMAL(14,2)
+  total_cobrado : DECIMAL(14,2)
+  deuda_pendiente : DECIMAL(14,2)
+  posicion_neta : DECIMAL(14,2)
+  estado : VARCHAR(15) <<CK>>
+}
+
+polcob ||--o{ fondo : "rige"
+fondo ||--o{ movfondo : "registra"
+fondo ||--o{ devfondo : "devuelve"
+fondo ||--o{ cobertura : "cubre con"
+reginc ||--o{ evid : "acredita con"
+reginc ||--|{ histinc : "transiciona"
+reginc ||--o{ descargo : "recibe"
+reginc ||--o| gestion : "gestiona en"
+reginc ||--o| cobertura : "activa"
+reginc ||--o| deuda : "genera"
+reginc ||--o{ sancion : "sanciona con"
+reginc ||--o| quita : "negocia"
+reginc ||--o| reemp : "puede forzar"
+reginc ||--o{ listarestr : "restringe por"
+histusr ||--o{ reginc : "acumula"
+scoreriesgo ||--o{ alertatemp : "dispara"
+estrat ||--o{ gestion : "guia"
+gestion ||--o{ acccob : "ejecuta"
+gestion ||--o{ promesa : "obtiene"
+cobertura ||--o| subrog : "subroga"
+cobertura ||--o| deuda : "origina"
+deuda ||--o{ abono : "amortiza con"
+deuda ||--o| castigo : "se castiga"
+deuda ||--o| subrog : "es subrogada en"
+aval ||--o{ ejecaval : "se ejecuta"
+ejecaval }o--|| deuda : "abona"
+polsanc ||--|{ matriz : "tabula"
+matriz ||--o{ sancion : "instancia"
+sancion ||--o{ apel : "se apela"
+reemp ||--o{ candid : "evalua"
+plancont ||--o| disol : "puede derivar"
+disol ||--|{ liqpart : "liquida"
+
+note top of reginc
+  <b>Expediente unico por hecho</b>
+  UNIQUE parcial (obligacion_id)
+    WHERE estado NOT IN ('ANULADO_POR_ERROR')
+  -> un aporte impago no genera dos expedientes.
+  codigo_expediente es legible para citarlo en
+  notificaciones y reclamos.
+  Indices operativos:
+   (estado, dias_mora_actuales DESC) para la
+   bandeja de cobranza;
+   (usuario_id, detectado_en DESC) para el
+   historial portable.
+end note
+
+note bottom of deuda
+  <b>La deuda sobrevive al grupo</b>
+  Vive a nivel usuario, no solo participante:
+  si el grupo termina, la deuda sigue exigible y
+  bloquea el ingreso a nuevos grupos mediante
+  restriccion_usuario (M1).
+  CHECK: saldo_actual = capital_original
+    + recargos_acumulados - total_abonado.
+end note
+
+note bottom of cobertura
+  UNIQUE (obligacion_id): el fondo cubre una
+  obligacion una sola vez. La aplicacion es
+  atomica con movimiento_fondo y con el asiento
+  contable del modulo 3 (misma transaccion),
+  para que el saldo del fondo nunca mienta.
+end note
+
+note bottom of sancion
+  Solo se ejecuta cuando estado = 'FIRME':
+  antes hubo notificacion, plazo de descargo y,
+  si se apelo, resolucion. Toda transicion queda
+  en la bitacora del modulo 9 y genera
+  evento_reputacion en el modulo 6.
+end note
+
+note bottom of aval
+  avalista_usuario_id -> usuario.id (M1) y suele
+  coincidir con participante.invitado_por_id (M2):
+  formaliza el "yo respondo por el" del pasanaku
+  presencial con monto maximo y aceptacion firmada.
+end note
+
+@enduml

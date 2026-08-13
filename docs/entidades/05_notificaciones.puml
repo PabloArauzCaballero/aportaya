@@ -1,0 +1,729 @@
+@startuml 05_notificaciones_clases
+' ============================================================
+'  MODULO 5: Notificaciones y Comunicaciones (WhatsApp / SMS / Correo)
+'  Diagrama de CLASES  (modelo detallado)
+'  Cubre: RF-16 (WhatsApp como canal primario, pago en un toque)
+'  Realidad operativa modelada: plantillas de WhatsApp que requieren
+'  aprobacion del proveedor, ventana de 24 h de conversacion, opt-in
+'  obligatorio, cadena de respaldo entre canales, costo por mensaje
+'  y respuestas entrantes del participante ("PAGUE", "1", "AYUDA").
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 5 - Notificaciones y Comunicaciones (clases)
+
+legend top right
+  <b>Separacion en tres niveles</b>
+  <b>Notificacion</b> = el hecho a comunicar (1 por evento y destinatario).
+  <b>EnvioNotificacion</b> = un intento por un canal concreto.
+  <b>EventoEntregaMensaje</b> = lo que el proveedor reporta despues.
+  Un mismo aviso puede tener 3 envios (WhatsApp -> SMS -> correo).
+endlegend
+
+' ============================================================
+package "Catalogo de eventos y plantillas" {
+
+  enum TipoCanal {
+    WHATSAPP
+    SMS
+    CORREO
+    PUSH
+    IN_APP
+    LLAMADA_VOZ
+  }
+
+  enum TipoEventoNotificable {
+    BIENVENIDA
+    CODIGO_VERIFICACION
+    INVITACION_GRUPO
+    GRUPO_CONFORMADO
+    SORTEO_REALIZADO
+    RECORDATORIO_APORTE_PREVIO
+    RECORDATORIO_APORTE_HOY
+    APORTE_VENCIDO
+    CONFIRMACION_PAGO
+    ALERTA_MORA
+    ESCALAMIENTO_COBRANZA
+    TURNO_PROXIMO
+    ENTREGA_EN_PROCESO
+    ENTREGA_ACREDITADA
+    CONFIRMACION_RECEPCION_PENDIENTE
+    COBERTURA_APLICADA
+    SANCION_APLICADA
+    CIERRE_DE_GRUPO
+    RESUMEN_PERIODICO
+  }
+
+  enum PrioridadMensaje {
+    CRITICA
+    ALTA
+    NORMAL
+    BAJA
+  }
+
+  class EventoNotificable <<Pol>> {
+    - id: UUID
+    - tipo: TipoEventoNotificable
+    - descripcion: String
+    - prioridad: PrioridadMensaje
+    - esTransaccional: Boolean <<ignora horario silencio>>
+    - permiteAgrupacion: Boolean
+    - ventanaDeduplicacionMin: Integer
+    - canalesPermitidos: List<TipoCanal>
+    - cadenaRespaldo: List<TipoCanal>
+    - activo: Boolean
+    --
+    + resolverCanales(preferencias): List<TipoCanal>
+  }
+
+  class PlantillaMensaje {
+    - id: UUID
+    - codigo: String <<unico>>
+    - tipoEvento: TipoEventoNotificable
+    - canal: TipoCanal
+    - descripcion: String
+    - categoriaProveedor: String <<UTILITY | AUTHENTICATION | MARKETING>>
+    - estadoAprobacion: String <<BORRADOR | ENVIADA | APROBADA | RECHAZADA | PAUSADA>>
+    - idPlantillaProveedor: String
+    - activa: Boolean
+    --
+    + versionVigente(idioma): VersionPlantilla
+    + solicitarAprobacion()
+  }
+
+  class VersionPlantilla {
+    - id: UUID
+    - plantillaId: UUID
+    - version: Integer
+    - idioma: String
+    - asunto: String
+    - cuerpo: String
+    - variables: List<String>
+    - botones: JSON <<CTA / respuesta rapida>>
+    - urlEncabezadoMedia: String
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    --
+    + renderizar(contexto): MensajeRenderizado
+    + validarVariables(contexto): List<String>
+  }
+
+  class MensajeRenderizado <<VO>> {
+    - asunto: String
+    - cuerpo: String
+    - longitud: Integer
+    - segmentosSMS: Integer
+    --
+    + truncarPara(canal): MensajeRenderizado
+  }
+}
+
+' ============================================================
+package "Destinatarios y consentimiento" {
+
+  class CanalVinculado {
+    - id: UUID
+    - usuarioId: UUID
+    - tipo: TipoCanal
+    - identificador: String <<telefono, correo, deviceToken>>
+    - verificado: Boolean
+    - verificadoEn: DateTime
+    - optInEn: DateTime
+    - optOutEn: DateTime
+    - motivoOptOut: String
+    - ventanaConversacionHasta: DateTime <<WhatsApp: 24 h>>
+    - rebotesConsecutivos: Integer
+    - estado: String <<ACTIVO | NO_ALCANZABLE | BLOQUEADO_POR_USUARIO | DADO_DE_BAJA>>
+    --
+    + vincular(): TokenVerificacion
+    + confirmar(codigo)
+    + registrarOptOut(motivo)
+    + estaDisponible(): Boolean
+    + puedeRecibirLibre(): Boolean
+  }
+
+  class ListaSupresion {
+    - id: UUID
+    - identificador: String
+    - canal: TipoCanal
+    - motivo: String <<QUEJA_SPAM | REBOTE_DURO | SOLICITUD_LEGAL>>
+    - agregadoEn: DateTime
+    - permanente: Boolean
+    --
+    + contiene(identificador, canal): Boolean
+  }
+}
+
+' ============================================================
+package "Emision y entrega" {
+
+  enum EstadoNotificacion {
+    CREADA
+    PROGRAMADA
+    EN_COLA
+    ENVIADA
+    ENTREGADA
+    LEIDA
+    FALLIDA
+    CANCELADA
+    SUPRIMIDA
+  }
+
+  enum EstadoEnvio {
+    PENDIENTE
+    ACEPTADO_POR_PROVEEDOR
+    ENVIADO
+    ENTREGADO
+    LEIDO
+    RECHAZADO
+    FALLIDO
+    EXPIRADO
+  }
+
+  class Notificacion <<AR>> {
+    - id: UUID
+    - usuarioId: UUID
+    - tipoEvento: TipoEventoNotificable
+    - prioridad: PrioridadMensaje
+    - contexto: JSON <<grupoId, aporteId, montos, fechas>>
+    - claveDeduplicacion: String <<unica por ventana>>
+    - estado: EstadoNotificacion
+    - programadaPara: DateTime
+    - creadaEn: DateTime
+    - finalizadaEn: DateTime
+    - correlationId: UUID
+    --
+    + resolverDestino(): List<CanalVinculado>
+    + despachar(): List<EnvioNotificacion>
+    + cancelar(motivo)
+    + escalarACanalRespaldo()
+    + estaDuplicada(): Boolean
+  }
+
+  class EnvioNotificacion {
+    - id: UUID
+    - notificacionId: UUID
+    - canal: TipoCanal
+    - proveedorId: UUID
+    - versionPlantillaId: UUID
+    - destinatario: String
+    - contenidoEnviado: String
+    - estado: EstadoEnvio
+    - idMensajeProveedor: String
+    - orden: Integer <<posicion en la cadena de respaldo>>
+    - intentos: Integer
+    - maxIntentos: Integer
+    - costo: Decimal
+    - moneda: String
+    - codigoError: String
+    - enviadoEn: DateTime
+    - entregadoEn: DateTime
+    - leidoEn: DateTime
+    - proximoReintentoEn: DateTime
+    --
+    + enviar()
+    + reintentar()
+    + marcarEntregado(evento)
+    + fallar(codigo, mensaje)
+  }
+
+  class EventoEntregaMensaje {
+    - id: UUID
+    - envioId: UUID
+    - tipoEvento: String <<sent | delivered | read | failed | rejected>>
+    - fechaHoraProveedor: DateTime
+    - recibidoEn: DateTime
+    - payloadCrudo: JSON
+    - codigoError: String
+    - claveIdempotencia: String
+    --
+    + aplicar()
+  }
+
+  class ProveedorMensajeria {
+    - id: UUID
+    - codigo: String
+    - nombre: String
+    - canalesSoportados: List<TipoCanal>
+    - urlBase: String
+    - referenciaCredenciales: String
+    - costoPorMensaje: Decimal
+    - limiteMensajesPorSegundo: Integer
+    - prioridad: Integer
+    - activo: Boolean
+    - saludPorcentaje: Decimal
+    --
+    + enviar(envio): String
+    + estaSaludable(): Boolean
+  }
+
+  class ColaEnvio {
+    - id: UUID
+    - envioId: UUID
+    - particion: String
+    - disponibleEn: DateTime
+    - intentos: Integer
+    - bloqueadaHasta: DateTime
+    --
+    + encolar()
+    + tomarLote(n): List<EnvioNotificacion>
+    + moverAColaMuerta(motivo)
+  }
+
+  class ColaMuerta {
+    - id: UUID
+    - envioId: UUID
+    - motivo: String
+    - payload: JSON
+    - fecha: DateTime
+    - reprocesadoEn: DateTime
+    --
+    + reprocesar()
+  }
+}
+
+' ============================================================
+package "Interaccion y accion directa" {
+
+  class EnlacePagoNotificado {
+    - id: UUID
+    - notificacionId: UUID
+    - ordenCobroId: UUID <<modulo 3>>
+    - tokenId: UUID <<modulo 1>>
+    - urlCorta: String
+    - clicks: Integer
+    - primerClickEn: DateTime
+    - convertidoEnPago: Boolean
+    - expiraEn: DateTime
+    --
+    + generarDeepLink(): String
+    + registrarClick(ip, agente)
+    + marcarConversion(pagoId)
+  }
+
+  class RespuestaEntrante {
+    - id: UUID
+    - canalVinculadoId: UUID
+    - contenido: String
+    - intencionDetectada: String <<YA_PAGUE | CONSULTAR_SALDO | AYUDA | BAJA | DESCONOCIDA>>
+    - notificacionRelacionadaId: UUID
+    - recibidaEn: DateTime
+    - procesadaEn: DateTime
+    - accionEjecutada: String
+    --
+    + clasificar(): String
+    + ejecutarAccion()
+  }
+
+  class ProgramacionRecordatorio <<Pol>> {
+    - id: UUID
+    - grupoId: UUID <<null = global>>
+    - tipoEvento: TipoEventoNotificable
+    - desfaseDias: Integer <<-3 = tres dias antes; +1 = un dia despues>>
+    - horaEnvio: Time
+    - repetirCada: Integer
+    - maxRepeticiones: Integer
+    - condicion: String <<ej. estado = PENDIENTE>>
+    - activa: Boolean
+    --
+    + calcularFechaEnvio(referencia): DateTime
+    + generarNotificaciones(): List<Notificacion>
+  }
+
+  class BandejaEntrada {
+    - id: UUID
+    - usuarioId: UUID
+    - notificacionId: UUID
+    - titulo: String
+    - resumen: String
+    - urlAccion: String
+    - leida: Boolean
+    - leidaEn: DateTime
+    - archivada: Boolean
+    --
+    + marcarLeida()
+    + archivar()
+  }
+
+  class ServicioNotificaciones <<Svc>> {
+    --
+    + emitir(evento, usuario, contexto): Notificacion
+    + emitirLote(evento, usuarios, contexto): List<Notificacion>
+    + procesarWebhookEntrega(payload)
+    + procesarMensajeEntrante(payload): RespuestaEntrante
+    + reintentarFallidos(): Integer
+  }
+}
+
+' ---------- Relaciones ----------
+EventoNotificable "1" *-- "1..*" PlantillaMensaje
+PlantillaMensaje "1" *-- "1..*" VersionPlantilla
+VersionPlantilla ..> MensajeRenderizado : produce >
+
+Notificacion "*" --> "1" EventoNotificable
+Notificacion "1" *-- "1..*" EnvioNotificacion
+Notificacion "1" *-- "0..1" EnlacePagoNotificado
+Notificacion "1" *-- "0..1" BandejaEntrada
+EnvioNotificacion "*" --> "1" VersionPlantilla
+EnvioNotificacion "*" --> "1" ProveedorMensajeria
+EnvioNotificacion "*" --> "1" CanalVinculado : destino >
+EnvioNotificacion "1" *-- "0..*" EventoEntregaMensaje
+EnvioNotificacion "1" *-- "0..1" ColaEnvio
+ColaEnvio ..> ColaMuerta : descarta a >
+
+CanalVinculado "1" *-- "0..*" RespuestaEntrante
+ListaSupresion ..> EnvioNotificacion : bloquea >
+ProgramacionRecordatorio ..> Notificacion : genera >
+ServicioNotificaciones ..> Notificacion : orquesta >
+
+Notificacion --> EstadoNotificacion
+Notificacion --> PrioridadMensaje
+EnvioNotificacion --> EstadoEnvio
+EnvioNotificacion --> TipoCanal
+CanalVinculado --> TipoCanal
+EventoNotificable --> TipoEventoNotificable
+
+note right of EnvioNotificacion
+  <b>Cadena de respaldo (RF-16)</b>
+  orden = 1 WhatsApp; si a los N minutos no hay
+  "delivered", se crea el envio orden = 2 por SMS,
+  y luego correo. Cada eslabon guarda su propio
+  costo y estado: se puede medir que canal
+  realmente hace pagar a la gente.
+end note
+
+note right of CanalVinculado
+  <b>Ventana de 24 h de WhatsApp</b>
+  Fuera de la ventana solo se pueden enviar
+  plantillas aprobadas (categoria UTILITY o
+  AUTHENTICATION). El campo
+  ventanaConversacionHasta evita envios que el
+  proveedor rechazaria y que igual se cobran.
+end note
+
+note bottom of Notificacion
+  claveDeduplicacion (ej. hash de
+  tipoEvento + usuarioId + aporteId + dia)
+  con indice UNIQUE parcial: impide el clasico
+  bombardeo de 5 recordatorios identicos
+  cuando el job se reejecuta.
+end note
+
+note bottom of RespuestaEntrante
+  El participante responde "YA PAGUE" por
+  WhatsApp: se crea la respuesta, se clasifica
+  la intencion y se dispara el flujo de
+  comprobante manual del modulo 3, sin que
+  nadie lea el chat a mano.
+end note
+
+@enduml
+
+@startuml 05_notificaciones_relacional
+' ============================================================
+'  MODULO 5: Notificaciones y Comunicaciones
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 5 - Notificaciones y Comunicaciones (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> CHECK    <<NULL>> admite nulos
+  Tablas de alto volumen: notificacion, envio_notificacion y
+  evento_entrega_mensaje se particionan por mes (creado_en).
+endlegend
+
+entity "evento_notificable" as evt {
+  * id : UUID <<PK>>
+  --
+  tipo : VARCHAR(40) <<UQ>>
+  descripcion : VARCHAR(200)
+  prioridad : VARCHAR(10) <<CK>>
+  es_transaccional : BOOLEAN
+  permite_agrupacion : BOOLEAN
+  ventana_deduplicacion_min : SMALLINT
+  canales_permitidos : VARCHAR(120)
+  cadena_respaldo : VARCHAR(120)
+  activo : BOOLEAN
+}
+
+entity "plantilla_mensaje" as plant {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(50) <<UQ>>
+  # evento_id : UUID <<FK, IDX>>
+  canal : VARCHAR(15) <<CK>>
+  descripcion : VARCHAR(200)
+  categoria_proveedor : VARCHAR(20) <<CK>>
+  estado_aprobacion : VARCHAR(15) <<CK>>
+  id_plantilla_proveedor : VARCHAR(80) <<NULL>>
+  activa : BOOLEAN
+}
+
+entity "version_plantilla" as vplant {
+  * id : UUID <<PK>>
+  --
+  # plantilla_id : UUID <<FK, IDX>>
+  version : SMALLINT <<UQ+plantilla_id+idioma>>
+  idioma : VARCHAR(10)
+  asunto : VARCHAR(160) <<NULL>>
+  cuerpo : TEXT
+  variables : JSONB
+  botones : JSONB <<NULL>>
+  url_encabezado_media : VARCHAR(255) <<NULL>>
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+}
+
+entity "proveedor_mensajeria" as provmsg {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(30) <<UQ>>
+  nombre : VARCHAR(80)
+  canales_soportados : VARCHAR(120)
+  url_base : VARCHAR(200)
+  referencia_credenciales : VARCHAR(120)
+  costo_por_mensaje : DECIMAL(10,4)
+  limite_mensajes_por_segundo : SMALLINT
+  prioridad : SMALLINT
+  activo : BOOLEAN
+  salud_porcentaje : DECIMAL(5,2)
+}
+
+entity "canal_vinculado" as canal {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(15) <<CK>>
+  identificador : VARCHAR(150) <<UQ+tipo>>
+  verificado : BOOLEAN
+  verificado_en : TIMESTAMPTZ <<NULL>>
+  opt_in_en : TIMESTAMPTZ <<NULL>>
+  opt_out_en : TIMESTAMPTZ <<NULL>>
+  motivo_opt_out : VARCHAR(120) <<NULL>>
+  ventana_conversacion_hasta : TIMESTAMPTZ <<NULL>>
+  rebotes_consecutivos : SMALLINT
+  estado : VARCHAR(25) <<CK, IDX>>
+}
+
+entity "lista_supresion" as supres {
+  * id : UUID <<PK>>
+  --
+  identificador : VARCHAR(150) <<UQ+canal>>
+  canal : VARCHAR(15) <<CK>>
+  motivo : VARCHAR(25) <<CK>>
+  agregado_en : TIMESTAMPTZ
+  permanente : BOOLEAN
+}
+
+entity "notificacion" as notif {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # evento_id : UUID <<FK>>
+  prioridad : VARCHAR(10) <<CK>>
+  contexto : JSONB
+  clave_deduplicacion : VARCHAR(120) <<UQ parcial>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  programada_para : TIMESTAMPTZ <<IDX>>
+  creada_en : TIMESTAMPTZ <<IDX, particion>>
+  finalizada_en : TIMESTAMPTZ <<NULL>>
+  correlation_id : UUID <<IDX>>
+}
+
+entity "envio_notificacion" as envio {
+  * id : UUID <<PK>>
+  --
+  # notificacion_id : UUID <<FK, IDX>>
+  # proveedor_id : UUID <<FK>>
+  # version_plantilla_id : UUID <<FK>>
+  # canal_vinculado_id : UUID <<FK, NULL>>
+  canal : VARCHAR(15) <<CK>>
+  destinatario : VARCHAR(150)
+  contenido_enviado : TEXT
+  estado : VARCHAR(25) <<CK, IDX>>
+  id_mensaje_proveedor : VARCHAR(120) <<UQ, NULL>>
+  orden : SMALLINT
+  intentos : SMALLINT
+  max_intentos : SMALLINT
+  costo : DECIMAL(10,4)
+  moneda : CHAR(3)
+  codigo_error : VARCHAR(40) <<NULL>>
+  enviado_en : TIMESTAMPTZ <<NULL>>
+  entregado_en : TIMESTAMPTZ <<NULL>>
+  leido_en : TIMESTAMPTZ <<NULL>>
+  proximo_reintento_en : TIMESTAMPTZ <<NULL, IDX>>
+}
+
+entity "evento_entrega_mensaje" as evtent {
+  * id : UUID <<PK>>
+  --
+  # envio_id : UUID <<FK, IDX>>
+  tipo_evento : VARCHAR(20) <<CK>>
+  fecha_hora_proveedor : TIMESTAMPTZ
+  recibido_en : TIMESTAMPTZ
+  payload_crudo : JSONB
+  codigo_error : VARCHAR(40) <<NULL>>
+  clave_idempotencia : VARCHAR(120) <<UQ>>
+}
+
+entity "cola_envio" as cola {
+  * id : UUID <<PK>>
+  --
+  # envio_id : UUID <<FK, UQ>>
+  particion : VARCHAR(20) <<IDX>>
+  disponible_en : TIMESTAMPTZ <<IDX>>
+  intentos : SMALLINT
+  bloqueada_hasta : TIMESTAMPTZ <<NULL>>
+}
+
+entity "cola_muerta" as dlq {
+  * id : UUID <<PK>>
+  --
+  # envio_id : UUID <<FK, IDX>>
+  motivo : VARCHAR(200)
+  payload : JSONB
+  fecha : TIMESTAMPTZ
+  reprocesado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "enlace_pago_notificado" as enlace {
+  * id : UUID <<PK>>
+  --
+  # notificacion_id : UUID <<FK, UQ>>
+  # orden_cobro_id : UUID <<FK, M3>>
+  # token_id : UUID <<FK, UQ, M1>>
+  url_corta : VARCHAR(60) <<UQ>>
+  clicks : SMALLINT
+  primer_click_en : TIMESTAMPTZ <<NULL>>
+  convertido_en_pago : BOOLEAN
+  expira_en : TIMESTAMPTZ
+}
+
+entity "respuesta_entrante" as respin {
+  * id : UUID <<PK>>
+  --
+  # canal_vinculado_id : UUID <<FK, IDX>>
+  # notificacion_relacionada_id : UUID <<FK, NULL>>
+  contenido : TEXT
+  intencion_detectada : VARCHAR(30) <<CK>>
+  recibida_en : TIMESTAMPTZ <<IDX>>
+  procesada_en : TIMESTAMPTZ <<NULL>>
+  accion_ejecutada : VARCHAR(120) <<NULL>>
+}
+
+entity "programacion_recordatorio" as prog {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, NULL>>
+  # evento_id : UUID <<FK>>
+  desfase_dias : SMALLINT
+  hora_envio : TIME
+  repetir_cada : SMALLINT <<NULL>>
+  max_repeticiones : SMALLINT
+  condicion : VARCHAR(200)
+  activa : BOOLEAN
+}
+
+entity "bandeja_entrada" as bandeja {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # notificacion_id : UUID <<FK, UQ>>
+  titulo : VARCHAR(120)
+  resumen : VARCHAR(300)
+  url_accion : VARCHAR(255) <<NULL>>
+  leida : BOOLEAN <<IDX>>
+  leida_en : TIMESTAMPTZ <<NULL>>
+  archivada : BOOLEAN
+}
+
+evt ||--o{ plant : "se comunica con"
+evt ||--o{ notif : "origina"
+evt ||--o{ prog : "se programa en"
+plant ||--o{ vplant : "versiona"
+notif ||--|{ envio : "despacha"
+notif ||--o| enlace : "adjunta"
+notif ||--o| bandeja : "espeja en"
+notif ||--o{ respin : "provoca"
+vplant ||--o{ envio : "formatea"
+provmsg ||--o{ envio : "transporta"
+canal ||--o{ envio : "recibe"
+canal ||--o{ respin : "origina"
+envio ||--o{ evtent : "reporta"
+envio ||--o| cola : "espera en"
+envio ||--o{ dlq : "cae en"
+
+note top of notif
+  <b>Deduplicacion</b>
+  CREATE UNIQUE INDEX ON notificacion
+    (clave_deduplicacion)
+    WHERE estado NOT IN ('CANCELADA','SUPRIMIDA');
+  La clave incluye la ventana temporal del evento
+  (ventana_deduplicacion_min), de modo que el
+  mismo recordatorio no se emite dos veces el
+  mismo dia aunque el job corra varias veces.
+end note
+
+note bottom of envio
+  id_mensaje_proveedor es UNIQUE: es la llave
+  con la que llegan los webhooks de estado.
+  evento_entrega_mensaje.clave_idempotencia
+  evita aplicar dos veces el mismo callback
+  (los proveedores reintentan).
+end note
+
+note bottom of canal
+  usuario_id -> usuario.id (modulo 1).
+  Antes de cada envio se consulta
+  lista_supresion: si el numero se quejo por
+  spam o rebota en duro, no se le vuelve a
+  escribir por ese canal (proteccion de la
+  reputacion del remitente).
+end note
+
+note bottom of enlace
+  orden_cobro_id -> orden_cobro.id (modulo 3);
+  token_id -> token_verificacion.id (modulo 1),
+  subtipo ENLACE firmado con HMAC y uso unico:
+  el "pago en un toque" no expone datos del grupo.
+end note
+
+@enduml

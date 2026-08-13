@@ -1,0 +1,92 @@
+-- Claves foráneas del módulo 06 — Transparencia y Reputación
+-- Generado por scripts/generar_ddl.py — no editar a mano.
+-- Se aplican después de crear todas las tablas: el modelo tiene
+-- referencias circulares entre módulos.
+
+ALTER TABLE bloque_transparencia
+  ADD CONSTRAINT fk_bloque_transparencia_grupo_id
+  FOREIGN KEY (grupo_id) REFERENCES grupo (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE certificado_reputacion
+  ADD CONSTRAINT fk_certificado_reputacion_snapshot_id
+  FOREIGN KEY (snapshot_id) REFERENCES snapshot_reputacion (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE certificado_reputacion
+  ADD CONSTRAINT fk_certificado_reputacion_usuario_id
+  FOREIGN KEY (usuario_id) REFERENCES usuario (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE componente_score
+  ADD CONSTRAINT fk_componente_score_puntaje_id
+  FOREIGN KEY (puntaje_id) REFERENCES puntaje_reputacion (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE evento_reputacion
+  ADD CONSTRAINT fk_evento_reputacion_grupo_id
+  FOREIGN KEY (grupo_id) REFERENCES grupo (id) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE evento_reputacion
+  ADD CONSTRAINT fk_evento_reputacion_participante_id
+  FOREIGN KEY (participante_id) REFERENCES participante (id) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE evento_reputacion
+  ADD CONSTRAINT fk_evento_reputacion_revertido_por_id
+  FOREIGN KEY (revertido_por_id) REFERENCES evento_reputacion (id) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE evento_reputacion
+  ADD CONSTRAINT fk_evento_reputacion_usuario_id
+  FOREIGN KEY (usuario_id) REFERENCES usuario (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE insignia_otorgada
+  ADD CONSTRAINT fk_insignia_otorgada_insignia_id
+  FOREIGN KEY (insignia_id) REFERENCES insignia_logro (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE insignia_otorgada
+  ADD CONSTRAINT fk_insignia_otorgada_usuario_id
+  FOREIGN KEY (usuario_id) REFERENCES usuario (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE metrica_grupo
+  ADD CONSTRAINT fk_metrica_grupo_grupo_id
+  FOREIGN KEY (grupo_id) REFERENCES grupo (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE metrica_grupo
+  ADD CONSTRAINT fk_metrica_grupo_periodo_id
+  FOREIGN KEY (periodo_id) REFERENCES periodo (id) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE peso_factor
+  ADD CONSTRAINT fk_peso_factor_modelo_id
+  FOREIGN KEY (modelo_id) REFERENCES modelo_scoring (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE puntaje_reputacion
+  ADD CONSTRAINT fk_puntaje_reputacion_modelo_id
+  FOREIGN KEY (modelo_id) REFERENCES modelo_scoring (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE puntaje_reputacion
+  ADD CONSTRAINT fk_puntaje_reputacion_usuario_id
+  FOREIGN KEY (usuario_id) REFERENCES usuario (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE registro_sellado
+  ADD CONSTRAINT fk_registro_sellado_bloque_id
+  FOREIGN KEY (bloque_id) REFERENCES bloque_transparencia (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE regla_impacto_evento
+  ADD CONSTRAINT fk_regla_impacto_evento_modelo_id
+  FOREIGN KEY (modelo_id) REFERENCES modelo_scoring (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE resena_participante
+  ADD CONSTRAINT fk_resena_participante_autor_participante_id
+  FOREIGN KEY (autor_participante_id) REFERENCES participante (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE resena_participante
+  ADD CONSTRAINT fk_resena_participante_evaluado_usuario_id
+  FOREIGN KEY (evaluado_usuario_id) REFERENCES usuario (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE resena_participante
+  ADD CONSTRAINT fk_resena_participante_grupo_id
+  FOREIGN KEY (grupo_id) REFERENCES grupo (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE resena_participante
+  ADD CONSTRAINT fk_resena_participante_moderada_por
+  FOREIGN KEY (moderada_por) REFERENCES usuario (id) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE snapshot_reputacion
+  ADD CONSTRAINT fk_snapshot_reputacion_usuario_id
+  FOREIGN KEY (usuario_id) REFERENCES usuario (id) ON DELETE RESTRICT ON UPDATE CASCADE;

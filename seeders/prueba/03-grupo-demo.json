@@ -1,0 +1,1002 @@
+{
+  "descripcion": "Grupo de pasanaku demo: 6 cupos, Bs 500 mensuales, 6 períodos, con su tarifa congelada y el primer período abierto.",
+  "entorno": "prueba",
+  "bloques": [
+    {
+      "tabla": "organizador",
+      "conflicto": [],
+      "filas": [
+        {
+          "usuario_id": {
+            "$ref": "usuario",
+            "codigo_publico": "USR000001"
+          },
+          "estado": "HABILITADO",
+          "nivel": "ESTANDAR",
+          "limite_grupos_simultaneos": 3,
+          "limite_monto_administrado": 50000,
+          "grupos_activos": 1,
+          "grupos_historicos": 0,
+          "calificacion_promedio": 0,
+          "indice_morosidad_cartera": 0,
+          "fecha_postulacion": {
+            "$sql": "now()"
+          }
+        }
+      ]
+    },
+    {
+      "tabla": "grupo",
+      "conflicto": [
+        "codigo_publico"
+      ],
+      "filas": [
+        {
+          "codigo_publico": "GRP-DEMO-01",
+          "nombre": "Pasanaku demo del barrio",
+          "moneda": "BOB",
+          "periodicidad": "MENSUAL",
+          "dia_cobro": 10,
+          "num_periodos": 6,
+          "cupos_totales": 6,
+          "cupos_ocupados": 6,
+          "monto_aporte": 500.0,
+          "fecha_inicio": {
+            "$sql": "current_date"
+          },
+          "fecha_fin_estimada": {
+            "$fecha": "180 days"
+          },
+          "estado": "EN_CURSO",
+          "tipo_conformacion": "MANUAL_POR_INVITACION",
+          "modalidad_turnos": "SORTEO_ALEATORIO",
+          "visibilidad": "PRIVADO",
+          "requiere_kyc_minimo": "BASICO",
+          "reputacion_minima": 0,
+          "dias_gracia": 3,
+          "porcentaje_fondo_garantia": 5.0,
+          "quorum_decisiones": 0.667,
+          "organizador_id": {
+            "$ref": "organizador",
+            "usuario_id": {
+              "$ref": "usuario",
+              "codigo_publico": "USR000001"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "tabla": "configuracion_grupo",
+      "conflicto": [],
+      "filas": [
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "max_cupos_por_persona": 2,
+          "hora_limite_pago": "20:00:00",
+          "tolerancia_monto_parcial": 50.0,
+          "politica_mora_id": {
+            "$sql": "(SELECT id FROM politica_mora LIMIT 1)"
+          }
+        }
+      ]
+    },
+    {
+      "tabla": "reglamento_grupo",
+      "conflicto": [],
+      "filas": [
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "version": 1,
+          "contenido": "Reglamento de prueba del grupo demo.",
+          "hash_contenido": {
+            "$sql": "repeat('a', 64)"
+          },
+          "clausulas_mora": "Recargo del 2% con tope del 100% del aporte.",
+          "clausulas_abandono": "El cupo se libera y se busca reemplazo.",
+          "vigente_desde": {
+            "$sql": "now()"
+          },
+          "redactado_por": {
+            "$ref": "usuario",
+            "codigo_publico": "USR000001"
+          }
+        }
+      ]
+    },
+    {
+      "tabla": "tarifa_congelada_grupo",
+      "conflicto": [
+        "grupo_id"
+      ],
+      "comentario": "El precio pactado no cambia a mitad del juego (R-TAR-07)",
+      "filas": [
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "tarifario_id": {
+            "$ref": "tarifario",
+            "codigo": "GENERAL",
+            "version": 1
+          },
+          "snapshot_conceptos": {
+            "COM_ENTREGA": {
+              "metodo": "PORCENTUAL",
+              "valor": 0.3,
+              "piso": 10,
+              "techo": 50
+            }
+          },
+          "hash_snapshot": {
+            "$sql": "repeat('a', 64)"
+          },
+          "congelada_en": {
+            "$sql": "now()"
+          },
+          "vigente_hasta_ciclo_nro": 6
+        }
+      ]
+    },
+    {
+      "tabla": "participante",
+      "conflicto": [],
+      "filas": [
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "usuario_id": {
+            "$ref": "usuario",
+            "codigo_publico": "USR000001"
+          },
+          "estado": "ACTIVO",
+          "reputacion_al_ingresar": 700,
+          "aportes_realizados": 0,
+          "aportes_en_mora": 0,
+          "fecha_ingreso": {
+            "$sql": "now()"
+          },
+          "es_organizador": true
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "usuario_id": {
+            "$ref": "usuario",
+            "codigo_publico": "USR000002"
+          },
+          "estado": "ACTIVO",
+          "reputacion_al_ingresar": 700,
+          "aportes_realizados": 0,
+          "aportes_en_mora": 0,
+          "fecha_ingreso": {
+            "$sql": "now()"
+          },
+          "es_organizador": false
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "usuario_id": {
+            "$ref": "usuario",
+            "codigo_publico": "USR000003"
+          },
+          "estado": "ACTIVO",
+          "reputacion_al_ingresar": 700,
+          "aportes_realizados": 0,
+          "aportes_en_mora": 0,
+          "fecha_ingreso": {
+            "$sql": "now()"
+          },
+          "es_organizador": false
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "usuario_id": {
+            "$ref": "usuario",
+            "codigo_publico": "USR000004"
+          },
+          "estado": "ACTIVO",
+          "reputacion_al_ingresar": 700,
+          "aportes_realizados": 0,
+          "aportes_en_mora": 0,
+          "fecha_ingreso": {
+            "$sql": "now()"
+          },
+          "es_organizador": false
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "usuario_id": {
+            "$ref": "usuario",
+            "codigo_publico": "USR000005"
+          },
+          "estado": "ACTIVO",
+          "reputacion_al_ingresar": 700,
+          "aportes_realizados": 0,
+          "aportes_en_mora": 0,
+          "fecha_ingreso": {
+            "$sql": "now()"
+          },
+          "es_organizador": false
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "usuario_id": {
+            "$ref": "usuario",
+            "codigo_publico": "USR000006"
+          },
+          "estado": "ACTIVO",
+          "reputacion_al_ingresar": 700,
+          "aportes_realizados": 0,
+          "aportes_en_mora": 0,
+          "fecha_ingreso": {
+            "$sql": "now()"
+          },
+          "es_organizador": false
+        }
+      ]
+    },
+    {
+      "tabla": "cupo",
+      "conflicto": [],
+      "filas": [
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "numero": 1,
+          "estado": "OCUPADO",
+          "fraccion": 1.0,
+          "participante_id": {
+            "$ref": "participante",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "usuario_id": {
+              "$ref": "usuario",
+              "codigo_publico": "USR000001"
+            }
+          }
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "numero": 2,
+          "estado": "OCUPADO",
+          "fraccion": 1.0,
+          "participante_id": {
+            "$ref": "participante",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "usuario_id": {
+              "$ref": "usuario",
+              "codigo_publico": "USR000002"
+            }
+          }
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "numero": 3,
+          "estado": "OCUPADO",
+          "fraccion": 1.0,
+          "participante_id": {
+            "$ref": "participante",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "usuario_id": {
+              "$ref": "usuario",
+              "codigo_publico": "USR000003"
+            }
+          }
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "numero": 4,
+          "estado": "OCUPADO",
+          "fraccion": 1.0,
+          "participante_id": {
+            "$ref": "participante",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "usuario_id": {
+              "$ref": "usuario",
+              "codigo_publico": "USR000004"
+            }
+          }
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "numero": 5,
+          "estado": "OCUPADO",
+          "fraccion": 1.0,
+          "participante_id": {
+            "$ref": "participante",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "usuario_id": {
+              "$ref": "usuario",
+              "codigo_publico": "USR000005"
+            }
+          }
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "numero": 6,
+          "estado": "OCUPADO",
+          "fraccion": 1.0,
+          "participante_id": {
+            "$ref": "participante",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "usuario_id": {
+              "$ref": "usuario",
+              "codigo_publico": "USR000006"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "tabla": "periodo",
+      "conflicto": [],
+      "filas": [
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "numero": 1,
+          "fecha_inicio": {
+            "$fecha": "0 days"
+          },
+          "fecha_limite_pago": {
+            "$fecha": "10 days"
+          },
+          "fecha_fin_gracia": {
+            "$fecha": "13 days"
+          },
+          "fecha_entrega_prevista": {
+            "$fecha": "15 days"
+          },
+          "estado": "ABIERTO",
+          "cupos_morosos": 0,
+          "monto_recaudado": 0
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "numero": 2,
+          "fecha_inicio": {
+            "$fecha": "30 days"
+          },
+          "fecha_limite_pago": {
+            "$fecha": "40 days"
+          },
+          "fecha_fin_gracia": {
+            "$fecha": "43 days"
+          },
+          "fecha_entrega_prevista": {
+            "$fecha": "45 days"
+          },
+          "estado": "PROGRAMADO",
+          "cupos_morosos": 0,
+          "monto_recaudado": 0
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "numero": 3,
+          "fecha_inicio": {
+            "$fecha": "60 days"
+          },
+          "fecha_limite_pago": {
+            "$fecha": "70 days"
+          },
+          "fecha_fin_gracia": {
+            "$fecha": "73 days"
+          },
+          "fecha_entrega_prevista": {
+            "$fecha": "75 days"
+          },
+          "estado": "PROGRAMADO",
+          "cupos_morosos": 0,
+          "monto_recaudado": 0
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "numero": 4,
+          "fecha_inicio": {
+            "$fecha": "90 days"
+          },
+          "fecha_limite_pago": {
+            "$fecha": "100 days"
+          },
+          "fecha_fin_gracia": {
+            "$fecha": "103 days"
+          },
+          "fecha_entrega_prevista": {
+            "$fecha": "105 days"
+          },
+          "estado": "PROGRAMADO",
+          "cupos_morosos": 0,
+          "monto_recaudado": 0
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "numero": 5,
+          "fecha_inicio": {
+            "$fecha": "120 days"
+          },
+          "fecha_limite_pago": {
+            "$fecha": "130 days"
+          },
+          "fecha_fin_gracia": {
+            "$fecha": "133 days"
+          },
+          "fecha_entrega_prevista": {
+            "$fecha": "135 days"
+          },
+          "estado": "PROGRAMADO",
+          "cupos_morosos": 0,
+          "monto_recaudado": 0
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "numero": 6,
+          "fecha_inicio": {
+            "$fecha": "150 days"
+          },
+          "fecha_limite_pago": {
+            "$fecha": "160 days"
+          },
+          "fecha_fin_gracia": {
+            "$fecha": "163 days"
+          },
+          "fecha_entrega_prevista": {
+            "$fecha": "165 days"
+          },
+          "estado": "PROGRAMADO",
+          "cupos_morosos": 0,
+          "monto_recaudado": 0
+        }
+      ]
+    },
+    {
+      "tabla": "turno",
+      "conflicto": [],
+      "filas": [
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "periodo_id": {
+            "$ref": "periodo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 1
+          },
+          "cupo_id": {
+            "$ref": "cupo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 1
+          },
+          "orden_asignado": 1,
+          "estado": "PROGRAMADO",
+          "criterio_asignacion": "SORTEO"
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "periodo_id": {
+            "$ref": "periodo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 2
+          },
+          "cupo_id": {
+            "$ref": "cupo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 2
+          },
+          "orden_asignado": 2,
+          "estado": "PROGRAMADO",
+          "criterio_asignacion": "SORTEO"
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "periodo_id": {
+            "$ref": "periodo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 3
+          },
+          "cupo_id": {
+            "$ref": "cupo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 3
+          },
+          "orden_asignado": 3,
+          "estado": "PROGRAMADO",
+          "criterio_asignacion": "SORTEO"
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "periodo_id": {
+            "$ref": "periodo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 4
+          },
+          "cupo_id": {
+            "$ref": "cupo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 4
+          },
+          "orden_asignado": 4,
+          "estado": "PROGRAMADO",
+          "criterio_asignacion": "SORTEO"
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "periodo_id": {
+            "$ref": "periodo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 5
+          },
+          "cupo_id": {
+            "$ref": "cupo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 5
+          },
+          "orden_asignado": 5,
+          "estado": "PROGRAMADO",
+          "criterio_asignacion": "SORTEO"
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "periodo_id": {
+            "$ref": "periodo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 6
+          },
+          "cupo_id": {
+            "$ref": "cupo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 6
+          },
+          "orden_asignado": 6,
+          "estado": "PROGRAMADO",
+          "criterio_asignacion": "SORTEO"
+        }
+      ]
+    },
+    {
+      "tabla": "obligacion_aporte",
+      "conflicto": [],
+      "comentario": "Primer período: seis obligaciones de Bs 500 pendientes",
+      "filas": [
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "periodo_id": {
+            "$ref": "periodo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 1
+          },
+          "cupo_id": {
+            "$ref": "cupo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 1
+          },
+          "participante_id": {
+            "$ref": "participante",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "usuario_id": {
+              "$ref": "usuario",
+              "codigo_publico": "USR000001"
+            }
+          },
+          "tipo": "APORTE_PERIODICO",
+          "monto_esperado": 500.0,
+          "moneda": "BOB",
+          "monto_pagado": 0,
+          "monto_recargo": 0,
+          "monto_condonado": 0,
+          "monto_cubierto_garantia": 0,
+          "estado": "PENDIENTE",
+          "fecha_vencimiento": {
+            "$fecha": "10 days"
+          },
+          "fecha_fin_gracia": {
+            "$fecha": "13 days"
+          },
+          "dias_mora": 0,
+          "version": 0,
+          "politica_mora_id": {
+            "$sql": "(SELECT id FROM politica_mora LIMIT 1)"
+          }
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "periodo_id": {
+            "$ref": "periodo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 1
+          },
+          "cupo_id": {
+            "$ref": "cupo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 2
+          },
+          "participante_id": {
+            "$ref": "participante",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "usuario_id": {
+              "$ref": "usuario",
+              "codigo_publico": "USR000002"
+            }
+          },
+          "tipo": "APORTE_PERIODICO",
+          "monto_esperado": 500.0,
+          "moneda": "BOB",
+          "monto_pagado": 0,
+          "monto_recargo": 0,
+          "monto_condonado": 0,
+          "monto_cubierto_garantia": 0,
+          "estado": "PENDIENTE",
+          "fecha_vencimiento": {
+            "$fecha": "10 days"
+          },
+          "fecha_fin_gracia": {
+            "$fecha": "13 days"
+          },
+          "dias_mora": 0,
+          "version": 0,
+          "politica_mora_id": {
+            "$sql": "(SELECT id FROM politica_mora LIMIT 1)"
+          }
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "periodo_id": {
+            "$ref": "periodo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 1
+          },
+          "cupo_id": {
+            "$ref": "cupo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 3
+          },
+          "participante_id": {
+            "$ref": "participante",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "usuario_id": {
+              "$ref": "usuario",
+              "codigo_publico": "USR000003"
+            }
+          },
+          "tipo": "APORTE_PERIODICO",
+          "monto_esperado": 500.0,
+          "moneda": "BOB",
+          "monto_pagado": 0,
+          "monto_recargo": 0,
+          "monto_condonado": 0,
+          "monto_cubierto_garantia": 0,
+          "estado": "PENDIENTE",
+          "fecha_vencimiento": {
+            "$fecha": "10 days"
+          },
+          "fecha_fin_gracia": {
+            "$fecha": "13 days"
+          },
+          "dias_mora": 0,
+          "version": 0,
+          "politica_mora_id": {
+            "$sql": "(SELECT id FROM politica_mora LIMIT 1)"
+          }
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "periodo_id": {
+            "$ref": "periodo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 1
+          },
+          "cupo_id": {
+            "$ref": "cupo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 4
+          },
+          "participante_id": {
+            "$ref": "participante",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "usuario_id": {
+              "$ref": "usuario",
+              "codigo_publico": "USR000004"
+            }
+          },
+          "tipo": "APORTE_PERIODICO",
+          "monto_esperado": 500.0,
+          "moneda": "BOB",
+          "monto_pagado": 0,
+          "monto_recargo": 0,
+          "monto_condonado": 0,
+          "monto_cubierto_garantia": 0,
+          "estado": "PENDIENTE",
+          "fecha_vencimiento": {
+            "$fecha": "10 days"
+          },
+          "fecha_fin_gracia": {
+            "$fecha": "13 days"
+          },
+          "dias_mora": 0,
+          "version": 0,
+          "politica_mora_id": {
+            "$sql": "(SELECT id FROM politica_mora LIMIT 1)"
+          }
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "periodo_id": {
+            "$ref": "periodo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 1
+          },
+          "cupo_id": {
+            "$ref": "cupo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 5
+          },
+          "participante_id": {
+            "$ref": "participante",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "usuario_id": {
+              "$ref": "usuario",
+              "codigo_publico": "USR000005"
+            }
+          },
+          "tipo": "APORTE_PERIODICO",
+          "monto_esperado": 500.0,
+          "moneda": "BOB",
+          "monto_pagado": 0,
+          "monto_recargo": 0,
+          "monto_condonado": 0,
+          "monto_cubierto_garantia": 0,
+          "estado": "PENDIENTE",
+          "fecha_vencimiento": {
+            "$fecha": "10 days"
+          },
+          "fecha_fin_gracia": {
+            "$fecha": "13 days"
+          },
+          "dias_mora": 0,
+          "version": 0,
+          "politica_mora_id": {
+            "$sql": "(SELECT id FROM politica_mora LIMIT 1)"
+          }
+        },
+        {
+          "grupo_id": {
+            "$ref": "grupo",
+            "codigo_publico": "GRP-DEMO-01"
+          },
+          "periodo_id": {
+            "$ref": "periodo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 1
+          },
+          "cupo_id": {
+            "$ref": "cupo",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "numero": 6
+          },
+          "participante_id": {
+            "$ref": "participante",
+            "grupo_id": {
+              "$ref": "grupo",
+              "codigo_publico": "GRP-DEMO-01"
+            },
+            "usuario_id": {
+              "$ref": "usuario",
+              "codigo_publico": "USR000006"
+            }
+          },
+          "tipo": "APORTE_PERIODICO",
+          "monto_esperado": 500.0,
+          "moneda": "BOB",
+          "monto_pagado": 0,
+          "monto_recargo": 0,
+          "monto_condonado": 0,
+          "monto_cubierto_garantia": 0,
+          "estado": "PENDIENTE",
+          "fecha_vencimiento": {
+            "$fecha": "10 days"
+          },
+          "fecha_fin_gracia": {
+            "$fecha": "13 days"
+          },
+          "dias_mora": 0,
+          "version": 0,
+          "politica_mora_id": {
+            "$sql": "(SELECT id FROM politica_mora LIMIT 1)"
+          }
+        }
+      ]
+    }
+  ]
+}

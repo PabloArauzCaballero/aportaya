@@ -1,0 +1,606 @@
+@startuml 04_entregas_clases
+' ============================================================
+'  MODULO 4: Entregas de Fondo (desembolso al beneficiario)
+'  Diagrama de CLASES  (modelo detallado)
+'  Cubre: nucleo, RN-05 (no se entrega sin fondo completo),
+'         RN-17 (trazabilidad), enlace con M8 (garantia)
+'  Principio: la entrega es una liquidacion, no una transferencia
+'  simple. Se calcula bolsa bruta, se aplican deducciones linea a
+'  linea (deuda propia, cobertura) y recien se desembolsa
+'  el neto contra una cuenta bancaria previamente verificada.
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 4 - Entregas de Fondo (clases)
+
+legend top right
+  <b>Ciclo de la entrega</b>
+  PROGRAMADA -> validaciones previas -> AUTORIZADA
+   -> orden de desembolso -> ENTREGADA -> CONFIRMADA
+  Cualquier validacion fallida detiene el ciclo y
+  genera IncidenciaEntrega, nunca un desembolso parcial silencioso.
+endlegend
+
+' ============================================================
+package "Entrega y Liquidacion" {
+
+  enum EstadoEntrega {
+    PROGRAMADA
+    BLOQUEADA_POR_FONDO_INCOMPLETO
+    BLOQUEADA_POR_VALIDACION
+    LISTA_PARA_ENTREGA
+    AUTORIZADA
+    EN_PROCESO_DESEMBOLSO
+    ENTREGADA
+    CONFIRMADA
+    RECHAZADA_POR_BENEFICIARIO
+    REVERSADA
+    ANULADA
+  }
+
+  enum MetodoDesembolso {
+    TRANSFERENCIA_BANCARIA
+    BILLETERA_MOVIL
+    QR_ENVIO
+    EFECTIVO_ORGANIZADOR
+    COMPENSACION_INTERNA
+  }
+
+  enum TipoDeduccion {
+    APORTE_PROPIO_DEL_PERIODO
+    DEUDA_VENCIDA_PROPIA
+    RECARGO_MORA_PROPIO
+    REPOSICION_FONDO_GARANTIA
+    COMISION_PLATAFORMA
+    RETENCION_IMPUESTO
+    COSTO_TRANSFERENCIA
+    AJUSTE_ACORDADO
+  }
+
+  note top of TipoDeduccion
+    COMISION_PLATAFORMA es la comision del servicio (M11),
+    nunca del organizador: RN-18 sigue vigente. Su
+    referenciaOrigenId apunta a cargo_comision.id, que a su
+    vez apunta al concepto y al tarifario que la justifican.
+  end note
+
+  class EntregaFondo <<AR>> {
+    - id: UUID
+    - grupoId: UUID
+    - periodoId: UUID
+    - turnoId: UUID
+    - cupoId: UUID
+    - beneficiarioParticipanteId: UUID
+    - montoBolsaBruto: Decimal
+    - totalDeducciones: Decimal
+    - montoNetoAEntregar: Decimal
+    - montoEfectivamenteEntregado: Decimal
+    - moneda: String
+    - estado: EstadoEntrega
+    - metodoDesembolso: MetodoDesembolso
+    - cuentaDestinoId: UUID
+    - fechaProgramada: Date
+    - fechaAutorizacion: DateTime
+    - fechaEntrega: DateTime
+    - autorizadaPor: UUID
+    - ejecutadaPor: UUID
+    - comprobanteUrl: String
+    - hashComprobante: String
+    - observaciones: String
+    - version: Integer
+    --
+    + calcularBolsa(): Decimal
+    + calcularDeducciones(): List<DeduccionEntrega>
+    + ejecutarValidacionesPrevias(): ResultadoValidacion
+    + autorizar(usuarioId)
+    + generarOrdenDesembolso(): OrdenDesembolso
+    + registrarComprobante(url)
+    + marcarEntregada()
+    + reversar(motivo)
+    + montoNeto(): Decimal
+  }
+
+  class DeduccionEntrega {
+    - id: UUID
+    - entregaId: UUID
+    - tipo: TipoDeduccion
+    - descripcion: String
+    - monto: Decimal
+    - referenciaOrigenId: UUID <<obligacion, cobertura>>
+    - esObligatoria: Boolean
+    - aplicadaEn: DateTime
+    --
+    + validarContraOrigen(): Boolean
+    + revertir(motivo)
+  }
+
+  class ValidacionPreEntrega {
+    - id: UUID
+    - entregaId: UUID
+    - regla: String
+    - descripcion: String
+    - resultado: String <<APROBADA | RECHAZADA | ADVERTENCIA | OMITIDA>>
+    - valorEsperado: String
+    - valorObtenido: String
+    - esBloqueante: Boolean
+    - omitidaPor: UUID
+    - justificacionOmision: String
+    - evaluadaEn: DateTime
+    --
+    + evaluar(): String
+    + omitir(usuarioId, justificacion)
+  }
+
+  class ReglaEntrega <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - descripcion: String
+    - esBloqueante: Boolean
+    - permiteOmision: Boolean
+    - rolQuePuedeOmitir: String
+    - orden: Integer
+    - activa: Boolean
+    --
+    + aplicarA(entrega): ValidacionPreEntrega
+  }
+}
+
+' ============================================================
+package "Desembolso" {
+
+  enum EstadoDesembolso {
+    CREADA
+    ENVIADA_A_PROVEEDOR
+    EN_PROCESO
+    ACREDITADA
+    RECHAZADA
+    DEVUELTA_POR_BANCO
+    CANCELADA
+  }
+
+  class CuentaBancariaBeneficiario {
+    - id: UUID
+    - usuarioId: UUID
+    - tipoCuenta: String <<AHORRO | CORRIENTE | BILLETERA>>
+    - entidadFinanciera: String
+    - numeroCuentaCifrado: String
+    - numeroEnmascarado: String
+    - titularNombre: String
+    - titularDocumento: String
+    - moneda: String
+    - esPrincipal: Boolean
+    - estadoVerificacion: String <<PENDIENTE | VERIFICADA | RECHAZADA>>
+    - metodoVerificacion: String <<MICRODEPOSITO | NOMBRE_COINCIDE | MANUAL>>
+    - verificadaEn: DateTime
+    - bloqueadaHasta: DateTime <<enfriamiento tras cambio>>
+    --
+    + verificar(codigo): Boolean
+    + marcarPrincipal()
+    + coincideTitularCon(usuario): Boolean
+  }
+
+  class OrdenDesembolso {
+    - id: UUID
+    - entregaId: UUID
+    - proveedorId: UUID
+    - cuentaDestinoId: UUID
+    - monto: Decimal
+    - moneda: String
+    - estado: EstadoDesembolso
+    - referenciaProveedor: String
+    - glosa: String
+    - claveIdempotencia: String
+    - creadaEn: DateTime
+    - acreditadaEn: DateTime
+    --
+    + enviar(): IntentoDesembolso
+    + consultarEstado(): EstadoDesembolso
+    + cancelar(motivo)
+  }
+
+  class IntentoDesembolso {
+    - id: UUID
+    - ordenDesembolsoId: UUID
+    - numeroIntento: Integer
+    - iniciadoEn: DateTime
+    - finalizadoEn: DateTime
+    - resultado: String
+    - codigoError: String
+    - mensajeProveedor: String
+    - reintentableEn: DateTime
+    --
+    + ejecutar()
+    + programarReintento(): DateTime
+  }
+}
+
+' ============================================================
+package "Confirmacion e Incidencias" {
+
+  enum EstadoConfirmacion {
+    PENDIENTE
+    CONFIRMADA_POR_BENEFICIARIO
+    CONFIRMADA_AUTOMATICAMENTE
+    OBJETADA
+    VENCIDA
+  }
+
+  enum TipoIncidencia {
+    FONDO_INCOMPLETO
+    DATOS_BANCARIOS_ERRONEOS
+    DESEMBOLSO_RECHAZADO
+    MONTO_NO_COINCIDE
+    BENEFICIARIO_NO_RECIBIO
+    ENTREGA_DUPLICADA
+    RECLAMO_DE_TERCERO
+    SOSPECHA_FRAUDE
+  }
+
+  class ConfirmacionRecepcion {
+    - id: UUID
+    - entregaId: UUID
+    - estado: EstadoConfirmacion
+    - montoConfirmado: Decimal
+    - tokenConfirmacionId: UUID <<modulo 1>>
+    - confirmadaEn: DateTime
+    - plazoLimite: DateTime
+    - autoconfirmadaPorVencimiento: Boolean
+    - ipConfirmacion: String
+    - comentario: String
+    --
+    + confirmar(codigo)
+    + objetar(motivo): IncidenciaEntrega
+    + vencerPlazo()
+    + recordar()
+  }
+
+  class IncidenciaEntrega {
+    - id: UUID
+    - entregaId: UUID
+    - tipo: TipoIncidencia
+    - severidad: String <<BAJA | MEDIA | ALTA | CRITICA>>
+    - descripcion: String
+    - reportadaPor: UUID
+    - asignadaA: UUID
+    - estado: String <<ABIERTA | EN_GESTION | ESCALADA | RESUELTA | CERRADA>>
+    - slaHoras: Integer
+    - fechaLimiteSLA: DateTime
+    - resolucion: String
+    - evidencias: List<String>
+    - abiertaEn: DateTime
+    - resueltaEn: DateTime
+    --
+    + escalar(nivel)
+    + resolver(accion, nota)
+    + estaFueraDeSLA(): Boolean
+  }
+
+  class HistorialEstadoEntrega {
+    - id: UUID
+    - entregaId: UUID
+    - estadoAnterior: EstadoEntrega
+    - estadoNuevo: EstadoEntrega
+    - motivo: String
+    - ejecutadoPor: UUID
+    - fechaHora: DateTime
+  }
+
+  class ServicioEntregas <<Svc>> {
+    --
+    + detectarEntregasListas(fecha): List<EntregaFondo>
+    + liquidarPeriodo(periodoId): EntregaFondo
+    + procesarConfirmacionesVencidas(): Integer
+    + reintentarDesembolsosFallidos(): Integer
+  }
+}
+
+' ---------- Relaciones ----------
+EntregaFondo "1" *-- "0..*" DeduccionEntrega
+EntregaFondo "1" *-- "1..*" ValidacionPreEntrega
+EntregaFondo "1" *-- "0..*" OrdenDesembolso
+EntregaFondo "1" *-- "1" ConfirmacionRecepcion
+EntregaFondo "1" *-- "0..*" IncidenciaEntrega
+EntregaFondo "1" *-- "0..*" HistorialEstadoEntrega
+EntregaFondo "*" --> "1" CuentaBancariaBeneficiario : abona en >
+
+ReglaEntrega "1" ..> "0..*" ValidacionPreEntrega : instancia >
+OrdenDesembolso "1" *-- "1..*" IntentoDesembolso
+ConfirmacionRecepcion ..> IncidenciaEntrega : puede abrir >
+ServicioEntregas ..> EntregaFondo : orquesta >
+
+EntregaFondo --> EstadoEntrega
+EntregaFondo --> MetodoDesembolso
+DeduccionEntrega --> TipoDeduccion
+OrdenDesembolso --> EstadoDesembolso
+ConfirmacionRecepcion --> EstadoConfirmacion
+IncidenciaEntrega --> TipoIncidencia
+
+note right of DeduccionEntrega
+  <b>Neteo explicito</b>
+  Si el beneficiario del turno tambien debe su
+  propio aporte del periodo, no se le cobra y
+  se le paga: se descuenta como deduccion
+  linea a linea. Cada linea apunta a su origen
+  (obligacion_aporte o cobertura) para que
+  el beneficiario vea
+  exactamente por que recibio menos.
+end note
+
+note right of ValidacionPreEntrega
+  <b>Reglas tipicas (RN-05)</b>
+  - Todos los aportes del periodo estan pagados
+    o cubiertos por el fondo de garantia.
+  - El beneficiario no tiene deuda vencida sin plan.
+  - Cuenta bancaria verificada y a su nombre.
+  - KYC vigente para el monto a entregar.
+  - No existe entrega previa para el mismo turno.
+  Las bloqueantes impiden autorizar; omitir una
+  exige justificacion y queda en bitacora (M9).
+end note
+
+note bottom of CuentaBancariaBeneficiario
+  usuarioId -> usuario.id (modulo 1).
+  Cambiar la cuenta activa un periodo de
+  enfriamiento (bloqueadaHasta): defensa
+  clasica contra el fraude de "me cambiaron
+  la cuenta justo antes de cobrar".
+end note
+
+note bottom of EntregaFondo
+  periodoId, turnoId y cupoId -> modulo 2.
+  Las deducciones consumen datos de los
+  modulos 3 (obligaciones) y 8 (cobertura).
+  El asiento contable se
+  registra en el modulo 3.
+end note
+
+@enduml
+
+@startuml 04_entregas_relacional
+' ============================================================
+'  MODULO 4: Entregas de Fondo
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 4 - Entregas de Fondo (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> CHECK    <<NULL>> admite nulos
+endlegend
+
+entity "entrega_fondo" as entrega {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  # periodo_id : UUID <<FK, UQ>>
+  # turno_id : UUID <<FK, UQ>>
+  # cupo_id : UUID <<FK>>
+  # beneficiario_participante_id : UUID <<FK, IDX>>
+  # cuenta_destino_id : UUID <<FK, NULL>>
+  monto_bolsa_bruto : DECIMAL(14,2)
+  total_deducciones : DECIMAL(14,2)
+  monto_neto_a_entregar : DECIMAL(14,2) <<CK: >= 0>>
+  monto_efectivamente_entregado : DECIMAL(14,2)
+  moneda : CHAR(3)
+  estado : VARCHAR(35) <<CK, IDX>>
+  metodo_desembolso : VARCHAR(30) <<CK>>
+  fecha_programada : DATE <<IDX>>
+  fecha_autorizacion : TIMESTAMPTZ <<NULL>>
+  fecha_entrega : TIMESTAMPTZ <<NULL>>
+  # autorizada_por : UUID <<FK, NULL>>
+  # ejecutada_por : UUID <<FK, NULL>>
+  comprobante_url : VARCHAR(255) <<NULL>>
+  hash_comprobante : VARCHAR(64) <<NULL>>
+  observaciones : VARCHAR(400) <<NULL>>
+  version : INTEGER
+}
+
+entity "deduccion_entrega" as deduc {
+  * id : UUID <<PK>>
+  --
+  # entrega_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(35) <<CK>>
+  descripcion : VARCHAR(200)
+  monto : DECIMAL(14,2) <<CK: > 0>>
+  referencia_origen_id : UUID <<NULL, polimorfica>>
+  es_obligatoria : BOOLEAN
+  aplicada_en : TIMESTAMPTZ
+  revertida_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "regla_entrega" as regla {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(40) <<UQ>>
+  descripcion : VARCHAR(200)
+  es_bloqueante : BOOLEAN
+  permite_omision : BOOLEAN
+  rol_que_puede_omitir : VARCHAR(30) <<NULL>>
+  orden : SMALLINT
+  activa : BOOLEAN
+}
+
+entity "validacion_pre_entrega" as valid {
+  * id : UUID <<PK>>
+  --
+  # entrega_id : UUID <<FK, IDX>>
+  # regla_id : UUID <<FK>>
+  resultado : VARCHAR(15) <<CK>>
+  valor_esperado : VARCHAR(80) <<NULL>>
+  valor_obtenido : VARCHAR(80) <<NULL>>
+  es_bloqueante : BOOLEAN
+  # omitida_por : UUID <<FK, NULL>>
+  justificacion_omision : VARCHAR(300) <<NULL>>
+  evaluada_en : TIMESTAMPTZ
+}
+
+entity "cuenta_bancaria_beneficiario" as ctabco {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  tipo_cuenta : VARCHAR(15) <<CK>>
+  entidad_financiera : VARCHAR(60)
+  numero_cuenta_cifrado : VARCHAR(255)
+  hash_numero_cuenta : VARCHAR(64) <<UQ+usuario_id>>
+  numero_enmascarado : VARCHAR(30)
+  titular_nombre : VARCHAR(120)
+  titular_documento : VARCHAR(30)
+  moneda : CHAR(3)
+  es_principal : BOOLEAN
+  estado_verificacion : VARCHAR(15) <<CK>>
+  metodo_verificacion : VARCHAR(20) <<NULL>>
+  verificada_en : TIMESTAMPTZ <<NULL>>
+  bloqueada_hasta : TIMESTAMPTZ <<NULL>>
+}
+
+entity "orden_desembolso" as ordendes {
+  * id : UUID <<PK>>
+  --
+  # entrega_id : UUID <<FK, IDX>>
+  # proveedor_id : UUID <<FK, M3>>
+  # cuenta_destino_id : UUID <<FK>>
+  monto : DECIMAL(14,2)
+  moneda : CHAR(3)
+  estado : VARCHAR(25) <<CK, IDX>>
+  referencia_proveedor : VARCHAR(80) <<UQ, NULL>>
+  glosa : VARCHAR(140)
+  clave_idempotencia : VARCHAR(80) <<UQ>>
+  creada_en : TIMESTAMPTZ
+  acreditada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "intento_desembolso" as intdes {
+  * id : UUID <<PK>>
+  --
+  # orden_desembolso_id : UUID <<FK, IDX>>
+  numero_intento : SMALLINT
+  iniciado_en : TIMESTAMPTZ
+  finalizado_en : TIMESTAMPTZ <<NULL>>
+  resultado : VARCHAR(20) <<CK>>
+  codigo_error : VARCHAR(40) <<NULL>>
+  mensaje_proveedor : VARCHAR(255) <<NULL>>
+  reintentable_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "confirmacion_recepcion" as confirm {
+  * id : UUID <<PK>>
+  --
+  # entrega_id : UUID <<FK, UQ>>
+  estado : VARCHAR(30) <<CK, IDX>>
+  monto_confirmado : DECIMAL(14,2) <<NULL>>
+  # token_confirmacion_id : UUID <<FK, NULL, M1>>
+  confirmada_en : TIMESTAMPTZ <<NULL>>
+  plazo_limite : TIMESTAMPTZ <<IDX>>
+  autoconfirmada_por_vencimiento : BOOLEAN
+  ip_confirmacion : INET <<NULL>>
+  comentario : VARCHAR(300) <<NULL>>
+}
+
+entity "incidencia_entrega" as incid {
+  * id : UUID <<PK>>
+  --
+  # entrega_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(35) <<CK>>
+  severidad : VARCHAR(10) <<CK>>
+  descripcion : TEXT
+  # reportada_por : UUID <<FK>>
+  # asignada_a : UUID <<FK, NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  sla_horas : SMALLINT
+  fecha_limite_sla : TIMESTAMPTZ <<IDX>>
+  resolucion : VARCHAR(400) <<NULL>>
+  evidencias : JSONB
+  abierta_en : TIMESTAMPTZ
+  resuelta_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "historial_estado_entrega" as histent {
+  * id : UUID <<PK>>
+  --
+  # entrega_id : UUID <<FK, IDX>>
+  estado_anterior : VARCHAR(35)
+  estado_nuevo : VARCHAR(35)
+  motivo : VARCHAR(200)
+  # ejecutado_por : UUID <<FK, NULL>>
+  fecha_hora : TIMESTAMPTZ
+}
+
+entrega ||--o{ deduc : "descuenta"
+entrega ||--|{ valid : "valida con"
+entrega ||--o{ ordendes : "desembolsa via"
+entrega ||--|| confirm : "espera"
+entrega ||--o{ incid : "registra"
+entrega ||--o{ histent : "transiciona"
+entrega }o--o| ctabco : "abona en"
+regla ||--o{ valid : "instancia"
+ordendes ||--|{ intdes : "intenta"
+ctabco ||--o{ ordendes : "recibe"
+
+note top of entrega
+  <b>Restricciones clave</b>
+  - UNIQUE (turno_id) y UNIQUE (periodo_id):
+    imposible entregar dos veces el mismo turno.
+  - CHECK monto_neto_a_entregar =
+      monto_bolsa_bruto - total_deducciones.
+  - Trigger: no se permite pasar a AUTORIZADA
+    si existe validacion_pre_entrega bloqueante
+    con resultado 'RECHAZADA'.
+end note
+
+note bottom of deduc
+  referencia_origen_id es polimorfica segun tipo:
+   DEUDA_VENCIDA_PROPIA -> obligacion_aporte.id (M3)
+   REPOSICION_FONDO_GARANTIA -> cobertura_incumplimiento.id (M8)
+   COMISION_PLATAFORMA -> cargo_comision.id (M11)
+  La comision de plataforma es la unica deduccion que
+  representa un ingreso de la empresa. Es siempre una
+  linea visible, con su monto, su concepto tarifario y
+  el tarifario version N que la calculo. El organizador
+  no percibe nada de ella (RN-18).
+end note
+
+note bottom of ctabco
+  hash_numero_cuenta detecta que dos usuarios
+  distintos declaren la misma cuenta destino
+  (patron tipico de mula financiera): dispara
+  alerta de cumplimiento en el modulo 9.
+end note
+
+@enduml

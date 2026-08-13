@@ -1,0 +1,572 @@
+@startuml 07_organizador_automatizacion_clases
+' ============================================================
+'  MODULO 7: Organizador y Automatizacion (Parche A)
+'  Diagrama de CLASES  (modelo detallado)
+'  Cubre: RF-20, RN-18 (el organizador NO custodia fondos ni cobra),
+'         RN-22 (desempeno)
+'  Regla estructural: el organizador NO percibe comision. Es un
+'  participante mas del grupo, con funciones administrativas y
+'  responsabilidad de desempeno, pero sin ingreso por administrar.
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 7 - Organizador y Automatizacion (clases)
+
+legend top right
+  <b>RN-18 (invariante del sistema)</b>
+  El organizador nunca es cuenta de paso del dinero del grupo
+  y <b>no percibe comision por administrar</b>. Participa como
+  cualquier otro miembro: aporta y cobra su turno igual que
+  todos. Su rol solo agrega funciones administrativas.
+  La comision del <b>servicio</b> (M11) es de la plataforma, con
+  tarifario publicado: ninguna tabla de M11 apunta a organizador.
+endlegend
+
+' ============================================================
+package "Habilitacion del Organizador" {
+
+  enum EstadoOrganizador {
+    POSTULADO
+    EN_EVALUACION
+    CAPACITACION_PENDIENTE
+    HABILITADO
+    LIMITADO
+    SUSPENDIDO
+    DESHABILITADO
+    RETIRADO
+  }
+
+  enum NivelOrganizador {
+    APRENDIZ
+    ESTANDAR
+    SENIOR
+    MAESTRO
+  }
+
+  class Organizador <<AR>> {
+    - id: UUID
+    - usuarioId: UUID
+    - estado: EstadoOrganizador
+    - nivel: NivelOrganizador
+    - limiteGruposSimultaneos: Integer
+    - limiteMontoAdministrado: Decimal
+    - gruposActivos: Integer
+    - gruposHistoricos: Integer
+    - montoAdministradoActual: Decimal
+    - calificacionPromedio: Decimal
+    - indiceMorosidadCartera: Decimal
+    - fechaPostulacion: DateTime
+    - fechaHabilitacion: DateTime
+    - fechaSuspension: DateTime
+    - version: Integer
+    --
+    + postular(): SolicitudOrganizador
+    + habilitar(evaluadorId)
+    + suspender(motivo, hasta)
+    + deshabilitar(motivo)
+    + ajustarLimites(nivel)
+    + puedeCrearGrupo(monto): Boolean
+    + cupoDisponible(): Integer
+  }
+
+  class SolicitudOrganizador {
+    - id: UUID
+    - usuarioId: UUID
+    - motivacion: String
+    - experienciaDeclarada: String
+    - referenciasIds: List<UUID>
+    - kycReforzadoId: UUID
+    - puntajeReputacionAlSolicitar: Decimal
+    - estado: String <<PENDIENTE | EN_REVISION | APROBADA | RECHAZADA>>
+    - revisadaPor: UUID
+    - motivoRechazo: String
+    - fechaSolicitud: DateTime
+    - fechaResolucion: DateTime
+    --
+    + validarRequisitos(): List<Requisito>
+    + aprobar(revisorId): Organizador
+    + rechazar(motivo)
+  }
+
+  class RequisitoHabilitacion <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - descripcion: String
+    - tipo: String <<KYC | REPUTACION | ANTIGUEDAD | CAPACITACION | GARANTIA_ECONOMICA>>
+    - valorMinimo: Decimal
+    - esObligatorio: Boolean
+    - nivelRequerido: NivelOrganizador
+    - activo: Boolean
+    --
+    + evaluar(usuario): Boolean
+  }
+
+  class CapacitacionOrganizador {
+    - id: UUID
+    - organizadorId: UUID
+    - modulo: String
+    - completadaEn: DateTime
+    - puntajeEvaluacion: Decimal
+    - aprobada: Boolean
+    - vigenteHasta: DateTime
+    --
+    + registrarAprobacion()
+  }
+
+  class ContratoOrganizador {
+    - id: UUID
+    - organizadorId: UUID
+    - version: String
+    - contenidoHash: String
+    - obligaciones: String
+    - causalesRescision: String
+    - firmadoEn: DateTime
+    - tokenFirmaId: UUID
+    - vigenteDesde: Date
+    - vigenteHasta: Date
+    - rescindidoEn: DateTime
+    - motivoRescision: String
+    --
+    + firmar(tokenId)
+    + rescindir(motivo)
+    + estaVigente(): Boolean
+  }
+}
+
+' ============================================================
+package "Desempeno y Sanciones al Organizador" {
+
+  class EvaluacionDesempeno {
+    - id: UUID
+    - organizadorId: UUID
+    - periodoEvaluado: String
+    - indiceMorosidadCartera: Decimal
+    - tasaFinalizacionGrupos: Decimal
+    - satisfaccionParticipantes: Decimal
+    - tiempoRespuestaPromedioHoras: Decimal
+    - incidenciasAbiertas: Integer
+    - coberturasConsumidas: Integer
+    - puntajeGlobal: Decimal
+    - nivelSugerido: NivelOrganizador
+    - accionRecomendada: String
+    - evaluadoEn: DateTime
+    --
+    + calcular(): Decimal
+    + aplicarConsecuencias()
+  }
+
+  class MetricaOrganizador {
+    - id: UUID
+    - evaluacionId: UUID
+    - codigo: String
+    - valor: Decimal
+    - meta: Decimal
+    - cumple: Boolean
+    - peso: Decimal
+  }
+
+  class SancionOrganizador {
+    - id: UUID
+    - organizadorId: UUID
+    - evaluacionId: UUID
+    - tipo: String <<ADVERTENCIA | REDUCCION_LIMITE | SUSPENSION | INHABILITACION>>
+    - motivo: String
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    - estado: String <<VIGENTE | CUMPLIDA | REVOCADA | APELADA>>
+    - aplicadaPor: UUID
+    --
+    + aplicar()
+    + revocar(motivo, adminId)
+    + apelar(): ApelacionSancion
+  }
+
+  class ApelacionSancion {
+    - id: UUID
+    - sancionOrganizadorId: UUID
+    - argumento: String
+    - evidencias: List<String>
+    - estado: String <<PRESENTADA | EN_REVISION | ACEPTADA | RECHAZADA>>
+    - resueltaPor: UUID
+    - resolucion: String
+    - presentadaEn: DateTime
+    - resueltaEn: DateTime
+    --
+    + resolver(decision, nota)
+  }
+}
+
+' ============================================================
+package "Organizador Digital (automatizacion, RF-20)" {
+
+  class OrganizadorDigital <<Svc>> {
+    - id: UUID
+    - grupoId: UUID
+    - nivelAutonomia: String <<SOLO_SUGIERE | EJECUTA_CON_AVISO | AUTONOMO>>
+    - activo: Boolean
+    - activadoEn: DateTime
+    --
+    + ejecutarCicloDiario()
+    + reemplazarFuncionesDe(organizador)
+    + tareasPendientes(): List<TareaAutomatizada>
+  }
+
+  class ReglaAutomatizacion <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - descripcion: String
+    - disparador: String <<CRON | EVENTO>>
+    - expresionDisparo: String
+    - condicion: String
+    - accion: String <<GENERAR_COBROS | ENVIAR_RECORDATORIO | APLICAR_MORA | LIQUIDAR_PERIODO | EJECUTAR_ENTREGA | ESCALAR_COBRANZA>>
+    - requiereConfirmacionHumana: Boolean
+    - prioridad: Integer
+    - activa: Boolean
+    --
+    + evaluar(contexto): Boolean
+  }
+
+  class TareaAutomatizada {
+    - id: UUID
+    - reglaId: UUID
+    - grupoId: UUID
+    - tipo: String
+    - programadaPara: DateTime
+    - estado: String <<PROGRAMADA | EN_EJECUCION | COMPLETADA | FALLIDA | CANCELADA | REQUIERE_APROBACION>>
+    - intentos: Integer
+    - claveIdempotencia: String
+    --
+    + ejecutar(): EjecucionTarea
+    + cancelar(motivo)
+  }
+
+  class EjecucionTarea {
+    - id: UUID
+    - tareaId: UUID
+    - iniciadaEn: DateTime
+    - finalizadaEn: DateTime
+    - resultado: String <<EXITO | PARCIAL | ERROR>>
+    - registrosAfectados: Integer
+    - detalle: JSON
+    - mensajeError: String
+    --
+    + registrar()
+  }
+}
+
+' ---------- Relaciones ----------
+Organizador "1" *-- "0..1" SolicitudOrganizador
+Organizador "1" *-- "0..*" CapacitacionOrganizador
+Organizador "1" *-- "1..*" ContratoOrganizador
+Organizador "1" *-- "0..*" EvaluacionDesempeno
+Organizador "1" *-- "0..*" SancionOrganizador
+SolicitudOrganizador ..> RequisitoHabilitacion : evaluada con >
+
+EvaluacionDesempeno "1" *-- "1..*" MetricaOrganizador
+EvaluacionDesempeno ..> SancionOrganizador : puede originar >
+SancionOrganizador "1" *-- "0..1" ApelacionSancion
+
+OrganizadorDigital ..> ReglaAutomatizacion : aplica >
+ReglaAutomatizacion "1" *-- "0..*" TareaAutomatizada
+TareaAutomatizada "1" *-- "0..*" EjecucionTarea
+
+Organizador --> EstadoOrganizador
+Organizador --> NivelOrganizador
+
+note right of Organizador
+  <b>RN-18 - La administracion no se cobra</b>
+  No existe esquema de comision, devengo ni
+  liquidacion a favor del organizador: el modelo
+  no tiene forma de representar un ingreso suyo
+  por administrar. La ausencia de la estructura es
+  la garantia mas fuerte de que no se puede
+  cobrar, mucho mas que un permiso o una bandera.
+  El organizador aporta y cobra su turno como
+  cualquier participante (M2/M3/M4).
+  <b>Distinto es la comision de la plataforma</b>
+  (M11): es de la empresa que presta el servicio,
+  con tarifario publicado y factura, y no reparte
+  nada al organizador. Ninguna tabla de M11 tiene
+  FK hacia organizador.
+end note
+
+note bottom of OrganizadorDigital
+  Cuando el grupo es autogestionado, el
+  organizador digital ejecuta el mismo conjunto
+  de tareas del organizador humano (cobros,
+  recordatorios, mora, liquidacion de periodo,
+  entrega) con nivel de autonomia configurable.
+  Toda ejecucion queda en EjecucionTarea y en la
+  bitacora del modulo 9.
+end note
+
+note bottom of Organizador
+  usuarioId -> usuario.id (M1). No lleva cuenta
+  de cobro: no hay nada que pagarle.
+  gruposActivos y montoAdministradoActual son
+  contadores mantenidos por trigger para hacer
+  cumplir los limites sin recorrer toda la cartera.
+end note
+
+@enduml
+
+@startuml 07_organizador_automatizacion_relacional
+' ============================================================
+'  MODULO 7: Organizador y Automatizacion
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 7 - Organizador y Automatizacion (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> CHECK    <<NULL>> admite nulos
+  No existen tablas de comision del organizador: no percibe
+  contraprestacion por administrar (RN-18). La comision del
+  servicio pertenece a la plataforma y vive en el modulo 11.
+endlegend
+
+entity "organizador" as org {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, UQ>>
+  estado : VARCHAR(25) <<CK, IDX>>
+  nivel : VARCHAR(15) <<CK>>
+  limite_grupos_simultaneos : SMALLINT
+  limite_monto_administrado : DECIMAL(16,2)
+  grupos_activos : SMALLINT
+  grupos_historicos : SMALLINT
+  monto_administrado_actual : DECIMAL(16,2)
+  calificacion_promedio : DECIMAL(3,2)
+  indice_morosidad_cartera : DECIMAL(5,2)
+  fecha_postulacion : TIMESTAMPTZ
+  fecha_habilitacion : TIMESTAMPTZ <<NULL>>
+  fecha_suspension : TIMESTAMPTZ <<NULL>>
+  version : INTEGER
+}
+
+entity "solicitud_organizador" as solorg {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  motivacion : TEXT
+  experiencia_declarada : TEXT
+  # kyc_reforzado_id : UUID <<FK, NULL, M1>>
+  puntaje_reputacion_al_solicitar : DECIMAL(6,2)
+  estado : VARCHAR(15) <<CK>>
+  # revisada_por : UUID <<FK, NULL>>
+  motivo_rechazo : VARCHAR(300) <<NULL>>
+  fecha_solicitud : TIMESTAMPTZ
+  fecha_resolucion : TIMESTAMPTZ <<NULL>>
+}
+
+entity "requisito_habilitacion" as req {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(40) <<UQ>>
+  descripcion : VARCHAR(200)
+  tipo : VARCHAR(25) <<CK>>
+  valor_minimo : DECIMAL(12,2)
+  es_obligatorio : BOOLEAN
+  nivel_requerido : VARCHAR(15) <<CK>>
+  activo : BOOLEAN
+}
+
+entity "capacitacion_organizador" as capac {
+  * id : UUID <<PK>>
+  --
+  # organizador_id : UUID <<FK, IDX>>
+  modulo : VARCHAR(80)
+  completada_en : TIMESTAMPTZ
+  puntaje_evaluacion : DECIMAL(5,2)
+  aprobada : BOOLEAN
+  vigente_hasta : DATE <<NULL>>
+}
+
+entity "contrato_organizador" as contorg {
+  * id : UUID <<PK>>
+  --
+  # organizador_id : UUID <<FK, IDX>>
+  version : VARCHAR(20)
+  contenido_hash : VARCHAR(64)
+  obligaciones : TEXT
+  causales_rescision : TEXT
+  firmado_en : TIMESTAMPTZ <<NULL>>
+  # token_firma_id : UUID <<FK, NULL, M1>>
+  vigente_desde : DATE
+  vigente_hasta : DATE <<NULL>>
+  rescindido_en : TIMESTAMPTZ <<NULL>>
+  motivo_rescision : VARCHAR(300) <<NULL>>
+}
+
+
+
+
+entity "evaluacion_desempeno" as evaldes {
+  * id : UUID <<PK>>
+  --
+  # organizador_id : UUID <<FK, IDX>>
+  periodo_evaluado : VARCHAR(10) <<UQ+organizador_id>>
+  indice_morosidad_cartera : DECIMAL(5,2)
+  tasa_finalizacion_grupos : DECIMAL(5,2)
+  satisfaccion_participantes : DECIMAL(3,2)
+  tiempo_respuesta_promedio_horas : DECIMAL(6,2)
+  incidencias_abiertas : SMALLINT
+  coberturas_consumidas : SMALLINT
+  puntaje_global : DECIMAL(5,2)
+  nivel_sugerido : VARCHAR(15) <<CK>>
+  accion_recomendada : VARCHAR(120)
+  evaluado_en : TIMESTAMPTZ
+}
+
+entity "metrica_organizador" as metrorg {
+  * id : UUID <<PK>>
+  --
+  # evaluacion_id : UUID <<FK, IDX>>
+  codigo : VARCHAR(40) <<UQ+evaluacion_id>>
+  valor : DECIMAL(12,4)
+  meta : DECIMAL(12,4)
+  cumple : BOOLEAN
+  peso : DECIMAL(4,3)
+}
+
+entity "sancion_organizador" as sancorg {
+  * id : UUID <<PK>>
+  --
+  # organizador_id : UUID <<FK, IDX>>
+  # evaluacion_id : UUID <<FK, NULL>>
+  tipo : VARCHAR(25) <<CK>>
+  motivo : VARCHAR(300)
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  # aplicada_por : UUID <<FK>>
+}
+
+entity "apelacion_sancion_org" as apelorg {
+  * id : UUID <<PK>>
+  --
+  # sancion_organizador_id : UUID <<FK, UQ>>
+  argumento : TEXT
+  evidencias : JSONB
+  estado : VARCHAR(15) <<CK>>
+  # resuelta_por : UUID <<FK, NULL>>
+  resolucion : VARCHAR(400) <<NULL>>
+  presentada_en : TIMESTAMPTZ
+  resuelta_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "regla_automatizacion" as reglaauto {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(40) <<UQ>>
+  descripcion : VARCHAR(200)
+  disparador : VARCHAR(10) <<CK>>
+  expresion_disparo : VARCHAR(80)
+  condicion : VARCHAR(300)
+  accion : VARCHAR(30) <<CK>>
+  requiere_confirmacion_humana : BOOLEAN
+  prioridad : SMALLINT
+  activa : BOOLEAN
+}
+
+entity "tarea_automatizada" as tarea {
+  * id : UUID <<PK>>
+  --
+  # regla_id : UUID <<FK, IDX>>
+  # grupo_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(40)
+  programada_para : TIMESTAMPTZ <<IDX>>
+  estado : VARCHAR(25) <<CK, IDX>>
+  intentos : SMALLINT
+  clave_idempotencia : VARCHAR(80) <<UQ>>
+}
+
+entity "ejecucion_tarea" as ejec {
+  * id : UUID <<PK>>
+  --
+  # tarea_id : UUID <<FK, IDX>>
+  iniciada_en : TIMESTAMPTZ
+  finalizada_en : TIMESTAMPTZ <<NULL>>
+  resultado : VARCHAR(10) <<CK>>
+  registros_afectados : INTEGER
+  detalle : JSONB
+  mensaje_error : TEXT <<NULL>>
+}
+
+org ||--o| solorg : "postula con"
+org ||--o{ capac : "se capacita"
+org ||--o{ contorg : "firma"
+org ||--o{ evaldes : "es evaluado"
+org ||--o{ sancorg : "es sancionado"
+evaldes ||--|{ metrorg : "mide"
+evaldes ||--o{ sancorg : "origina"
+sancorg ||--o| apelorg : "se apela"
+reglaauto ||--o{ tarea : "programa"
+tarea ||--o{ ejec : "se ejecuta en"
+
+note top of org
+  <b>RN-18 como ausencia de esquema</b>
+  No existen esquema_comision_organizador,
+  liquidacion_comision_organizador ni
+  pago_comision: lo que hace imposible el cobro
+  es que no haya donde representarlo, no una
+  validacion que alguien pueda desactivar.
+  devengo_comision (M11) existe, pero su
+  usuario_obligado_id es quien PAGA la comision
+  del servicio, nunca quien la cobra: el unico
+  beneficiario posible es la plataforma.
+end note
+
+note bottom of org
+  usuario_id -> usuario.id (M1).
+  Sin cuenta_cobro_id: no hay egreso hacia el
+  organizador. Si ademas participa en el grupo,
+  lo hace como participante normal (M2) con sus
+  propias obligaciones (M3) y su turno (M4).
+end note
+
+note bottom of tarea
+  El organizador digital corre sobre estas dos
+  tablas: clave_idempotencia impide que un
+  reintento del planificador genere cobros o
+  recordatorios duplicados.
+end note
+
+@enduml

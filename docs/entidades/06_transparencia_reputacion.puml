@@ -1,0 +1,728 @@
+@startuml 06_transparencia_reputacion_clases
+' ============================================================
+'  MODULO 6: Transparencia, Reputacion y Confianza
+'  Diagrama de CLASES  (modelo detallado)
+'  Cubre: RF-17 (panel de transparencia), RF-18 (reputacion portable)
+'  Principios:
+'   1. La reputacion es event-sourced: nunca se "escribe un numero",
+'      se acumulan eventos con impacto y el score se deriva.
+'   2. El modelo de scoring esta versionado: se puede recalcular el
+'      historico y explicar por que un usuario tiene ese puntaje.
+'   3. La transparencia se prueba, no se promete: libro sellado con
+'      cadena de hashes verificable por cualquier participante.
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 6 - Transparencia, Reputacion y Confianza (clases)
+
+legend top right
+  <b>Reputacion != un solo numero</b>
+  PuntajeReputacion (agregado) se compone de
+  ComponenteScore (puntualidad, permanencia, severidad de
+  incumplimientos, volumen, antiguedad, comportamiento social),
+  cada uno alimentado por EventoReputacion inmutables.
+endlegend
+
+' ============================================================
+package "Motor de Reputacion" {
+
+  enum TipoEventoReputacion {
+    APORTE_PUNTUAL
+    APORTE_ANTICIPADO
+    APORTE_CON_RETRASO_LEVE
+    APORTE_CON_RETRASO_GRAVE
+    APORTE_NO_REALIZADO
+    COBERTURA_CONSUMIDA
+    DEUDA_RECUPERADA
+    DEUDA_CASTIGADA
+    GRUPO_COMPLETADO
+    ABANDONO_DE_GRUPO
+    EXPULSION
+    SANCION_APLICADA
+    SANCION_REVOCADA
+    AVAL_EJECUTADO
+    CONFIRMACION_ENTREGA_A_TIEMPO
+    KYC_COMPLETADO
+    RESENA_POSITIVA
+    RESENA_NEGATIVA
+    FRAUDE_CONFIRMADO
+  }
+
+  enum NivelConfianza {
+    SIN_HISTORIAL
+    EN_OBSERVACION
+    BASICO
+    CONFIABLE
+    MUY_CONFIABLE
+    REFERENTE
+    RESTRINGIDO
+  }
+
+  class ModeloScoring <<Pol>> {
+    - id: UUID
+    - version: String
+    - descripcion: String
+    - puntajeBase: Decimal
+    - puntajeMinimo: Decimal
+    - puntajeMaximo: Decimal
+    - factorDecaimientoMensual: Decimal <<los errores viejos pesan menos>>
+    - ventanaHistoricaMeses: Integer
+    - minEventosParaScore: Integer
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    - esProduccion: Boolean
+    --
+    + calcular(eventos): PuntajeReputacion
+    + simular(usuarioId): PuntajeReputacion
+    + explicar(usuarioId): List<ContribucionFactor>
+  }
+
+  class PesoFactor {
+    - id: UUID
+    - modeloId: UUID
+    - codigoFactor: String
+    - descripcion: String
+    - peso: Decimal
+    - topeAporteAlScore: Decimal
+    - esPenalizador: Boolean
+    --
+    + aplicar(valorFactor): Decimal
+  }
+
+  class ReglaImpactoEvento {
+    - id: UUID
+    - modeloId: UUID
+    - tipoEvento: TipoEventoReputacion
+    - codigoFactor: String
+    - impactoBase: Decimal
+    - multiplicadorPorReincidencia: Decimal
+    - impactoMaximo: Decimal
+    - requiereConfirmacion: Boolean
+    --
+    + calcularImpacto(contexto): Decimal
+  }
+
+  class EventoReputacion {
+    - id: UUID
+    - usuarioId: UUID
+    - grupoId: UUID
+    - participanteId: UUID
+    - tipo: TipoEventoReputacion
+    - referenciaOrigenId: UUID <<obligacion, sancion, cobertura>>
+    - impacto: Decimal
+    - factorAfectado: String
+    - descripcion: String
+    - modeloVersion: String
+    - esReversible: Boolean
+    - revertidoPorId: UUID
+    - ocurridoEn: DateTime
+    - registradoEn: DateTime
+    --
+    + revertir(motivo): EventoReputacion
+    + pesoActualConDecaimiento(fecha): Decimal
+  }
+
+  class PuntajeReputacion <<AR>> {
+    - id: UUID
+    - usuarioId: UUID
+    - puntaje: Decimal <<0..1000>>
+    - nivelConfianza: NivelConfianza
+    - indicePuntualidad: Decimal
+    - tasaIncumplimiento: Decimal
+    - montoTotalAportado: Decimal
+    - gruposCompletados: Integer
+    - gruposAbandonados: Integer
+    - incumplimientosAbiertos: Integer
+    - antiguedadMeses: Integer
+    - eventosConsiderados: Integer
+    - modeloVersion: String
+    - calculadoEn: DateTime
+    - proximoRecalculoEn: DateTime
+    --
+    + recalcular(): PuntajeReputacion
+    + explicar(): List<ContribucionFactor>
+    + compararCon(otroUsuario): Decimal
+    + esElegiblePara(grupo): Boolean
+  }
+
+  class ComponenteScore {
+    - id: UUID
+    - puntajeId: UUID
+    - codigoFactor: String
+    - valorCrudo: Decimal
+    - valorNormalizado: Decimal
+    - contribucion: Decimal
+    - tendencia: String <<SUBE | BAJA | ESTABLE>>
+  }
+
+  class ContribucionFactor <<VO>> {
+    - codigoFactor: String
+    - descripcionLegible: String
+    - contribucion: Decimal
+    - recomendacion: String
+  }
+
+  class SnapshotReputacion {
+    - id: UUID
+    - usuarioId: UUID
+    - puntaje: Decimal
+    - nivelConfianza: NivelConfianza
+    - fotografiaFactores: JSON
+    - motivo: String <<PERIODICO | INGRESO_A_GRUPO | CIERRE_DE_GRUPO | AUDITORIA>>
+    - tomadoEn: DateTime
+    --
+    + comparar(otro): Decimal
+  }
+
+  class CertificadoReputacion {
+    - id: UUID
+    - usuarioId: UUID
+    - snapshotId: UUID
+    - codigoVerificacion: String
+    - hashContenido: String
+    - firmaDigital: String
+    - urlPublica: String
+    - emitidoEn: DateTime
+    - expiraEn: DateTime
+    --
+    + generarPDF(): Documento
+    + verificar(codigo): Boolean
+    + revocar(motivo)
+  }
+
+  class InsigniaLogro {
+    - id: UUID
+    - codigo: String <<PUNTUAL_12_MESES | PRIMER_GRUPO | SIN_MORA | ORGANIZADOR_5_ESTRELLAS>>
+    - nombre: String
+    - descripcion: String
+    - criterio: String
+    - iconoUrl: String
+  }
+
+  class InsigniaOtorgada {
+    - id: UUID
+    - usuarioId: UUID
+    - insigniaId: UUID
+    - otorgadaEn: DateTime
+    - revocadaEn: DateTime
+    - motivoRevocacion: String
+  }
+
+  class ServicioReputacion <<Svc>> {
+    --
+    + registrarEvento(tipo, contexto): EventoReputacion
+    + recalcularUsuario(usuarioId): PuntajeReputacion
+    + recalcularLote(modeloVersion): Integer
+    + emitirCertificado(usuarioId): CertificadoReputacion
+    + evaluarInsignias(usuarioId): List<InsigniaOtorgada>
+  }
+}
+
+' ============================================================
+package "Panel de Transparencia" {
+
+  class PanelTransparencia <<Vista>> {
+    - grupoId: UUID
+    --
+    + resumenGrupo(): ResumenGrupo
+    + estadoPagoDeTodos(): List<FilaEstadoPago>
+    + fondoAcumulado(): Decimal
+    + fondoEsperado(): Decimal
+    + brechaDelPeriodo(): Decimal
+    + proximoBeneficiario(): Participante
+    + calendarioCompleto(): List<Turno>
+    + historialEntregas(): List<EntregaFondo>
+    + saldoFondoGarantia(): Decimal
+    + indicadoresDeRiesgo(): List<MetricaGrupo>
+    + selloIntegridad(): String
+    --
+    <<se calcula desde el mayor contable (M3);
+      no duplica datos ni tiene tabla propia>>
+  }
+
+  class MetricaGrupo {
+    - id: UUID
+    - grupoId: UUID
+    - periodoId: UUID
+    - codigo: String <<TASA_PUNTUALIDAD | DIAS_MORA_PROMEDIO | COBERTURA_USADA | ROTACION>>
+    - valor: Decimal
+    - unidad: String
+    - umbralAlerta: Decimal
+    - enAlerta: Boolean
+    - calculadaEn: DateTime
+    --
+    + evaluarAlerta(): Boolean
+  }
+
+  class ResumenGrupo <<VO>> {
+    - totalRecaudado: Decimal
+    - totalEntregado: Decimal
+    - periodosCumplidos: Integer
+    - periodosRestantes: Integer
+    - participantesAlDia: Integer
+    - participantesEnMora: Integer
+    - saludDelGrupo: String
+  }
+
+  class FilaEstadoPago <<VO>> {
+    - participanteAlias: String
+    - cupoNumero: Integer
+    - estadoAporte: String
+    - montoPagado: Decimal
+    - fechaPago: DateTime
+    - diasMora: Integer
+    - yaCobro: Boolean
+  }
+}
+
+' ============================================================
+package "Libro Sellado y Verificacion Publica" {
+
+  class BloqueTransparencia {
+    - id: UUID
+    - grupoId: UUID
+    - numeroBloque: Long
+    - hashBloqueAnterior: String
+    - raizMerkle: String
+    - hashBloque: String
+    - cantidadEventos: Integer
+    - periodoCubiertoDesde: DateTime
+    - periodoCubiertoHasta: DateTime
+    - selladoEn: DateTime
+    - selloExterno: String <<opcional: anclaje a servicio de timestamping>>
+    --
+    + calcularHash(): String
+    + verificarEncadenamiento(): Boolean
+    + pruebaDeInclusion(eventoId): List<String>
+  }
+
+  class RegistroSellado {
+    - id: UUID
+    - bloqueId: UUID
+    - tipoEntidad: String <<PAGO | ENTREGA | COBERTURA | ACUERDO | SANCION>>
+    - entidadId: UUID
+    - hashContenido: String
+    - resumenPublico: JSON <<sin datos personales>>
+    - ocurridoEn: DateTime
+    --
+    + verificarContraOrigen(): Boolean
+  }
+
+  class VerificacionPublica {
+    - codigo: String
+    - tipoDocumento: String <<CONSTANCIA_PAGO | CERTIFICADO_REPUTACION | ESTADO_GRUPO>>
+    - referenciaId: UUID
+    - hashEsperado: String
+    - consultas: Integer
+    - ultimaConsultaEn: DateTime
+    --
+    + verificar(): ResultadoVerificacion
+  }
+
+  class ResenaParticipante {
+    - id: UUID
+    - grupoId: UUID
+    - autorParticipanteId: UUID
+    - evaluadoUsuarioId: UUID
+    - calificacion: Integer <<1..5>>
+    - comentario: String
+    - dimension: String <<PUNTUALIDAD | COMUNICACION | ORGANIZACION>>
+    - estadoModeracion: String <<PENDIENTE | PUBLICADA | OCULTA | RECHAZADA>>
+    - moderadaPor: UUID
+    - creadaEn: DateTime
+    --
+    + moderar(decision, motivo)
+    + impactarReputacion(): EventoReputacion
+  }
+
+  class AlertaRiesgo {
+    - id: UUID
+    - ambito: String <<USUARIO | GRUPO | ORGANIZADOR>>
+    - ambitoId: UUID
+    - codigo: String <<CAIDA_ABRUPTA_SCORE | MORA_CONCENTRADA | RETIRO_MASIVO | GRUPO_INVIABLE>>
+    - severidad: String
+    - descripcion: String
+    - evidencia: JSON
+    - estado: String <<ABIERTA | EN_REVISION | DESCARTADA | CONFIRMADA>>
+    - detectadaEn: DateTime
+    --
+    + notificarInvolucrados()
+    + escalarACumplimiento()
+  }
+}
+
+' ---------- Relaciones ----------
+ModeloScoring "1" *-- "1..*" PesoFactor
+ModeloScoring "1" *-- "1..*" ReglaImpactoEvento
+ModeloScoring "1" ..> "0..*" PuntajeReputacion : calcula >
+EventoReputacion "*" --> "1" ReglaImpactoEvento : evaluado por >
+PuntajeReputacion "1" *-- "1..*" ComponenteScore
+PuntajeReputacion "1" o-- "0..*" EventoReputacion : deriva de >
+PuntajeReputacion ..> ContribucionFactor : explica con >
+PuntajeReputacion "1" *-- "0..*" SnapshotReputacion
+SnapshotReputacion "1" *-- "0..1" CertificadoReputacion
+InsigniaLogro "1" *-- "0..*" InsigniaOtorgada
+ServicioReputacion ..> EventoReputacion : registra >
+ServicioReputacion ..> PuntajeReputacion : recalcula >
+
+PanelTransparencia ..> ResumenGrupo : produce >
+PanelTransparencia ..> FilaEstadoPago : produce >
+PanelTransparencia ..> MetricaGrupo : muestra >
+PanelTransparencia ..> BloqueTransparencia : sella con >
+
+BloqueTransparencia "1" *-- "1..*" RegistroSellado
+VerificacionPublica ..> RegistroSellado : contrasta >
+VerificacionPublica ..> CertificadoReputacion : valida >
+ResenaParticipante ..> EventoReputacion : genera >
+MetricaGrupo ..> AlertaRiesgo : dispara >
+PuntajeReputacion ..> AlertaRiesgo : dispara >
+
+EventoReputacion --> TipoEventoReputacion
+PuntajeReputacion --> NivelConfianza
+SnapshotReputacion --> NivelConfianza
+
+note right of EventoReputacion
+  <b>Event sourcing (RF-18)</b>
+  Los eventos son inmutables. Corregir un error
+  no es editar: es registrar el evento inverso
+  (revertidoPorId). Asi el historial siempre
+  explica el puntaje actual y se puede
+  reprocesar con un modelo nuevo sin perder
+  la version con que se decidio en su momento.
+end note
+
+note right of ModeloScoring
+  <b>Portabilidad y defensa</b>
+  Guardar modeloVersion en cada puntaje permite
+  responder "por que me bajo el score": se
+  recalcula con el mismo modelo de esa fecha.
+  Tambien permite probar un modelo nuevo en
+  sombra (esProduccion = false) antes de aplicarlo.
+end note
+
+note bottom of BloqueTransparencia
+  <b>Sello de integridad (RF-17)</b>
+  Cada bloque encadena el hash del anterior y
+  publica una raiz Merkle. Un participante puede
+  pedir la prueba de inclusion de su pago y
+  comprobar que ese registro estaba en el libro
+  antes de que se cerrara el ciclo: nadie pudo
+  reescribir la historia del grupo despues.
+end note
+
+note bottom of PanelTransparencia
+  Vista de solo lectura: agrega grupo, cupo y
+  turno (M2), obligaciones y pagos (M3),
+  entregas (M4) y fondo de garantia (M8).
+  No tiene tabla propia; se
+  materializa en vistas para rendimiento.
+end note
+
+@enduml
+
+@startuml 06_transparencia_reputacion_relacional
+' ============================================================
+'  MODULO 6: Transparencia, Reputacion y Confianza
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 6 - Transparencia y Reputacion (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> CHECK    <<NULL>> admite nulos
+  evento_reputacion y registro_sellado son APPEND-ONLY:
+  se revoca el privilegio UPDATE/DELETE a nivel de rol de BD.
+endlegend
+
+entity "modelo_scoring" as modelo {
+  * id : UUID <<PK>>
+  --
+  version : VARCHAR(20) <<UQ>>
+  descripcion : VARCHAR(200)
+  puntaje_base : DECIMAL(6,2)
+  puntaje_minimo : DECIMAL(6,2)
+  puntaje_maximo : DECIMAL(6,2)
+  factor_decaimiento_mensual : DECIMAL(5,4)
+  ventana_historica_meses : SMALLINT
+  min_eventos_para_score : SMALLINT
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+  es_produccion : BOOLEAN
+}
+
+entity "peso_factor" as peso {
+  * id : UUID <<PK>>
+  --
+  # modelo_id : UUID <<FK, IDX>>
+  codigo_factor : VARCHAR(40) <<UQ+modelo_id>>
+  descripcion : VARCHAR(160)
+  peso : DECIMAL(5,4)
+  tope_aporte_al_score : DECIMAL(6,2)
+  es_penalizador : BOOLEAN
+}
+
+entity "regla_impacto_evento" as reglaimp {
+  * id : UUID <<PK>>
+  --
+  # modelo_id : UUID <<FK, IDX>>
+  tipo_evento : VARCHAR(40) <<UQ+modelo_id>>
+  codigo_factor : VARCHAR(40)
+  impacto_base : DECIMAL(6,2)
+  multiplicador_por_reincidencia : DECIMAL(4,2)
+  impacto_maximo : DECIMAL(6,2)
+  requiere_confirmacion : BOOLEAN
+}
+
+entity "evento_reputacion" as evtrep {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # grupo_id : UUID <<FK, NULL, IDX>>
+  # participante_id : UUID <<FK, NULL>>
+  tipo : VARCHAR(40) <<CK, IDX>>
+  referencia_origen_id : UUID <<NULL, polimorfica>>
+  impacto : DECIMAL(6,2)
+  factor_afectado : VARCHAR(40)
+  descripcion : VARCHAR(200)
+  modelo_version : VARCHAR(20)
+  es_reversible : BOOLEAN
+  # revertido_por_id : UUID <<FK, NULL>>
+  ocurrido_en : TIMESTAMPTZ <<IDX>>
+  registrado_en : TIMESTAMPTZ
+}
+
+entity "puntaje_reputacion" as puntaje {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, UQ>>
+  # modelo_id : UUID <<FK>>
+  puntaje : DECIMAL(6,2) <<IDX>>
+  nivel_confianza : VARCHAR(20) <<CK, IDX>>
+  indice_puntualidad : DECIMAL(5,2)
+  tasa_incumplimiento : DECIMAL(5,2)
+  monto_total_aportado : DECIMAL(16,2)
+  grupos_completados : SMALLINT
+  grupos_abandonados : SMALLINT
+  incumplimientos_abiertos : SMALLINT
+  antiguedad_meses : SMALLINT
+  eventos_considerados : INTEGER
+  modelo_version : VARCHAR(20)
+  calculado_en : TIMESTAMPTZ
+  proximo_recalculo_en : TIMESTAMPTZ <<IDX>>
+}
+
+entity "componente_score" as compscore {
+  * id : UUID <<PK>>
+  --
+  # puntaje_id : UUID <<FK, IDX>>
+  codigo_factor : VARCHAR(40) <<UQ+puntaje_id>>
+  valor_crudo : DECIMAL(12,4)
+  valor_normalizado : DECIMAL(5,4)
+  contribucion : DECIMAL(6,2)
+  tendencia : VARCHAR(10) <<CK>>
+}
+
+entity "snapshot_reputacion" as snap {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  puntaje : DECIMAL(6,2)
+  nivel_confianza : VARCHAR(20)
+  fotografia_factores : JSONB
+  motivo : VARCHAR(25) <<CK>>
+  tomado_en : TIMESTAMPTZ <<IDX>>
+}
+
+entity "certificado_reputacion" as certif {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # snapshot_id : UUID <<FK, UQ>>
+  codigo_verificacion : VARCHAR(40) <<UQ>>
+  hash_contenido : VARCHAR(64)
+  firma_digital : VARCHAR(255)
+  url_publica : VARCHAR(255)
+  emitido_en : TIMESTAMPTZ
+  expira_en : TIMESTAMPTZ
+  revocado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "insignia_logro" as insig {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(40) <<UQ>>
+  nombre : VARCHAR(80)
+  descripcion : VARCHAR(200)
+  criterio : VARCHAR(300)
+  icono_url : VARCHAR(255)
+}
+
+entity "insignia_otorgada" as insigot {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  # insignia_id : UUID <<FK>>
+  otorgada_en : TIMESTAMPTZ
+  revocada_en : TIMESTAMPTZ <<NULL>>
+  motivo_revocacion : VARCHAR(160) <<NULL>>
+}
+
+entity "metrica_grupo" as metr {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  # periodo_id : UUID <<FK, NULL>>
+  codigo : VARCHAR(40) <<UQ+grupo_id+periodo_id>>
+  valor : DECIMAL(12,4)
+  unidad : VARCHAR(15)
+  umbral_alerta : DECIMAL(12,4) <<NULL>>
+  en_alerta : BOOLEAN <<IDX>>
+  calculada_en : TIMESTAMPTZ
+}
+
+entity "bloque_transparencia" as bloque {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  numero_bloque : BIGINT <<UQ+grupo_id>>
+  hash_bloque_anterior : VARCHAR(64)
+  raiz_merkle : VARCHAR(64)
+  hash_bloque : VARCHAR(64) <<UQ>>
+  cantidad_eventos : INTEGER
+  periodo_cubierto_desde : TIMESTAMPTZ
+  periodo_cubierto_hasta : TIMESTAMPTZ
+  sellado_en : TIMESTAMPTZ
+  sello_externo : VARCHAR(255) <<NULL>>
+}
+
+entity "registro_sellado" as regsell {
+  * id : UUID <<PK>>
+  --
+  # bloque_id : UUID <<FK, IDX>>
+  tipo_entidad : VARCHAR(25) <<CK>>
+  entidad_id : UUID <<IDX, polimorfica>>
+  hash_contenido : VARCHAR(64)
+  resumen_publico : JSONB
+  ocurrido_en : TIMESTAMPTZ
+}
+
+entity "verificacion_publica" as verpub {
+  * codigo : VARCHAR(40) <<PK>>
+  --
+  tipo_documento : VARCHAR(30) <<CK>>
+  referencia_id : UUID <<IDX>>
+  hash_esperado : VARCHAR(64)
+  consultas : INTEGER
+  ultima_consulta_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "resena_participante" as resena {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, IDX>>
+  # autor_participante_id : UUID <<FK>>
+  # evaluado_usuario_id : UUID <<FK, IDX>>
+  calificacion : SMALLINT <<CK: 1..5>>
+  comentario : VARCHAR(500) <<NULL>>
+  dimension : VARCHAR(20) <<CK>>
+  estado_moderacion : VARCHAR(15) <<CK>>
+  # moderada_por : UUID <<FK, NULL>>
+  creada_en : TIMESTAMPTZ
+}
+
+entity "alerta_riesgo" as alerta {
+  * id : UUID <<PK>>
+  --
+  ambito : VARCHAR(15) <<CK>>
+  ambito_id : UUID <<IDX>>
+  codigo : VARCHAR(40) <<CK>>
+  severidad : VARCHAR(10) <<CK>>
+  descripcion : VARCHAR(300)
+  evidencia : JSONB
+  estado : VARCHAR(15) <<CK, IDX>>
+  detectada_en : TIMESTAMPTZ
+  cerrada_en : TIMESTAMPTZ <<NULL>>
+}
+
+modelo ||--o{ peso : "pondera con"
+modelo ||--o{ reglaimp : "define impactos"
+modelo ||--o{ puntaje : "calcula"
+reglaimp ||--o{ evtrep : "tipifica"
+puntaje ||--|{ compscore : "descompone en"
+puntaje ||--o{ snap : "fotografia"
+snap ||--o| certif : "certifica"
+insig ||--o{ insigot : "se otorga como"
+bloque ||--|{ regsell : "sella"
+regsell }o--|| verpub : "se verifica por"
+resena }o--o{ evtrep : "impacta"
+
+note top of evtrep
+  <b>Append-only y trazable</b>
+  referencia_origen_id apunta segun tipo a:
+   obligacion_aporte.id (M3),
+   entrega_fondo.id (M4),
+   registro_incumplimiento.id / sancion.id (M8),
+   acuerdo.id (M2).
+  Indice compuesto (usuario_id, ocurrido_en DESC)
+  para reconstruir el score en una sola pasada.
+end note
+
+note bottom of puntaje
+  usuario_id -> usuario.id (M1). Esta tabla es la
+  proyeccion materializada; reputacion_usuario del
+  modulo 1 se mantiene sincronizada como cache de
+  lectura rapida para el login y el perfil.
+end note
+
+note bottom of bloque
+  Verificacion: hash_bloque =
+    H(numero_bloque || hash_bloque_anterior ||
+      raiz_merkle || periodo_cubierto_hasta).
+  Romper la cadena en un bloque invalida todos
+  los siguientes: manipular un pago viejo se nota.
+end note
+
+note bottom of metr
+  Alimenta el panel de transparencia y las
+  alertas tempranas del modulo 8
+  (mora concentrada = grupo en riesgo de colapso).
+end note
+
+@enduml

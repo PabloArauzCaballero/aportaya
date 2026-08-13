@@ -1,0 +1,293 @@
+{
+  "descripcion": "Umbrales de registro y reporte a la Unidad de Investigaciones Financieras.",
+  "entorno": "minimo",
+  "estado": "confirmar vigencia con legal",
+  "fuente": "Instructivo Específico para Entidades de Intermediación Financiera con Enfoque Basado en Gestión de Riesgos, R.A. UIF/016/2026 de 05/03/2026, arts. 52 y 53 según R.A. UIF/050/2026 de 10/06/2026",
+  "nota": "Cambiar un umbral es cerrar la vigencia de la fila e insertar la nueva (R-UIF-01): nunca un UPDATE, nunca un despliegue.",
+  "bloques": [
+    {
+      "tabla": "umbral_reporte_uif",
+      "conflicto": [],
+      "comentario": "Artículo 52 — Formulario PCC-01 (declaración de origen y destino)",
+      "filas": [
+        {
+          "formulario": "PCC-01",
+          "inciso": "a",
+          "concepto_operacion": "EFECTIVO",
+          "es_acumulado": false,
+          "umbral_usd": 10000,
+          "ventana_dias_calendario": null,
+          "exige_declaracion_origen_destino": true,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 52 par. I inc. a) — R.A. UIF/050/2026",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "PCC-01",
+          "inciso": "b",
+          "concepto_operacion": "EFECTIVO",
+          "es_acumulado": true,
+          "umbral_usd": 10000,
+          "ventana_dias_calendario": 10,
+          "exige_declaracion_origen_destino": true,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 52 par. I inc. b) — R.A. UIF/050/2026",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "PCC-01",
+          "inciso": "c",
+          "concepto_operacion": "CAMBIO_MONEDA",
+          "es_acumulado": false,
+          "umbral_usd": 5000,
+          "ventana_dias_calendario": null,
+          "exige_declaracion_origen_destino": true,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 52 par. I inc. c) — R.A. UIF/050/2026",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "PCC-01",
+          "inciso": "d",
+          "concepto_operacion": "CAMBIO_MONEDA",
+          "es_acumulado": true,
+          "umbral_usd": 5000,
+          "ventana_dias_calendario": 5,
+          "exige_declaracion_origen_destino": true,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 52 par. I inc. d) — R.A. UIF/050/2026",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "PCC-01",
+          "inciso": "e",
+          "concepto_operacion": "GIRO",
+          "es_acumulado": false,
+          "umbral_usd": 2000,
+          "ventana_dias_calendario": null,
+          "exige_declaracion_origen_destino": true,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 52 par. I inc. e) — R.A. UIF/050/2026",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "PCC-01",
+          "inciso": "f",
+          "concepto_operacion": "GIRO",
+          "es_acumulado": true,
+          "umbral_usd": 2000,
+          "ventana_dias_calendario": 5,
+          "exige_declaracion_origen_destino": true,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 52 par. I inc. f) — R.A. UIF/050/2026",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "PCC-01",
+          "inciso": "g",
+          "concepto_operacion": "REMESA",
+          "es_acumulado": false,
+          "umbral_usd": 1000,
+          "ventana_dias_calendario": null,
+          "exige_declaracion_origen_destino": true,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 52 par. I inc. g) — R.A. UIF/050/2026",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "PCC-01",
+          "inciso": "h",
+          "concepto_operacion": "REMESA",
+          "es_acumulado": true,
+          "umbral_usd": 1000,
+          "ventana_dias_calendario": 5,
+          "exige_declaracion_origen_destino": true,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 52 par. I inc. h) — R.A. UIF/050/2026",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "PCC-01",
+          "inciso": "i",
+          "concepto_operacion": "CARGA_BILLETERA",
+          "es_acumulado": true,
+          "umbral_usd": 1000,
+          "ventana_dias_calendario": 3,
+          "exige_declaracion_origen_destino": true,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 52 par. I inc. i) — R.A. UIF/050/2026 (carga de billetera móvil)",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "PCC-01",
+          "inciso": "i",
+          "concepto_operacion": "RETIRO_BILLETERA",
+          "es_acumulado": true,
+          "umbral_usd": 1000,
+          "ventana_dias_calendario": 3,
+          "exige_declaracion_origen_destino": true,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 52 par. I inc. i) — R.A. UIF/050/2026 (retiro de billetera móvil)",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        }
+      ]
+    },
+    {
+      "tabla": "umbral_reporte_uif",
+      "conflicto": [],
+      "comentario": "Artículo 53 — Reporte de Operaciones Generales (ROG)",
+      "filas": [
+        {
+          "formulario": "ROG-01",
+          "inciso": "a",
+          "concepto_operacion": "EFECTIVO",
+          "es_acumulado": false,
+          "umbral_usd": 0,
+          "ventana_dias_calendario": null,
+          "exige_declaracion_origen_destino": false,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 53 par. I inc. a) — retiros en efectivo de moneda extranjera, sin umbral",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "ROG-02",
+          "inciso": "b",
+          "concepto_operacion": "CAMBIO_MONEDA",
+          "es_acumulado": false,
+          "umbral_usd": 0,
+          "ventana_dias_calendario": null,
+          "exige_declaracion_origen_destino": false,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 53 par. I inc. b) — retiros por cambio de moneda extranjera, sin umbral",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "ROG-03",
+          "inciso": "c",
+          "concepto_operacion": "ELECTRONICA",
+          "es_acumulado": false,
+          "umbral_usd": 2000,
+          "ventana_dias_calendario": null,
+          "exige_declaracion_origen_destino": false,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 53 par. I inc. c) — R.A. UIF/050/2026",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "ROG-03",
+          "inciso": "d",
+          "concepto_operacion": "ELECTRONICA",
+          "es_acumulado": true,
+          "umbral_usd": 10000,
+          "ventana_dias_calendario": 10,
+          "exige_declaracion_origen_destino": false,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 53 par. I inc. d) — acumulación de operaciones menores a USD 2.000",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "ROG-03",
+          "inciso": "e",
+          "concepto_operacion": "GIRO",
+          "es_acumulado": true,
+          "umbral_usd": 2000,
+          "ventana_dias_calendario": 1,
+          "exige_declaracion_origen_destino": false,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 53 par. I inc. e) — giro nacional por orden electrónica",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "ROG-03",
+          "inciso": "f",
+          "concepto_operacion": "REMESA",
+          "es_acumulado": true,
+          "umbral_usd": 1000,
+          "ventana_dias_calendario": 1,
+          "exige_declaracion_origen_destino": false,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 53 par. I inc. f) — remesa por orden electrónica",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "ROG-03",
+          "inciso": "g",
+          "concepto_operacion": "TRANSFERENCIA_BILLETERA",
+          "es_acumulado": true,
+          "umbral_usd": 1000,
+          "ventana_dias_calendario": 3,
+          "exige_declaracion_origen_destino": false,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 53 par. I inc. g) — R.A. UIF/050/2026 (transferencias desde billetera móvil)",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "formulario": "ROG-04",
+          "inciso": "h",
+          "concepto_operacion": "ACTIVO_VIRTUAL",
+          "es_acumulado": false,
+          "umbral_usd": 0,
+          "ventana_dias_calendario": null,
+          "exige_declaracion_origen_destino": false,
+          "reinicia_tras_superar": true,
+          "base_normativa": "Instructivo EIF art. 53 par. I inc. h) — activos virtuales, según catálogo UIF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": false
+        }
+      ]
+    }
+  ]
+}

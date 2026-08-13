@@ -1,0 +1,44 @@
+{
+  "descripcion": "Impuestos vigentes. La alícuota se guarda con vigencia: un cambio es una fila nueva.",
+  "entorno": "minimo",
+  "estado": "confirmar con el área tributaria",
+  "bloques": [
+    {
+      "tabla": "impuesto",
+      "conflicto": [
+        "codigo",
+        "vigente_desde"
+      ],
+      "filas": [
+        {
+          "codigo": "IVA",
+          "nombre": "Impuesto al Valor Agregado",
+          "alicuota": 0.13,
+          "tipo_calculo": "INCLUIDO_EN_PRECIO",
+          "base_legal": "Ley 843 — verificar vigencia con el área tributaria",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "cuenta_contable_id": {
+            "$ref": "cuenta_contable",
+            "codigo": "2.2.01"
+          }
+        },
+        {
+          "codigo": "IT",
+          "nombre": "Impuesto a las Transacciones",
+          "alicuota": 0.03,
+          "tipo_calculo": "SOBRE_PRECIO",
+          "base_legal": "Ley 843 — verificar vigencia con el área tributaria",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "cuenta_contable_id": {
+            "$ref": "cuenta_contable",
+            "codigo": "2.2.02"
+          }
+        }
+      ]
+    }
+  ]
+}
