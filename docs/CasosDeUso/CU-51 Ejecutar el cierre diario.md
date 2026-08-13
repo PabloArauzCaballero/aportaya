@@ -51,6 +51,60 @@ normas: [Contabilidad, ASFI conciliación]
 - Un día cerrado y cuadrado es un punto de control confiable para auditoría.
 - Los saldos diarios quedan sellados y encadenados.
 
+## Contrato · `packages/contratos/CU-51.ts`
+
+```ts
+export const EntradaCU51 = z.object({
+  fecha: z.string().date(),
+  cerradoPor: z.string().uuid(),
+}).strict()
+
+export const SalidaCU51 = z.object({
+  cierreId: z.string().uuid(),
+  cuadrado: z.boolean(),
+  totalRecaudado: MontoSchema,
+  totalConciliado: MontoSchema,
+  excepcionesAbiertas: z.number().int(),
+  saldosDiariosGenerados: z.number().int(),
+}).strict()
+
+export const ErroresCU51 = {
+  EXCEPCIONES_ABIERTAS: 'AP-CU51-01',
+  CUSTODIA_DESCUADRADA: 'AP-CU51-02',
+  ASIENTOS_SIN_CONFIRMAR: 'AP-CU51-03',
+  DIA_YA_CERRADO: 'AP-CU51-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `EXCEPCIONES_ABIERTAS` | Hay conciliaciones sin resolver (R-BIL-12) |
+| `CUSTODIA_DESCUADRADA` | El encaje del día no cumple |
+| `ASIENTOS_SIN_CONFIRMAR` | Quedan asientos en borrador |
+| `DIA_YA_CERRADO` | Requiere reapertura autorizada |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `evaluarCuadre` | Reúne las condiciones y devuelve el motivo del no cuadre; puro |
+| Molécula | `CierreDiarioRepositorio` | Cierre y su estado |
+| Molécula | `SaldoDiarioRepositorio` | Sella los saldos encadenados por hash |
+| Organismo | `CU51CerrarDia` | Trabajo diario: sella saldos y cierra la fecha |
+| Página | `POST /contabilidad/cierres/:fecha` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `dia.cerrado` | Sellado de saldos y habilitación de reportes | `CONTABILIDAD` |
+| `dia.no_cuadra` | Alerta y bloqueo del cierre | — |
+
+## Interfaz
+
+- **App:** Sin pantalla en la app.
+- **Backoffice:** Cierre diario con el detalle de lo que impide cuadrar.
+
 ## Restricciones aplicables
 
 `R-BIL-12` · `R-AUD-05` · `R-AUD-07`

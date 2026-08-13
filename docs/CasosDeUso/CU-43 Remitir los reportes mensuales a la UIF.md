@@ -57,6 +57,64 @@ normas: [UIF — remisión hasta el día 15 del mes siguiente, informe en cero]
 - Cada obligación mensual tiene reporte, archivo con hash y constancia de envío o
   motivo documentado de por qué no salió.
 
+## Contrato · `packages/contratos/CU-43.ts`
+
+```ts
+export const EntradaCU43 = z.object({
+  periodo: z.string().regex(/^\d{4}-\d{2}$/),
+  catalogoCodigo: z.string(),
+  aprobadoPor: z.string().uuid(),
+}).strict()
+
+export const SalidaCU43 = z.object({
+  reporteId: z.string().uuid(),
+  cantidadRegistros: z.number().int(),
+  reporteEnCero: z.boolean(),
+  urlArchivo: z.string().url(),
+  hashArchivo: z.string().length(64),
+  numeroConstancia: z.string().nullable(),
+}).strict()
+
+export const ErroresCU43 = {
+  PERIODO_SIN_CERRAR: 'AP-CU43-01',
+  SEGREGACION_INCUMPLIDA: 'AP-CU43-02',
+  ENVIO_FALLIDO: 'AP-CU43-03',
+  FUERA_DE_PLAZO: 'AP-CU43-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `PERIODO_SIN_CERRAR` | Faltan cierres contables del período |
+| `SEGREGACION_INCUMPLIDA` | Quien aprueba no puede ser quien generó (R-SEG-04) |
+| `ENVIO_FALLIDO` | El organismo no confirmó recepción; se reintenta |
+| `FUERA_DE_PLAZO` | Se pasó la fecha límite: se envía igual y se abre hallazgo |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `armarArchivo` | Genera el formato del catálogo y su hash; puro |
+| Átomo | `calcularFechaLimite` | Plazo desde el catálogo; se guarda, no se recalcula |
+| Molécula | `ReporteRegulatorioRepositorio` | Generación y estados |
+| Molécula | `EnvioRegulatorioRepositorio` | Constancia y reintentos |
+| Molécula | `OrganismoAdaptador` | Canal de envío por organismo |
+| Organismo | `CU43RemitirReportes` | Trabajo mensual con doble control antes de enviar |
+| Página | `POST /cumplimiento/reportes/:periodo/envio` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `reporte.generado` | Revisión y aprobación | `CUMPLIMIENTO_REPORTAR` |
+| `reporte.enviado` | Registro de la constancia | — |
+| `reporte.vencido` | Hallazgo de auditoría de severidad alta | — |
+
+## Interfaz
+
+- **App:** Sin pantalla: es proceso interno de cumplimiento.
+- **Backoffice:** Calendario regulatorio con vencimientos, estado y constancias.
+
 ## Restricciones aplicables
 
 `R-UIF-05` · `R-UIF-06` · `R-SEG-04` · `R-AUD-08`

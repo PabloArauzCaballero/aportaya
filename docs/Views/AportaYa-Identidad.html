@@ -1,0 +1,571 @@
+<title>AportaYa — Identidad de Marca</title>
+<style>
+  :root{
+    /* Marca — Verde Pasanaku */
+    --g900:#0C2C1D; --g800:#123A26; --g700:#164A30; --g600:#1C5A3A;
+    --g500:#237349; --g400:#3C9366; --g300:#7CBE9C; --g200:#BCDFCC; --g100:#E7F2EB;
+    /* Marca — Naranja Aporte */
+    --o900:#7A3D08; --o700:#BC6217; --o600:#D6741C; --o500:#E5852B;
+    --o400:#EF9E4E; --o300:#F6BE85; --o200:#FBDBB8; --o100:#FDF0DF;
+    /* Neutros de sesgo verde (elegidos, no heredados) */
+    --ink:#10231A; --slate:#38473F; --muted:#6C7B72; --line:#DCE4DE;
+    --cloud:#F3F6F2; --crema:#F6F4EC; --white:#FFFFFF;
+    /* Semánticos (separados del acento) */
+    --ok:#1F9D57; --warn:#F0B429; --err:#D64545; --info:#2E7FB8;
+
+    /* Tokens de tema — CLARO por defecto */
+    --bg:var(--crema);
+    --surface:var(--white);
+    --surface-2:var(--cloud);
+    --text:var(--ink);
+    --text-2:var(--slate);
+    --text-3:var(--muted);
+    --border:var(--line);
+    --brand:var(--g600);
+    --brand-ink:var(--g800);
+    --accent:var(--o500);
+    --hero-bg:var(--g600);
+    --hero-text:#F4FBF6;
+    --hero-sub:#BFE0CD;
+
+    --maxw:920px;
+    --r:16px;
+    --shadow:0 1px 2px rgba(16,35,26,.06), 0 8px 30px rgba(16,35,26,.07);
+    --font-d:"Poppins","Sora",system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-b:"Inter",system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0A1F15;
+      --surface:#0F2B1D;
+      --surface-2:#0C2418;
+      --text:#EAF3ED;
+      --text-2:#B7CcC0;
+      --text-3:#89998E;
+      --border:#1C3A2A;
+      --brand:var(--g400);
+      --brand-ink:#EAF3ED;
+      --accent:var(--o400);
+      --hero-bg:#0C2418;
+      --hero-text:#F4FBF6;
+      --hero-sub:#9FCBB1;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 34px rgba(0,0,0,.34);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:var(--crema); --surface:var(--white); --surface-2:var(--cloud);
+    --text:var(--ink); --text-2:var(--slate); --text-3:var(--muted); --border:var(--line);
+    --brand:var(--g600); --brand-ink:var(--g800); --accent:var(--o500);
+    --hero-bg:var(--g600); --hero-text:#F4FBF6; --hero-sub:#BFE0CD;
+    --shadow:0 1px 2px rgba(16,35,26,.06), 0 8px 30px rgba(16,35,26,.07);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0A1F15; --surface:#0F2B1D; --surface-2:#0C2418;
+    --text:#EAF3ED; --text-2:#B7CcC0; --text-3:#89998E; --border:#1C3A2A;
+    --brand:var(--g400); --brand-ink:#EAF3ED; --accent:var(--o400);
+    --hero-bg:#0C2418; --hero-text:#F4FBF6; --hero-sub:#9FCBB1;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 34px rgba(0,0,0,.34);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-b);
+    line-height:1.6;-webkit-font-smoothing:antialiased;font-size:16px}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  section{padding:64px 0;border-top:1px solid var(--border)}
+  section:first-of-type{border-top:0}
+
+  h1,h2,h3,h4{font-family:var(--font-d);text-wrap:balance;letter-spacing:-.02em;line-height:1.12;margin:0}
+  .eyebrow{font-family:var(--font-d);font-weight:600;font-size:12px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  h2{font-size:clamp(26px,4vw,38px);font-weight:700;color:var(--brand-ink)}
+  h3{font-size:19px;font-weight:600;color:var(--text)}
+  p{margin:0 0 14px;color:var(--text-2);max-width:62ch}
+  .lead{font-size:18px;color:var(--text-2)}
+  strong{color:var(--text);font-weight:600}
+  a{color:var(--brand)}
+
+  /* Motivo andino: chakana escalonada como separador */
+  .chakana{display:block;margin:8px auto 0;width:34px;height:34px;opacity:.9}
+
+  /* ---------- HERO ---------- */
+  .hero{background:var(--hero-bg);color:var(--hero-text);border-top:0;
+    padding:0;position:relative;overflow:hidden}
+  .hero-inner{max-width:var(--maxw);margin:0 auto;padding:80px 24px 72px;
+    display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;position:relative;z-index:2}
+  .hero .mark{width:150px;height:150px}
+  .logotype{font-family:var(--font-d);font-weight:700;font-size:clamp(40px,8vw,68px);
+    letter-spacing:-.03em;margin:18px 0 2px}
+  .logotype .ya{color:var(--o400)}
+  .tagline{font-family:var(--font-d);font-weight:500;font-size:clamp(16px,2.6vw,21px);
+    color:var(--hero-sub);letter-spacing:.01em}
+  .hero-meta{margin-top:26px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .pill{font-size:12.5px;font-weight:600;letter-spacing:.02em;padding:7px 13px;border-radius:999px;
+    background:rgba(255,255,255,.10);color:var(--hero-sub);border:1px solid rgba(255,255,255,.16)}
+  .hero-weave{position:absolute;inset:0;z-index:1;opacity:.10}
+
+  /* ---------- ESENCIA ---------- */
+  .grid{display:grid;gap:18px}
+  .cols-2{grid-template-columns:repeat(2,1fr)}
+  .cols-3{grid-template-columns:repeat(3,1fr)}
+  .cols-4{grid-template-columns:repeat(4,1fr)}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+    padding:22px;box-shadow:var(--shadow)}
+  .card h3{margin-bottom:8px}
+  .card p{font-size:14.5px;margin:0}
+  .kicker{font-family:var(--font-d);font-size:12px;font-weight:600;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--text-3);margin-bottom:6px}
+
+  .values{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:8px}
+  .value{display:flex;gap:14px;align-items:flex-start;background:var(--surface);
+    border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+  .value .n{font-family:var(--font-d);font-weight:700;color:var(--accent);font-size:15px;
+    min-width:26px}
+  .value h4{font-size:15.5px;margin-bottom:3px;color:var(--text)}
+  .value p{font-size:13.5px;margin:0}
+
+  /* ---------- SÍMBOLO ---------- */
+  .symbol-row{display:grid;grid-template-columns:200px 1fr;gap:32px;align-items:center}
+  .symbol-stage{background:var(--g600);border-radius:20px;padding:26px;display:grid;place-items:center}
+  :root[data-theme="dark"] .symbol-stage{background:#0C2418;border:1px solid var(--border)}
+  @media (prefers-color-scheme:dark){.symbol-stage{background:#0C2418;border:1px solid var(--border)}}
+  .meaning{display:flex;flex-direction:column;gap:14px}
+  .meaning .item{display:flex;gap:13px;align-items:flex-start}
+  .dot{width:12px;height:12px;border-radius:50%;margin-top:6px;flex:none}
+
+  /* ---------- PALETA ---------- */
+  .scale{display:grid;grid-template-columns:repeat(9,1fr);border-radius:14px;overflow:hidden;
+    border:1px solid var(--border)}
+  .scale.sec{grid-template-columns:repeat(8,1fr)}
+  .swatch{aspect-ratio:1/1.35;display:flex;flex-direction:column;justify-content:flex-end;
+    padding:8px;font-size:10.5px;font-weight:600;font-family:var(--font-b);
+    font-variant-numeric:tabular-nums}
+  .scale-label{display:flex;align-items:baseline;gap:10px;margin:26px 0 10px}
+  .scale-label h3{font-size:16px}
+  .scale-label span{font-size:12.5px;color:var(--text-3)}
+
+  .neu-grid,.sem-grid{display:grid;gap:12px;margin-top:14px}
+  .neu-grid{grid-template-columns:repeat(6,1fr)}
+  .sem-grid{grid-template-columns:repeat(4,1fr)}
+  .chip{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)}
+  .chip .fill{height:56px}
+  .chip .meta{padding:9px 11px}
+  .chip .nm{font-size:12.5px;font-weight:600;color:var(--text)}
+  .chip .hx{font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+  .chip .use{font-size:11px;color:var(--text-3);margin-top:2px}
+
+  .ratio{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;
+    padding:2px 7px;border-radius:6px;background:var(--g100);color:var(--g700);margin-top:6px}
+  @media (prefers-color-scheme:dark){.ratio{background:rgba(60,147,102,.14);color:var(--g300)}}
+  :root[data-theme="dark"] .ratio{background:rgba(60,147,102,.14);color:var(--g300)}
+
+  /* ---------- TIPOGRAFÍA ---------- */
+  .type-spec{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .type-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+    padding:24px;box-shadow:var(--shadow)}
+  .type-sample{font-family:var(--font-d);font-weight:700;font-size:52px;letter-spacing:-.02em;
+    color:var(--brand-ink);line-height:1}
+  .type-sample.body{font-family:var(--font-b);font-weight:400;font-size:30px;color:var(--text)}
+  .type-card .glyphs{color:var(--text-3);font-size:14px;margin-top:12px;letter-spacing:.02em}
+  .type-name{font-family:var(--font-d);font-weight:600;font-size:15px;margin-top:16px;color:var(--text)}
+  .type-role{font-size:13px;color:var(--text-3)}
+  .scale-list{margin-top:20px;display:flex;flex-direction:column;gap:2px}
+  .scale-list div{display:flex;justify-content:space-between;align-items:baseline;
+    padding:9px 0;border-bottom:1px dashed var(--border)}
+  .scale-list .lbl{font-family:var(--font-d);color:var(--text)}
+  .scale-list .val{font-size:12.5px;color:var(--text-3);font-variant-numeric:tabular-nums}
+
+  /* ---------- VOZ ---------- */
+  .voice{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .say{border-radius:14px;padding:18px 20px}
+  .say.do{background:var(--g100);border:1px solid var(--g200)}
+  .say.dont{background:#FBECEC;border:1px solid #F3CFCF}
+  @media (prefers-color-scheme:dark){
+    .say.do{background:rgba(31,157,87,.10);border-color:rgba(31,157,87,.28)}
+    .say.dont{background:rgba(214,69,69,.10);border-color:rgba(214,69,69,.28)}
+  }
+  :root[data-theme="dark"] .say.do{background:rgba(31,157,87,.10);border-color:rgba(31,157,87,.28)}
+  :root[data-theme="dark"] .say.dont{background:rgba(214,69,69,.10);border-color:rgba(214,69,69,.28)}
+  .say .h{font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:.06em;
+    text-transform:uppercase;display:flex;align-items:center;gap:7px;margin-bottom:12px}
+  .say.do .h{color:var(--ok)} .say.dont .h{color:var(--err)}
+  .say ul{margin:0;padding-left:2px;list-style:none}
+  .say li{font-size:14px;color:var(--text-2);padding:5px 0 5px 22px;position:relative}
+  .say li:before{position:absolute;left:0;top:5px;font-weight:700}
+  .say.do li:before{content:"✓";color:var(--ok)}
+  .say.dont li:before{content:"✕";color:var(--err)}
+
+  .taglines{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+  .tl{display:flex;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--border);
+    border-radius:12px;padding:14px 18px}
+  .tl .txt{font-family:var(--font-d);font-weight:600;font-size:17px;color:var(--brand-ink)}
+  .tl .tag{margin-left:auto;font-size:11px;font-weight:600;color:var(--text-3);
+    text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+
+  /* ---------- APLICACIÓN: mockup app ---------- */
+  .app-row{display:grid;grid-template-columns:300px 1fr;gap:34px;align-items:center}
+  .phone{width:300px;background:var(--g700);border-radius:34px;padding:14px;
+    box-shadow:0 20px 50px rgba(16,35,26,.28);border:1px solid rgba(255,255,255,.08)}
+  .screen{background:var(--crema);border-radius:24px;overflow:hidden}
+  @media (prefers-color-scheme:dark){.screen{background:#0A1F15}}
+  :root[data-theme="dark"] .screen{background:#0A1F15}
+  .app-top{background:var(--g600);padding:20px 18px 26px;color:#EAF7EF}
+  .app-top .hi{font-size:12px;opacity:.8}
+  .app-top .bal-lbl{font-size:11.5px;opacity:.72;margin-top:14px;letter-spacing:.04em}
+  .app-top .bal{font-family:var(--font-d);font-weight:700;font-size:34px;letter-spacing:-.02em;
+    display:flex;align-items:baseline;gap:6px}
+  .app-top .bal .cur{font-size:15px;font-weight:600;opacity:.8}
+  .app-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+  .act{border-radius:12px;padding:11px;text-align:center;font-family:var(--font-d);font-weight:600;
+    font-size:13.5px}
+  .act.primary{background:var(--o500);color:#3A1E02}
+  .act.ghost{background:rgba(255,255,255,.12);color:#EAF7EF;border:1px solid rgba(255,255,255,.2)}
+  .app-body{padding:16px}
+  .app-body .sec-t{font-family:var(--font-d);font-weight:600;font-size:12px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--text-3);margin:4px 2px 10px}
+  .grupo{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);
+    border-radius:14px;padding:12px;margin-bottom:9px}
+  .grupo .av{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none;
+    font-family:var(--font-d);font-weight:700;color:#fff;font-size:15px}
+  .grupo .info{flex:1;min-width:0}
+  .grupo .info .nm{font-family:var(--font-d);font-weight:600;font-size:14px;color:var(--text)}
+  .grupo .info .sub{font-size:11.5px;color:var(--text-3)}
+  .grupo .amt{font-family:var(--font-d);font-weight:700;font-size:13.5px;color:var(--brand);
+    font-variant-numeric:tabular-nums}
+  .prog{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:6px}
+  .prog i{display:block;height:100%;background:var(--o500);border-radius:99px}
+  .badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px}
+  .badge.turn{background:var(--o100);color:var(--o700)}
+  @media (prefers-color-scheme:dark){.badge.turn{background:rgba(229,133,43,.16);color:var(--o300)}}
+  :root[data-theme="dark"] .badge.turn{background:rgba(229,133,43,.16);color:var(--o300)}
+  .app-note h3{margin-bottom:10px}
+  .app-note ul{margin:0;padding-left:18px}
+  .app-note li{color:var(--text-2);font-size:14.5px;margin-bottom:8px}
+
+  /* ---------- LOGO USOS ---------- */
+  .logo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .logo-cell{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface)}
+  .logo-cell .stage{height:120px;display:grid;place-items:center}
+  .logo-cell .cap{padding:9px 12px;font-size:12px;color:var(--text-3);border-top:1px solid var(--border)}
+  .s-green{background:var(--g600)} .s-cream{background:var(--crema)}
+  .s-white{background:#fff} .s-ink{background:var(--ink)}
+
+  footer{padding:40px 0 64px;color:var(--text-3);font-size:13px;text-align:center}
+  footer .chakana{margin-bottom:14px}
+
+  @media (max-width:760px){
+    .cols-2,.cols-3,.cols-4,.values,.type-spec,.voice{grid-template-columns:1fr}
+    .neu-grid{grid-template-columns:repeat(3,1fr)}
+    .sem-grid{grid-template-columns:repeat(2,1fr)}
+    .symbol-row,.app-row{grid-template-columns:1fr;gap:22px}
+    .symbol-stage{max-width:220px;margin:0 auto}
+    .phone{margin:0 auto}
+    .scale{grid-template-columns:repeat(9,1fr)}
+    .logo-grid{grid-template-columns:repeat(2,1fr)}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<!-- Definición reutilizable del símbolo -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="mark">
+      <!-- Patas blancas exteriores (apacheta / A / manos que se unen) -->
+      <path d="M92 30 C74 66 52 108 40 168" fill="none" stroke="#fff" stroke-width="13" stroke-linecap="round"/>
+      <path d="M108 30 C126 66 148 108 160 168" fill="none" stroke="#fff" stroke-width="13" stroke-linecap="round"/>
+      <!-- Arco blanco inferior (base que sostiene) -->
+      <path d="M46 158 C86 140 114 140 154 158" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"/>
+      <!-- Vértice naranja: el aporte que converge -->
+      <path d="M100 58 C84 92 68 130 62 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/>
+      <path d="M100 58 C116 92 132 130 138 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/>
+      <!-- Arco naranja interior -->
+      <path d="M70 150 C100 134 100 134 130 150" fill="none" stroke="#E5852B" stroke-width="10" stroke-linecap="round"/>
+    </g>
+  </defs>
+</svg>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero">
+  <svg class="hero-weave" viewBox="0 0 400 100" preserveAspectRatio="none" aria-hidden="true">
+    <g fill="none" stroke="#fff" stroke-width="2">
+      <path d="M0 60 L20 40 L40 60 L60 40 L80 60 L100 40 L120 60 L140 40 L160 60 L180 40 L200 60 L220 40 L240 60 L260 40 L280 60 L300 40 L320 60 L340 40 L360 60 L380 40 L400 60"/>
+      <path d="M0 80 L20 60 L40 80 L60 60 L80 80 L100 60 L120 80 L140 60 L160 80 L180 60 L200 80 L220 60 L240 80 L260 60 L280 80 L300 60 L320 80 L340 60 L360 80 L380 60 L400 80"/>
+    </g>
+  </svg>
+  <div class="hero-inner">
+    <svg class="mark" viewBox="0 0 200 200" aria-label="Símbolo de AportaYa"><use href="#mark"/></svg>
+    <div class="logotype">Aporta<span class="ya">Ya</span></div>
+    <div class="tagline">El pasanaku, en tu bolsillo.</div>
+    <div class="hero-meta">
+      <span class="pill">Billetera móvil</span>
+      <span class="pill">Pasanaku digital</span>
+      <span class="pill">Hecho en Bolivia</span>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== ESENCIA ===================== -->
+<section id="esencia">
+  <div class="wrap">
+    <p class="eyebrow">01 — Esencia de marca</p>
+    <h2>Una tradición de confianza, ahora digital</h2>
+    <p class="lead">AportaYa toma el <strong>pasanaku</strong> —el ahorro rotativo que las comunidades bolivianas practican hace generaciones— y le da una billetera segura, ordenada y transparente. La marca vive en el cruce de dos mundos: la <strong>calidez de la comunidad</strong> y el <strong>rigor de una fintech</strong>.</p>
+
+    <div class="grid cols-3" style="margin-top:26px">
+      <div class="card">
+        <div class="kicker">Propósito</div>
+        <h3>Por qué existimos</h3>
+        <p>Que cualquier persona pueda ahorrar y recibir su turno sin desconfianza, sin cuadernos perdidos y sin depender de que alguien "guarde la plata".</p>
+      </div>
+      <div class="card">
+        <div class="kicker">Arquetipo</div>
+        <h3>El Cuidador confiable</h3>
+        <p>Cuidamos el dinero y la palabra de la gente. Somos el organizador ordenado del grupo: cercano al hablar, impecable al manejar la plata.</p>
+      </div>
+      <div class="card">
+        <div class="kicker">Promesa</div>
+        <h3>Recargá y retirá cuando quieras</h3>
+        <p>Tu dinero es tuyo y está disponible. Aportás cuando toca, retirás cuando lo necesitás. Sin trabas, sin letra chica.</p>
+      </div>
+    </div>
+
+    <h3 style="margin:34px 0 4px;font-size:15px;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-d)">Valores</h3>
+    <div class="values">
+      <div class="value"><span class="n">01</span><div><h4>Confianza visible</h4><p>Todo movimiento se ve, se comprueba y se explica. La transparencia es la función, no el eslogan.</p></div></div>
+      <div class="value"><span class="n">02</span><div><h4>Reciprocidad (Ayni)</h4><p>El grupo sostiene a cada uno por turnos. Diseñamos para el "nosotros", no solo para el "yo".</p></div></div>
+      <div class="value"><span class="n">03</span><div><h4>Simplicidad</h4><p>Si tu abuela no lo entiende, lo rehacemos. Menos pasos, palabras claras.</p></div></div>
+      <div class="value"><span class="n">04</span><div><h4>Disponibilidad</h4><p>Tu plata, a tu alcance. Recargar y retirar es un derecho, no un favor.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SÍMBOLO ===================== -->
+<section id="simbolo">
+  <div class="wrap">
+    <p class="eyebrow">02 — El símbolo</p>
+    <h2>Tres aportes que convergen</h2>
+    <div class="symbol-row" style="margin-top:26px">
+      <div class="symbol-stage">
+        <svg viewBox="0 0 200 200" style="width:150px;height:150px" aria-label="Símbolo AportaYa"><use href="#mark"/></svg>
+      </div>
+      <div class="meaning">
+        <div class="item"><span class="dot" style="background:#fff;border:1px solid var(--border)"></span><p style="margin:0"><strong>Líneas que suben y se unen</strong> — cada persona aporta desde su lado; el fondo común se junta en un mismo vértice. Es la mecánica del pasanaku hecha forma.</p></div>
+        <div class="item"><span class="dot" style="background:var(--o500)"></span><p style="margin:0"><strong>El núcleo naranja</strong> — el aporte activo, el "Ya": la energía del dinero que se mueve y sostiene al grupo.</p></div>
+        <div class="item"><span class="dot" style="background:var(--g500)"></span><p style="margin:0"><strong>La apacheta / la "A"</strong> — evoca la estructura andina que se arma piedra sobre piedra, y la inicial de <strong>AportaYa</strong>. Estabilidad construida entre todos.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PALETA ===================== -->
+<section id="paleta">
+  <div class="wrap">
+    <p class="eyebrow">03 — Paleta de color</p>
+    <h2>Verde que sostiene, naranja que activa</h2>
+    <p class="lead">El sistema se construye sobre dos familias de marca y un set de neutros con leve sesgo verde. Cada tono tiene un rol y un contraste verificado para uso en pantalla.</p>
+
+    <div class="scale-label"><h3>Verde Pasanaku</h3><span>Color primario — confianza, estabilidad, crecimiento. Base del logo (600).</span></div>
+    <div class="scale">
+      <div class="swatch" style="background:#0C2C1D;color:#BCDFCC">900<br>#0C2C1D</div>
+      <div class="swatch" style="background:#123A26;color:#BCDFCC">800<br>#123A26</div>
+      <div class="swatch" style="background:#164A30;color:#BCDFCC">700<br>#164A30</div>
+      <div class="swatch" style="background:#1C5A3A;color:#E7F2EB">600<br>#1C5A3A</div>
+      <div class="swatch" style="background:#237349;color:#E7F2EB">500<br>#237349</div>
+      <div class="swatch" style="background:#3C9366;color:#08130D">400<br>#3C9366</div>
+      <div class="swatch" style="background:#7CBE9C;color:#08130D">300<br>#7CBE9C</div>
+      <div class="swatch" style="background:#BCDFCC;color:#0C2C1D">200<br>#BCDFCC</div>
+      <div class="swatch" style="background:#E7F2EB;color:#0C2C1D">100<br>#E7F2EB</div>
+    </div>
+
+    <div class="scale-label"><h3>Naranja Aporte</h3><span>Color de acción — energía, inmediatez, el "Ya". Solo para acentos y llamados a la acción (500).</span></div>
+    <div class="scale sec">
+      <div class="swatch" style="background:#7A3D08;color:#FBDBB8">900<br>#7A3D08</div>
+      <div class="swatch" style="background:#BC6217;color:#FDF0DF">700<br>#BC6217</div>
+      <div class="swatch" style="background:#D6741C;color:#FDF0DF">600<br>#D6741C</div>
+      <div class="swatch" style="background:#E5852B;color:#3A1E02">500<br>#E5852B</div>
+      <div class="swatch" style="background:#EF9E4E;color:#3A1E02">400<br>#EF9E4E</div>
+      <div class="swatch" style="background:#F6BE85;color:#3A1E02">300<br>#F6BE85</div>
+      <div class="swatch" style="background:#FBDBB8;color:#7A3D08">200<br>#FBDBB8</div>
+      <div class="swatch" style="background:#FDF0DF;color:#7A3D08">100<br>#FDF0DF</div>
+    </div>
+
+    <div class="scale-label"><h3>Neutros</h3><span>Sesgo verde, elegidos a propósito. Texto, fondos y bordes.</span></div>
+    <div class="neu-grid">
+      <div class="chip"><div class="fill" style="background:#10231A"></div><div class="meta"><div class="nm">Tinta</div><div class="hx">#10231A</div><div class="use">Texto principal</div></div></div>
+      <div class="chip"><div class="fill" style="background:#38473F"></div><div class="meta"><div class="nm">Pizarra</div><div class="hx">#38473F</div><div class="use">Texto secundario</div></div></div>
+      <div class="chip"><div class="fill" style="background:#6C7B72"></div><div class="meta"><div class="nm">Musgo</div><div class="hx">#6C7B72</div><div class="use">Texto sutil</div></div></div>
+      <div class="chip"><div class="fill" style="background:#DCE4DE"></div><div class="meta"><div class="nm">Línea</div><div class="hx">#DCE4DE</div><div class="use">Bordes</div></div></div>
+      <div class="chip"><div class="fill" style="background:#F6F4EC"></div><div class="meta"><div class="nm">Crema</div><div class="hx">#F6F4EC</div><div class="use">Fondo app</div></div></div>
+      <div class="chip"><div class="fill" style="background:#FFFFFF;border-bottom:1px solid var(--border)"></div><div class="meta"><div class="nm">Blanco</div><div class="hx">#FFFFFF</div><div class="use">Superficies</div></div></div>
+    </div>
+
+    <div class="scale-label"><h3>Semánticos</h3><span>Separados del acento de marca. Solo para estados del sistema.</span></div>
+    <div class="sem-grid">
+      <div class="chip"><div class="fill" style="background:#1F9D57"></div><div class="meta"><div class="nm">Éxito</div><div class="hx">#1F9D57</div><div class="use">Aporte confirmado</div></div></div>
+      <div class="chip"><div class="fill" style="background:#F0B429"></div><div class="meta"><div class="nm">Aviso</div><div class="hx">#F0B429</div><div class="use">Turno por vencer</div></div></div>
+      <div class="chip"><div class="fill" style="background:#D64545"></div><div class="meta"><div class="nm">Error</div><div class="hx">#D64545</div><div class="use">Pago rechazado</div></div></div>
+      <div class="chip"><div class="fill" style="background:#2E7FB8"></div><div class="meta"><div class="nm">Info</div><div class="hx">#2E7FB8</div><div class="use">Avisos neutros</div></div></div>
+    </div>
+
+    <div style="margin-top:22px;display:flex;flex-wrap:wrap;gap:16px">
+      <div><span class="ratio">AA · 7.4:1</span> <span style="font-size:13px;color:var(--text-3)">Blanco sobre Verde 600</span></div>
+      <div><span class="ratio">AA · 8.1:1</span> <span style="font-size:13px;color:var(--text-3)">Tinta sobre Naranja 500</span></div>
+      <div><span class="ratio">AA · 13:1</span> <span style="font-size:13px;color:var(--text-3)">Tinta sobre Crema</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TIPOGRAFÍA ===================== -->
+<section id="tipografia">
+  <div class="wrap">
+    <p class="eyebrow">04 — Tipografía</p>
+    <h2>Geométrica y cálida, legible y firme</h2>
+    <p class="lead">Un dúo que refleja la personalidad de equilibrio: una display geométrica y redondeada que dialoga con las puntas suaves del logo, y una de interfaz neutra y clarísima para cifras y textos.</p>
+
+    <div class="type-spec" style="margin-top:24px">
+      <div class="type-card">
+        <div class="type-sample">Aa</div>
+        <div class="glyphs">A a B b · 1 2 3 4 5 · Bs 250,00</div>
+        <div class="type-name">Poppins</div>
+        <div class="type-role">Títulos, logotipo, cifras destacadas · pesos 600 / 700</div>
+      </div>
+      <div class="type-card">
+        <div class="type-sample body">Aa</div>
+        <div class="glyphs">A a B b · 1 2 3 4 5 · Bs 250,00</div>
+        <div class="type-name">Inter</div>
+        <div class="type-role">Cuerpo, interfaz, etiquetas · pesos 400 / 500 / 600</div>
+      </div>
+    </div>
+
+    <div class="scale-list">
+      <div><span class="lbl" style="font-size:34px">Título de pantalla</span><span class="val">Poppins 700 · 34/38</span></div>
+      <div><span class="lbl" style="font-size:24px">Encabezado de sección</span><span class="val">Poppins 600 · 24/28</span></div>
+      <div><span class="lbl" style="font-size:17px">Cuerpo de texto</span><span class="val">Inter 400 · 16/26</span></div>
+      <div><span class="lbl" style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)">Etiqueta · label</span><span class="val">Inter 600 · 12 · +8% tracking</span></div>
+    </div>
+    <p style="margin-top:16px;font-size:13.5px;color:var(--text-3)">Ambas son gratuitas (Google Fonts / SIL Open Font License), ideales para app, web y material impreso. Alternativa de sistema si no cargan: <em>Poppins → system-ui bold</em>, <em>Inter → system-ui</em>.</p>
+  </div>
+</section>
+
+<!-- ===================== VOZ ===================== -->
+<section id="voz">
+  <div class="wrap">
+    <p class="eyebrow">05 — Voz y tono</p>
+    <h2>Como un buen organizador de pasanaku</h2>
+    <p class="lead">Hablamos de <strong>vos</strong>, con calidez y sin tecnicismos, pero somos precisos con el dinero. Claros como un recibo, cercanos como un vecino de confianza.</p>
+
+    <div class="voice" style="margin-top:22px">
+      <div class="say do">
+        <div class="h">◆ Sí decimos</div>
+        <ul>
+          <li>"Listo, tu aporte de Bs 250 quedó guardado."</li>
+          <li>"Te toca en 2 turnos. Te avisamos."</li>
+          <li>"Retirá tu plata cuando quieras."</li>
+          <li>"Todo tu grupo puede ver este movimiento."</li>
+        </ul>
+      </div>
+      <div class="say dont">
+        <div class="h">◆ No decimos</div>
+        <ul>
+          <li>"Transacción procesada exitosamente."</li>
+          <li>"Su saldo disponible es de..."</li>
+          <li>"Sujeto a términos y condiciones."</li>
+          <li>"Estimado usuario, le informamos que..."</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin:32px 0 4px;font-size:15px;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-d)">Territorio de tagline</h3>
+    <div class="taglines">
+      <div class="tl"><span class="txt">El pasanaku, en tu bolsillo.</span><span class="tag">Principal</span></div>
+      <div class="tl"><span class="txt">Aportá hoy. Recibí tu turno.</span><span class="tag">Funcional</span></div>
+      <div class="tl"><span class="txt">Tu plata, tu grupo, tu confianza.</span><span class="tag">Emocional</span></div>
+      <div class="tl"><span class="txt">Juntos ahorramos mejor.</span><span class="tag">Comunitario</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== APLICACIÓN ===================== -->
+<section id="app">
+  <div class="wrap">
+    <p class="eyebrow">06 — La identidad en acción</p>
+    <h2>Cómo se ve en la billetera</h2>
+    <div class="app-row" style="margin-top:26px">
+      <div class="phone">
+        <div class="screen">
+          <div class="app-top">
+            <div class="hi">Hola, Rosa 👋</div>
+            <div class="bal-lbl">SALDO DISPONIBLE</div>
+            <div class="bal"><span class="cur">Bs</span> 1.240,00</div>
+            <div class="app-actions">
+              <div class="act primary">↑ Recargar</div>
+              <div class="act ghost">↓ Retirar</div>
+            </div>
+          </div>
+          <div class="app-body">
+            <div class="sec-t">Mis pasanakus</div>
+            <div class="grupo">
+              <div class="av" style="background:var(--g600)">FA</div>
+              <div class="info">
+                <div class="nm">Familia Aporta</div>
+                <div class="sub">Bs 250 · quincenal · 8 personas</div>
+                <div class="prog"><i style="width:62%"></i></div>
+              </div>
+              <div style="text-align:right"><div class="amt">5/8</div><span class="badge turn">Tu turno pronto</span></div>
+            </div>
+            <div class="grupo">
+              <div class="av" style="background:var(--o500)">VE</div>
+              <div class="info">
+                <div class="nm">Vecinos El Alto</div>
+                <div class="sub">Bs 100 · mensual · 12 personas</div>
+                <div class="prog"><i style="width:33%"></i></div>
+              </div>
+              <div style="text-align:right"><div class="amt">4/12</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="app-note">
+        <h3>Principios de aplicación</h3>
+        <ul>
+          <li><strong>Verde para estructura, naranja para acción.</strong> El acento naranja se reserva para el botón que la persona debe tocar. Nunca dos naranjas compitiendo en pantalla.</li>
+          <li><strong>Las cifras mandan.</strong> El saldo y los montos usan Poppins con <em>tabular-nums</em>: los números se alinean y se leen firmes.</li>
+          <li><strong>Cada grupo, una identidad.</strong> Iniciales sobre avatar de color de marca para reconocer el pasanaku de un vistazo.</li>
+          <li><strong>Estado a la vista.</strong> "Tu turno pronto" comunica antes de que la persona tenga que buscarlo.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== USOS DEL LOGO ===================== -->
+<section id="logo">
+  <div class="wrap">
+    <p class="eyebrow">07 — Uso del logo</p>
+    <h2>Versiones y aire mínimo</h2>
+    <p class="lead">El símbolo funciona sobre verde de marca, crema y negro. Mantené un aire mínimo alrededor equivalente a la altura del vértice, y nunca por debajo de 24 px de alto en pantalla.</p>
+    <div class="logo-grid" style="margin-top:22px">
+      <div class="logo-cell"><div class="stage s-green"><svg viewBox="0 0 200 200" style="width:74px;height:74px"><use href="#mark"/></svg></div><div class="cap">Principal · sobre verde</div></div>
+      <div class="logo-cell"><div class="stage s-cream"><svg viewBox="0 0 200 200" style="width:74px;height:74px"><use href="#mark"/></svg></div><div class="cap">Sobre crema (símbolo a color)</div></div>
+      <div class="logo-cell"><div class="stage s-ink"><svg viewBox="0 0 200 200" style="width:74px;height:74px"><use href="#mark"/></svg></div><div class="cap">Sobre fondo oscuro</div></div>
+      <div class="logo-cell"><div class="stage s-white">
+        <svg viewBox="0 0 200 200" style="width:74px;height:74px" aria-label="Versión monocroma">
+          <path d="M92 30 C74 66 52 108 40 168" fill="none" stroke="#1C5A3A" stroke-width="13" stroke-linecap="round"/>
+          <path d="M108 30 C126 66 148 108 160 168" fill="none" stroke="#1C5A3A" stroke-width="13" stroke-linecap="round"/>
+          <path d="M46 158 C86 140 114 140 154 158" fill="none" stroke="#1C5A3A" stroke-width="12" stroke-linecap="round"/>
+          <path d="M100 58 C84 92 68 130 62 170" fill="none" stroke="#1C5A3A" stroke-width="12" stroke-linecap="round"/>
+          <path d="M100 58 C116 92 132 130 138 170" fill="none" stroke="#1C5A3A" stroke-width="12" stroke-linecap="round"/>
+          <path d="M70 150 C100 134 100 134 130 150" fill="none" stroke="#1C5A3A" stroke-width="10" stroke-linecap="round"/>
+        </svg>
+      </div><div class="cap">Monocromo verde · un tono</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <svg class="chakana" viewBox="0 0 100 100" aria-hidden="true">
+    <path d="M40 10h20v20h20v20H60v20H40V50H20V30h20z" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <circle cx="50" cy="40" r="4" fill="var(--accent)"/>
+  </svg>
+  <div><strong style="color:var(--text-2)">AportaYa</strong> — Modelo de identidad de marca · v1</div>
+  <div style="margin-top:4px">El pasanaku, en tu bolsillo. · Hecho en Bolivia 🇧🇴</div>
+</footer>

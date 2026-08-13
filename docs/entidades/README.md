@@ -1,4 +1,4 @@
-# Diccionario razonado de entidades — Pasanaku Digital v2.0 + Parches A y B
+# Diccionario razonado de entidades — AportaYa v2.0 + Parches A y B
 
 Este directorio documenta **qué hace cada entidad del modelo y por qué debería
 existir**. No es un diccionario de datos (los tipos y las claves ya están en los

@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS puntaje_reputacion (
   antiguedad_meses                   SMALLINT NOT NULL,
   eventos_considerados               INTEGER NOT NULL,
   modelo_version                     VARCHAR(20) NOT NULL,
+  vigente_desde                      TIMESTAMPTZ NOT NULL,
+  vigente_hasta                      TIMESTAMPTZ,
   calculado_en                       TIMESTAMPTZ NOT NULL,
   proximo_recalculo_en               TIMESTAMPTZ NOT NULL,
   CONSTRAINT pk_puntaje_reputacion PRIMARY KEY (id),
@@ -29,4 +31,5 @@ COMMENT ON COLUMN puntaje_reputacion.usuario_id IS 'FK, UQ';
 COMMENT ON COLUMN puntaje_reputacion.modelo_id IS 'FK';
 COMMENT ON COLUMN puntaje_reputacion.puntaje IS 'IDX';
 COMMENT ON COLUMN puntaje_reputacion.nivel_confianza IS 'CK, IDX';
+COMMENT ON COLUMN puntaje_reputacion.vigente_hasta IS 'NULL';
 COMMENT ON COLUMN puntaje_reputacion.proximo_recalculo_en IS 'IDX';

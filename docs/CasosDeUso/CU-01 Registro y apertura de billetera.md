@@ -76,6 +76,67 @@ normas: [ASFI Res. 540/2025, UIF EBR, ASFI Consumidor Financiero]
 - El usuario tiene calificación de riesgo vigente y límites aplicables resueltos.
 - El expediente del cliente queda abierto con su fecha de conservación.
 
+## Contrato · `packages/contratos/CU-01.ts`
+
+```ts
+export const EntradaCU01 = z.object({
+  claveIdempotencia: z.string().uuid(),
+  telefonoE164:      z.string().regex(/^\+591\d{8}$/),
+  nombres:           z.string().min(2).max(60),
+  apellidos:         z.string().min(2).max(60),
+  fechaNacimiento:   z.string().date(),
+  documento:         z.object({ tipo: z.enum(['CI','CEX','PASAPORTE']), numero: z.string() }),
+  aceptaContratos:   z.array(z.string().uuid()).min(1),
+}).strict()
+
+export const SalidaCU01 = z.object({
+  usuarioId:         z.string().uuid(),
+  cuentaBilleteraId: z.string().uuid(),
+  nivelDiligencia:   z.enum(['SIMPLIFICADA','ESTANDAR','AMPLIADA','REFORZADA']),
+  limites:           z.array(z.object({ concepto: z.string(), ventana: z.string(), monto: MontoSchema })),
+}).strict()
+
+export const ErroresCU01 = {
+  KYC_RECHAZADO: 'AP-CU01-01',
+  COINCIDENCIA_EN_LISTA: 'AP-CU01-02',
+  CUENTA_YA_EXISTE: 'AP-CU01-03',
+  CONTRATO_NO_ACEPTADO: 'AP-CU01-04',
+  SERVICIO_NO_AUTORIZADO: 'AP-CU01-05',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `KYC_RECHAZADO` | El proveedor no pudo validar el documento |
+| `COINCIDENCIA_EN_LISTA` | Coincidencia confirmada en lista restrictiva: no se abre cuenta |
+| `CUENTA_YA_EXISTE` | Ya hay cuenta activa para ese titular y moneda (R-BIL-04) |
+| `CONTRATO_NO_ACEPTADO` | Falta aceptar el contrato de adhesión vigente (R-CON-06) |
+| `SERVICIO_NO_AUTORIZADO` | La licencia no habilita billetera (R-LIC-01) |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `evaluarMatrizRiesgo` | Puntúa los factores y devuelve nivel y diligencia exigida; puro |
+| Átomo | `calcularRetencionLegal` | Fecha hasta la que hay que conservar el expediente |
+| Molécula | `VerificacionKycAdaptador` | Proveedor externo de identidad, detrás de una interfaz |
+| Molécula | `ListaRestrictivaRepositorio` | Cotejo contra listas vigentes |
+| Molécula | `CuentaBilleteraRepositorio` | Alta de la cuenta y su espejo contable |
+| Organismo | `CU01RegistrarUsuario` | Una transacción: usuario, KYC, diligencia, calificación, expediente y cuenta |
+| Página | `POST /usuarios` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `usuario.registrado` | Notificación de bienvenida y alta en bandeja | Ninguno: ruta pública |
+| `billetera.abierta` | Cálculo inicial de límites por nivel | — |
+
+## Interfaz
+
+- **App:** Alta guiada en cuatro pasos con la cámara para el documento; al terminar muestra los topes que le corresponden.
+- **Backoffice:** Cola de altas con KYC observado, para revisión manual.
+
 ## Restricciones aplicables
 
 `R-BIL-04` · `R-BIL-05` · `R-UIF-09` · `R-UIF-10` · `R-UIF-11` · `R-CON-06` ·

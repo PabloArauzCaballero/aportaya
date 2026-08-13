@@ -59,6 +59,61 @@ normas: [ASFI RNSF Libro 3 Título V — base de datos de eventos y central de r
 - Existe una base de pérdidas consultable que permite decidir inversiones en
   control con números y no con opiniones.
 
+## Contrato · `packages/contratos/CU-54.ts`
+
+```ts
+export const EntradaCU54 = z.object({
+  categoriaEvento: z.enum(['FRAUDE_INTERNO','FRAUDE_EXTERNO','RELACIONES_LABORALES','CLIENTES_PRODUCTOS_PRACTICAS','DANOS_ACTIVOS','FALLAS_SISTEMAS']),
+  factorRiesgo: z.enum(['PROCESOS_INTERNOS','PERSONAS','TECNOLOGIA_INFORMACION','EVENTOS_EXTERNOS','INFRAESTRUCTURA']),
+  lineaNegocio: z.string().max(40),
+  perdidaBruta: MontoSchema,
+  fechaOcurrencia: z.string().datetime(),
+  fechaDeteccion: z.string().datetime(),
+  descripcion: z.string().min(20),
+}).strict()
+
+export const SalidaCU54 = z.object({
+  eventoId: z.string().uuid(),
+  codigo: z.string(),
+  perdidaNeta: MontoSchema,
+  planAccionId: z.string().uuid().nullable(),
+}).strict()
+
+export const ErroresCU54 = {
+  FECHAS_INCOHERENTES: 'AP-CU54-01',
+  RECUPERACION_MAYOR_A_PERDIDA: 'AP-CU54-02',
+  TAXONOMIA_INVALIDA: 'AP-CU54-03',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `FECHAS_INCOHERENTES` | La detección no puede ser anterior a la ocurrencia |
+| `RECUPERACION_MAYOR_A_PERDIDA` | La recuperación no puede superar la pérdida bruta |
+| `TAXONOMIA_INVALIDA` | Categoría o factor fuera de la taxonomía (R-RIS-01) |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `clasificarEvento` | Valida la taxonomía y calcula la pérdida neta; puro |
+| Molécula | `EventoRiesgoRepositorio` | Base de pérdidas, append-only |
+| Molécula | `PlanAccionRepositorio` | Remediación con responsable y plazo |
+| Organismo | `CU54RegistrarRiesgoOperativo` | Transacción: evento y plan de acción |
+| Página | `POST /riesgos/eventos` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `riesgo.evento_registrado` | Plan de acción y reporte a la central | `RESPONSABLE_RIESGOS` |
+| `plan.vencido` | Hallazgo de auditoría | — |
+
+## Interfaz
+
+- **App:** Sin pantalla en la app.
+- **Backoffice:** Base de pérdidas con filtros por categoría, factor y línea de negocio.
+
 ## Restricciones aplicables
 
 `R-AUD-01` · `R-RIS-01` · `R-RIS-02` · `R-LIC-03`

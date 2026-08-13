@@ -45,5 +45,5 @@ Las **33 tablas** de este módulo. Justificación de negocio en [[08_garantia_in
 | [[reemplazo_participante]] | 12 | 6 | 1 |
 | [[candidato_reemplazo]] | 7 | 2 | 0 |
 | [[plan_contingencia]] | 11 | 2 | 0 |
-| [[disolucion_anticipada]] | 10 | 2 | 1 |
+| [[disolucion_anticipada]] | 11 | 2 | 1 |
 | [[liquidacion_participante]] | 8 | 2 | 0 |

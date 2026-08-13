@@ -1,0 +1,128 @@
+<title>AportaYa — Móviles</title>
+<link rel="stylesheet" href="../estilos.css">
+<svg width="0" height="0" style="position:absolute"><defs>
+  <g id="mark"><path d="M92 30 C74 66 52 108 40 168" fill="none" stroke="#7CBE9C" stroke-width="13" stroke-linecap="round"/><path d="M108 30 C126 66 148 108 160 168" fill="none" stroke="#7CBE9C" stroke-width="13" stroke-linecap="round"/><path d="M100 58 C84 92 68 130 62 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/><path d="M100 58 C116 92 132 130 138 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/></g>
+</defs></svg>
+
+<div class="topbar"><div class="topbar-in">
+  <a class="brandmark" href="../Fundamentos/Fundamentos.html"><svg width="26" height="26" viewBox="0 0 200 200"><use href="#mark"/></svg><span>Aporta<span class="ya">Ya</span></span></a>
+  <nav class="navlinks">
+    <a href="../Fundamentos/Fundamentos.html">Fundamentos</a>
+    <a href="../Atomos/Atomos.html">Átomos</a>
+    <a href="../Moleculas/Moleculas.html">Moléculas</a>
+    <a href="../Organismos/Organismos.html">Organismos</a>
+    <a class="on" href="../Moviles/Moviles.html">Móviles</a>
+  </nav>
+  <button class="theme-btn" onclick="toggleTheme()">◐ Tema</button>
+</div></div>
+
+<main>
+<section>
+  <div class="sec-head"><span class="lvl mob">Nivel 3 · App</span><p class="eyebrow">Componentes y pantallas móviles</p><h1>Móviles</h1>
+  <p>La billetera vive en el teléfono. Área táctil mínima <strong>44×44 px</strong>. App bar arriba, tab bar abajo, acciones críticas en bottom sheet, dinero con teclado numérico propio.</p></div>
+
+  <div class="phones">
+
+    <div>
+      <div class="phone"><div class="pscreen">
+        <div class="statusbar"><span>9:41</span><span class="rt">📶 🔋</span></div>
+        <div class="pbody green-top">
+          <div class="phead">
+            <div class="hi">Hola, Rosa 👋</div>
+            <div class="bl">SALDO DISPONIBLE</div>
+            <div class="bv"><span class="cur">Bs</span> 1.240,00</div>
+            <div class="qa"><div class="b pri">↑ Recargar</div><div class="b gh">↓ Retirar</div></div>
+          </div>
+          <div class="plist">
+            <div style="font-family:var(--font-d);font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin:0 2px 10px">Mis pasanakus</div>
+            <div class="listitem" style="margin-bottom:9px"><div class="avatar av40" style="background:#1C5A3A">FA</div><div class="info"><div class="nm">Familia Aporta</div><div class="sub">Bs 250 · quincenal</div><div class="prog"><i style="width:62%"></i></div></div><div style="text-align:right"><div class="amt">5/8</div></div></div>
+            <div class="listitem"><div class="avatar av40" style="background:#E5852B">VE</div><div class="info"><div class="nm">Vecinos El Alto</div><div class="sub">Bs 100 · mensual</div><div class="prog"><i style="width:33%"></i></div></div><div style="text-align:right"><div class="amt">4/12</div></div></div>
+          </div>
+        </div>
+        <div class="tabbar"><a class="on"><span class="ic">🏠</span>Inicio</a><a><span class="ic">👥</span>Grupos</a><a><span class="cta">＋</span></a><a><span class="ic">↕</span>Mover</a><a><span class="ic">👤</span>Perfil</a></div>
+      </div></div>
+      <p class="mini" style="text-align:center;margin-top:10px">Home · tab bar con CTA central</p>
+    </div>
+
+    <div>
+      <div class="phone"><div class="pscreen">
+        <div class="statusbar"><span>9:41</span><span class="rt">📶 🔋</span></div>
+        <div class="appbar"><span class="bk">‹</span><span class="ti">Recargar</span><span class="ac"></span></div>
+        <div class="pbody" style="display:flex;flex-direction:column">
+          <div style="text-align:center;padding:14px 0 6px"><div style="font-size:12px;color:var(--text-3)">Monto a recargar</div><div style="font-family:var(--font-d);font-weight:700;font-size:40px;letter-spacing:-.02em;color:var(--brand-ink)">Bs 250</div></div>
+          <div class="demo-row" style="justify-content:center;margin-bottom:14px"><span class="chip">Bs 100</span><span class="chip active">Bs 250</span><span class="chip">Bs 500</span></div>
+          <div class="keypad" style="margin-top:auto">
+            <button>1</button><button>2</button><button>3</button><button>4</button><button>5</button><button>6</button><button>7</button><button>8</button><button>9</button><button class="act">,</button><button>0</button><button class="act">⌫</button>
+          </div>
+          <button class="btn btn-primary block" style="margin-top:12px" onclick="showToast('Generando QR de recarga…')">Continuar</button>
+        </div>
+      </div></div>
+      <p class="mini" style="text-align:center;margin-top:10px">Recargar · teclado numérico + montos rápidos</p>
+    </div>
+
+    <div>
+      <div class="phone"><div class="pscreen">
+        <div class="statusbar"><span>9:41</span><span class="rt">📶 🔋</span></div>
+        <div class="appbar"><span class="bk">‹</span><span class="ti">Familia Aporta</span><span class="ac">⋯</span></div>
+        <div class="pbody">
+          <div class="tabs" style="margin-bottom:12px"><button class="on">Resumen</button><button>Movimientos</button><button>Gente</button></div>
+          <div class="balcard" style="padding:16px"><div class="k">FONDO ACUMULADO</div><div class="v" style="font-size:26px"><span class="cur">Bs</span> 1.250,00</div></div>
+          <div class="txrow" style="margin-top:10px"><div class="tic in">↓</div><div class="ti"><div class="tn">Aporte · Rosa</div><div class="td">Hoy</div></div><div class="ta in">+Bs 250</div></div>
+        </div>
+        <div class="sheet">
+          <div class="handle"></div><h4>Acciones del grupo</h4>
+          <div class="opt">💸 <span>Aportar mi turno</span></div>
+          <div class="opt">👤 <span>Invitar integrante</span></div>
+          <div class="opt" style="color:var(--err)">🚪 <span>Salir del grupo</span></div>
+        </div>
+      </div></div>
+      <p class="mini" style="text-align:center;margin-top:10px">Detalle + bottom sheet</p>
+    </div>
+
+    <div>
+      <div class="phone"><div class="pscreen">
+        <div class="statusbar"><span>9:41</span><span class="rt">📶 🔋</span></div>
+        <div class="pbody" style="display:flex;flex-direction:column;text-align:center">
+          <div style="padding:20px 0 4px"><svg width="54" height="54" viewBox="0 0 200 200"><use href="#mark"/></svg></div>
+          <h3 style="font-family:var(--font-d);color:var(--brand-ink);font-size:20px">Ingresá tu PIN</h3>
+          <p style="color:var(--text-3);font-size:13px;margin:6px 0 0">Para confirmar el retiro de Bs 500</p>
+          <div class="pinbig"><i class="f"></i><i class="f"></i><i></i><i></i></div>
+          <div class="keypad" style="margin-top:auto">
+            <button>1</button><button>2</button><button>3</button><button>4</button><button>5</button><button>6</button><button>7</button><button>8</button><button>9</button><button class="act">·</button><button>0</button><button class="act">⌫</button>
+          </div>
+        </div>
+      </div></div>
+      <p class="mini" style="text-align:center;margin-top:10px">Seguridad · PIN de 4 dígitos</p>
+    </div>
+
+    <div>
+      <div class="phone"><div class="pscreen">
+        <div class="statusbar"><span>9:41</span><span class="rt">📶 🔋</span></div>
+        <div class="pbody" style="display:flex;flex-direction:column">
+          <div style="text-align:right;padding:4px"><button class="btn btn-link btn-sm">Saltar</button></div>
+          <div class="onb" style="margin:auto 0">
+            <svg class="art" viewBox="0 0 200 200"><use href="#mark"/></svg>
+            <h3>El pasanaku, ahora digital</h3>
+            <p>Aportá, recibí tu turno y retirá tu plata cuando quieras.</p>
+            <div class="dots"><i class="on"></i><i></i><i></i></div>
+          </div>
+          <button class="btn btn-primary block">Empezar</button>
+          <button class="btn btn-link block" style="width:100%;margin-top:6px">Ya tengo cuenta</button>
+        </div>
+      </div></div>
+      <p class="mini" style="text-align:center;margin-top:10px">Onboarding · slides con puntos</p>
+    </div>
+
+  </div>
+
+  <div class="clabel" style="margin-top:30px">Componentes móviles sueltos</div>
+  <div class="subgrid cols3">
+    <div><div class="demo"><div class="tabbar" style="border:1px solid var(--border);border-radius:14px"><a class="on"><span class="ic">🏠</span>Inicio</a><a><span class="ic">👥</span>Grupos</a><a><span class="cta">＋</span></a><a><span class="ic">↕</span>Mover</a><a><span class="ic">👤</span>Perfil</a></div><p class="mini" style="text-align:center;margin-top:8px">Tab bar (5 destinos + CTA)</p></div></div>
+    <div><div class="demo"><div class="snackbar">Aporte guardado <span class="un">Deshacer</span></div><p class="mini" style="margin-top:8px">Snackbar con acción</p></div></div>
+    <div><div class="demo" style="display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100px;gap:8px"><button class="fab">＋</button><p class="mini">FAB</p></div></div>
+  </div>
+</section>
+</main>
+<footer><a href="../Organismos/Organismos.html">← Organismos</a><a href="../Fundamentos/Fundamentos.html">Volver al inicio ↺</a></footer>
+<div class="toast" id="toast"><span>✓</span><span id="toastMsg">Listo</span></div>
+<script src="../script.js"></script>

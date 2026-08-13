@@ -51,6 +51,62 @@ normas: [SIN — facturación en línea (CUF, CUFD, código de control, eventos 
 - Toda comisión cobrada tiene documento fiscal o un evento de contingencia abierto
   que lo justifica y un plazo corriendo.
 
+## Contrato · `packages/contratos/CU-32.ts`
+
+```ts
+export const EntradaCU32 = z.object({
+  devengoId: z.string().uuid(),
+  datosFacturacionId: z.string().uuid().optional(),
+}).strict()
+
+export const SalidaCU32 = z.object({
+  facturaId: z.string().uuid(),
+  cuf: z.string(),
+  numeroFactura: z.number().int(),
+  estadoFiscal: z.enum(['VALIDADA','EMITIDA_OFFLINE','RECHAZADA']),
+  urlPdf: z.string().url(),
+  eventoSignificativoId: z.string().uuid().nullable(),
+}).strict()
+
+export const ErroresCU32 = {
+  SIN_CUFD_VIGENTE: 'AP-CU32-01',
+  SERVICIO_FISCAL_CAIDO: 'AP-CU32-02',
+  DOCUMENTO_RECHAZADO: 'AP-CU32-03',
+  FACTURA_YA_EMITIDA: 'AP-CU32-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SIN_CUFD_VIGENTE` | No hay código diario vigente para el punto de venta |
+| `SERVICIO_FISCAL_CAIDO` | Se emite offline bajo evento significativo |
+| `DOCUMENTO_RECHAZADO` | El servicio de impuestos rechazó el envío |
+| `FACTURA_YA_EMITIDA` | El devengo ya tiene factura (R-TAR-09) |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `componerCuf` | Arma el código único desde NIT, fecha, sucursal y correlativo; puro |
+| Átomo | `calcularVigenciaCufd` | Ventana de validez del código diario |
+| Molécula | `FacturaRepositorio` | Documento fiscal y su estado |
+| Molécula | `SiatAdaptador` | Envío en línea y por lote, con reintentos |
+| Molécula | `EventoSignificativoRepositorio` | Contingencia con inicio, fin y plazo |
+| Organismo | `CU32EmitirFactura` | Transacción: documento, envío y contingencia si aplica |
+| Página | — | Sin endpoint: lo dispara el planificador o un evento |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `factura.emitida` | Entrega al usuario por su canal | Interno |
+| `contingencia.abierta` | Trabajo que registra el evento dentro del plazo | — |
+
+## Interfaz
+
+- **App:** La factura queda disponible en el detalle de la operación.
+- **Backoffice:** Monitor fiscal: emitidas, offline pendientes de envío y rechazadas.
+
 ## Restricciones aplicables
 
 `R-TAR-09` · `R-TAR-10` · `R-TAR-13` · `R-AUD-08`

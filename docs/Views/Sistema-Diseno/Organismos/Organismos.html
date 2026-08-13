@@ -1,0 +1,94 @@
+<title>AportaYa — Organismos</title>
+<link rel="stylesheet" href="../estilos.css">
+<svg width="0" height="0" style="position:absolute"><defs>
+  <g id="i-search"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12.5" y1="12.5" x2="17" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></g>
+  <g id="mark"><path d="M92 30 C74 66 52 108 40 168" fill="none" stroke="#7CBE9C" stroke-width="13" stroke-linecap="round"/><path d="M108 30 C126 66 148 108 160 168" fill="none" stroke="#7CBE9C" stroke-width="13" stroke-linecap="round"/><path d="M100 58 C84 92 68 130 62 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/><path d="M100 58 C116 92 132 130 138 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/></g>
+</defs></svg>
+
+<div class="topbar"><div class="topbar-in">
+  <a class="brandmark" href="../Fundamentos/Fundamentos.html"><svg width="26" height="26" viewBox="0 0 200 200"><use href="#mark"/></svg><span>Aporta<span class="ya">Ya</span></span></a>
+  <nav class="navlinks">
+    <a href="../Fundamentos/Fundamentos.html">Fundamentos</a>
+    <a href="../Atomos/Atomos.html">Átomos</a>
+    <a href="../Moleculas/Moleculas.html">Moléculas</a>
+    <a class="on" href="../Organismos/Organismos.html">Organismos</a>
+    <a href="../Moviles/Moviles.html">Móviles</a>
+  </nav>
+  <button class="theme-btn" onclick="toggleTheme()">◐ Tema</button>
+</div></div>
+
+<main>
+<section>
+  <div class="sec-head"><span class="lvl org">Nivel 3</span><p class="eyebrow">Secciones completas</p><h1>Organismos</h1>
+  <p>Moléculas y átomos ensamblados en piezas funcionales de interfaz web: navegación, formularios, tablas con filtros y orden, modales y estados vacíos.</p></div>
+
+  <div class="clabel">Barra de navegación (web)</div>
+  <div class="demo" style="padding:16px"><div class="navbar">
+    <span class="n">Aporta<span class="ya">Ya</span></span>
+    <div class="links"><a class="on" href="#">Inicio</a><a href="#">Pasanakus</a><a href="#">Movimientos</a><a href="#">Ayuda</a></div>
+    <button class="btn btn-primary btn-sm">＋ Nuevo pasanaku</button>
+  </div></div>
+
+  <div class="clabel">Layout con sidebar + contenido</div>
+  <div class="demo"><div style="display:flex;gap:18px;flex-wrap:wrap">
+    <div class="sidebar"><a class="on">🏠 Inicio</a><a>👥 Pasanakus</a><a>↕ Movimientos</a><a>🔔 Notificaciones</a><a>⚙ Ajustes</a></div>
+    <div style="flex:1;min-width:220px"><div class="stat"><div class="k">Saldo total</div><div class="v"><span class="cur">Bs</span> 1.240,00</div><div class="delta up">▲ Bs 250 este mes</div></div></div>
+  </div></div>
+
+  <div class="clabel">Formulario completo · crear pasanaku</div>
+  <div class="demo" style="background:transparent;border:0;padding:0;box-shadow:none">
+    <form class="form-org" onsubmit="event.preventDefault();showToast('Pasanaku creado ✓')">
+      <h3>Nuevo pasanaku</h3><p class="desc">Definí las reglas del grupo. Podés invitar integrantes después.</p>
+      <div class="form-grid">
+        <div><label class="field-label">Nombre del grupo <span class="req">*</span></label><input class="input" placeholder="Ej: Familia Aporta" required></div>
+        <div class="subgrid cols2">
+          <div><label class="field-label">Monto por aporte <span class="req">*</span></label><div class="input-group"><span class="addon">Bs</span><input class="input" value="250,00" required></div></div>
+          <div><label class="field-label">Frecuencia</label><select class="select"><option>Semanal</option><option selected>Quincenal</option><option>Mensual</option></select></div>
+        </div>
+        <div class="subgrid cols2">
+          <div><label class="field-label">N.º de integrantes</label><input class="input" type="number" value="8"></div>
+          <div><label class="field-label">Inicio</label><input class="input" type="date"></div>
+        </div>
+        <label class="check"><input type="checkbox" checked> Notificar a cada integrante cuando le toque su turno</label>
+      </div>
+      <div class="form-actions"><button type="button" class="btn btn-ghost">Cancelar</button><button type="submit" class="btn btn-primary">Crear pasanaku</button></div>
+    </form>
+  </div>
+
+  <div class="clabel">Tabla de datos · toolbar + orden + selección + paginación</div>
+  <div class="demo" style="padding:0;background:transparent;border:0;box-shadow:none">
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <div class="searchbar" style="max-width:260px"><svg width="18" height="18" viewBox="0 0 18 18"><use href="#i-search"/></svg><input placeholder="Buscar integrante…"></div>
+        <div class="filterbar" style="flex:1"><span class="chip active">Al día <span class="x">×</span></span><span class="chip">Atrasados</span></div>
+        <button class="btn btn-ghost btn-sm">⇩ Exportar</button>
+      </div>
+      <div class="tbl-scroll"><table>
+        <thead><tr><th style="width:36px"><input type="checkbox"></th><th class="sort">Integrante <span class="ar">▾</span></th><th>Turno</th><th>Estado</th><th class="sort" style="text-align:right">Aportado <span class="ar">▾</span></th><th></th></tr></thead>
+        <tbody>
+          <tr><td><input type="checkbox"></td><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar av30" style="background:#1C5A3A">RM</div>Rosa Mamani</div></td><td>1 / 8</td><td><span class="badge ok"><span class="d"></span>Al día</span></td><td style="text-align:right"><span class="num">Bs 1.000</span></td><td><button class="btn btn-link btn-sm">Ver</button></td></tr>
+          <tr><td><input type="checkbox"></td><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar av30" style="background:#E5852B">JC</div>Juan Choque</div></td><td>2 / 8</td><td><span class="badge warn"><span class="d"></span>Por vencer</span></td><td style="text-align:right"><span class="num">Bs 750</span></td><td><button class="btn btn-link btn-sm">Ver</button></td></tr>
+          <tr><td><input type="checkbox"></td><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar av30" style="background:#237349">LV</div>Lucía Villca</div></td><td>3 / 8</td><td><span class="badge err"><span class="d"></span>Atrasado</span></td><td style="text-align:right"><span class="num">Bs 500</span></td><td><button class="btn btn-link btn-sm">Ver</button></td></tr>
+        </tbody>
+      </table></div>
+      <div class="table-foot"><span>Mostrando 1–3 de 8 integrantes</span><div class="pager"><button>‹</button><button class="on">1</button><button>2</button><button>3</button><button>›</button></div></div>
+    </div>
+  </div>
+
+  <div class="subgrid cols2">
+    <div><div class="clabel">Modal / confirmación</div><div class="demo" style="background:var(--surface-2)"><div class="modal-demo">
+      <div class="head"><h3>¿Retirar Bs 500?</h3></div>
+      <div class="body">El dinero se transferirá a tu cuenta vinculada. Esta acción no se puede deshacer.</div>
+      <div class="foot"><button class="btn btn-ghost">Cancelar</button><button class="btn btn-primary" onclick="showToast('Retiro en proceso')">Sí, retirar</button></div>
+    </div></div></div>
+    <div><div class="clabel">Estado vacío</div><div class="demo"><div class="empty">
+      <svg class="ill" viewBox="0 0 200 200"><use href="#mark"/></svg>
+      <h3>Todavía no tenés pasanakus</h3><p>Creá tu primer grupo y empezá a ahorrar con quienes confiás.</p>
+      <button class="btn btn-primary" onclick="showToast('Abriendo formulario…')">Crear mi primer pasanaku</button>
+    </div></div></div>
+  </div>
+</section>
+</main>
+<footer><a href="../Moleculas/Moleculas.html">← Moléculas</a><a href="../Moviles/Moviles.html">Siguiente: Móviles →</a></footer>
+<div class="toast" id="toast"><span>✓</span><span id="toastMsg">Listo</span></div>
+<script src="../script.js"></script>

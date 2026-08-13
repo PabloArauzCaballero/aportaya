@@ -1,0 +1,107 @@
+<title>AportaYa — Átomos</title>
+<link rel="stylesheet" href="../estilos.css">
+<svg width="0" height="0" style="position:absolute"><defs>
+  <g id="i-search"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12.5" y1="12.5" x2="17" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></g>
+  <g id="mark"><path d="M92 30 C74 66 52 108 40 168" fill="none" stroke="#7CBE9C" stroke-width="13" stroke-linecap="round"/><path d="M108 30 C126 66 148 108 160 168" fill="none" stroke="#7CBE9C" stroke-width="13" stroke-linecap="round"/><path d="M100 58 C84 92 68 130 62 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/><path d="M100 58 C116 92 132 130 138 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/></g>
+</defs></svg>
+
+<div class="topbar"><div class="topbar-in">
+  <a class="brandmark" href="../Fundamentos/Fundamentos.html"><svg width="26" height="26" viewBox="0 0 200 200"><use href="#mark"/></svg><span>Aporta<span class="ya">Ya</span></span></a>
+  <nav class="navlinks">
+    <a href="../Fundamentos/Fundamentos.html">Fundamentos</a>
+    <a class="on" href="../Atomos/Atomos.html">Átomos</a>
+    <a href="../Moleculas/Moleculas.html">Moléculas</a>
+    <a href="../Organismos/Organismos.html">Organismos</a>
+    <a href="../Moviles/Moviles.html">Móviles</a>
+  </nav>
+  <button class="theme-btn" onclick="toggleTheme()">◐ Tema</button>
+</div></div>
+
+<main>
+<section>
+  <div class="sec-head"><span class="lvl atomo">Nivel 1</span><p class="eyebrow">Bloques indivisibles</p><h1>Átomos</h1>
+  <p>Botones, campos, selectores e indicadores. Cada uno con su color de token y sus estados. No se subdividen y no tienen lógica de negocio.</p></div>
+
+  <div class="clabel">Botones · variantes <span class="hex">primario #E5852B · secundario #1C5A3A · peligro #D64545</span></div>
+  <div class="demo"><div class="demo-row">
+    <button class="btn btn-primary">Recargar</button>
+    <button class="btn btn-secondary">Crear pasanaku</button>
+    <button class="btn btn-ghost">Retirar</button>
+    <button class="btn btn-danger">Cancelar grupo</button>
+    <button class="btn btn-link">Ver detalle</button>
+    <button class="icon-btn" title="Más">⋯</button>
+    <button class="btn btn-primary" disabled>Deshabilitado</button>
+    <button class="btn btn-secondary"><span class="spinner" style="width:16px;height:16px;border-width:2px;border-color:rgba(255,255,255,.4);border-top-color:#fff"></span> Cargando…</button>
+  </div></div>
+
+  <div class="subgrid cols3">
+    <div><div class="clabel">Tamaños</div><div class="demo"><div class="demo-row">
+      <button class="btn btn-primary btn-sm">SM</button><button class="btn btn-primary">Base</button><button class="btn btn-primary btn-lg">LG</button>
+    </div></div></div>
+    <div><div class="clabel">Con ícono / bloque</div><div class="demo"><div class="demo-col">
+      <button class="btn btn-secondary"><span>↑</span> Recargar saldo</button>
+      <button class="btn btn-primary block">Confirmar aporte de Bs 250</button>
+    </div></div></div>
+    <div><div class="clabel">FAB (móvil)</div><div class="demo"><div class="demo-row"><button class="fab">＋</button><span class="mini">56×56 · acción flotante</span></div></div></div>
+  </div>
+
+  <div class="subgrid cols3">
+    <div><div class="clabel">Inputs · estados</div><div class="demo"><div class="demo-col">
+      <input class="input" placeholder="Nombre del grupo">
+      <input class="input ok" value="Familia Aporta"><span class="help ok">Nombre disponible.</span>
+      <input class="input error" value="ab"><span class="help err">Mínimo 3 caracteres.</span>
+      <input class="input" value="Solo lectura" disabled>
+    </div></div></div>
+    <div><div class="clabel">Ícono / addon / monto</div><div class="demo"><div class="demo-col">
+      <div class="input-wrap"><span class="ic l"><svg width="16" height="16" viewBox="0 0 18 18"><use href="#i-search"/></svg></span><input class="input hasl" placeholder="Buscar"></div>
+      <div class="input-group"><span class="addon">Bs</span><input class="input" value="250,00" inputmode="decimal"></div>
+      <div class="input-wrap"><input class="input hasr" type="password" value="secreto123" id="pw1"><span class="ic r" onclick="togglePw('pw1',this)">👁</span></div>
+    </div></div></div>
+    <div><div class="clabel">Stepper / PIN / select</div><div class="demo"><div class="demo-col">
+      <div class="stepper"><button onclick="stp(this,-1)">−</button><input value="8" id="stp"><button onclick="stp(this,1)">＋</button></div>
+      <div class="pin"><input maxlength="1" value="2"><input maxlength="1" value="5"><input maxlength="1"><input maxlength="1"></div>
+      <select class="select"><option>Quincenal</option><option>Mensual</option><option>Semanal</option></select>
+    </div></div></div>
+  </div>
+
+  <div class="subgrid cols2">
+    <div><div class="clabel">Selección</div><div class="demo"><div class="demo-col">
+      <label class="check"><input type="checkbox" checked> Acepto las reglas del grupo</label>
+      <div class="demo-row"><label class="check"><input type="radio" name="r" checked> Aporte fijo</label><label class="check"><input type="radio" name="r"> Variable</label></div>
+      <label class="check"><span class="switch"><input type="checkbox" checked><span class="track"></span></span> Notificarme mi turno</label>
+      <div class="segmented"><button class="on">Mensual</button><button>Anual</button></div>
+    </div></div></div>
+    <div><div class="clabel">Indicadores de estado <span class="hex">ok #1F9D57 · warn #F0B429 · err #D64545</span></div><div class="demo"><div class="demo-col">
+      <div class="demo-row">
+        <span class="badge ok"><span class="d"></span>Al día</span>
+        <span class="badge warn"><span class="d"></span>Por vencer</span>
+        <span class="badge err"><span class="d"></span>Atrasado</span>
+        <span class="badge info"><span class="d"></span>En revisión</span>
+        <span class="badge neutral">Borrador</span>
+      </div>
+      <div class="demo-row">
+        <span class="chip active">Activos <span class="x">×</span></span><span class="chip">Cerrados</span>
+        <div class="av-group"><div class="avatar av30" style="background:#1C5A3A">FA</div><div class="avatar av30" style="background:#E5852B">VE</div><div class="avatar av30" style="background:#237349">+4</div></div>
+      </div>
+    </div></div></div>
+  </div>
+
+  <div class="subgrid cols4">
+    <div><div class="clabel">Progreso</div><div class="demo"><div class="demo-col">
+      <div class="bar"><i style="width:62%"></i></div>
+      <svg width="52" height="52" viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke="var(--surface-2)" stroke-width="6"/><circle cx="26" cy="26" r="22" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="52" transform="rotate(-90 26 26)"/></svg>
+    </div></div></div>
+    <div><div class="clabel">Carga</div><div class="demo"><div class="demo-col">
+      <div class="spinner"></div>
+      <div class="skeleton" style="height:12px;width:100%"></div><div class="skeleton" style="height:12px;width:70%"></div>
+    </div></div></div>
+    <div><div class="clabel">Avatares</div><div class="demo"><div class="demo-row" style="align-items:flex-end">
+      <div class="avatar av24" style="background:#1C5A3A">R</div><div class="avatar av30" style="background:#237349">JC</div><div class="avatar av40" style="background:#E5852B">LV</div><div class="avatar av56" style="background:#164A30">MA</div>
+    </div></div></div>
+    <div><div class="clabel">Tooltip</div><div class="demo"><div class="demo-row"><span class="tooltip"><button class="icon-btn">?</button><span class="tip">Tu turno pronto</span></span></div></div></div>
+  </div>
+</section>
+</main>
+<footer><a href="../Fundamentos/Fundamentos.html">← Fundamentos</a><a href="../Moleculas/Moleculas.html">Siguiente: Moléculas →</a></footer>
+<div class="toast" id="toast"><span>✓</span><span id="toastMsg">Listo</span></div>
+<script src="../script.js"></script>

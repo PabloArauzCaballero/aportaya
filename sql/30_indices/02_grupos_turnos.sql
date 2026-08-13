@@ -73,6 +73,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_turno_grupo_id_orden_asignado
 CREATE UNIQUE INDEX IF NOT EXISTS uq_sorteo_turnos_grupo_id
   ON sorteo_turnos (grupo_id);
 
+CREATE INDEX IF NOT EXISTS ix_sorteo_turnos_estado
+  ON sorteo_turnos (estado);
+
 CREATE INDEX IF NOT EXISTS ix_solicitud_permuta_turno_origen_id
   ON solicitud_permuta (turno_origen_id);
 

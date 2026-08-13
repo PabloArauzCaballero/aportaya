@@ -1431,6 +1431,7 @@ entity "disolucion_anticipada" as disol {
   --
   # grupo_id : UUID <<FK, UQ>>
   # acuerdo_grupo_id : UUID <<FK, NULL, M2>>
+  causal : VARCHAR(25) <<CK>>
   motivo : VARCHAR(400)
   total_aportado_grupo : DECIMAL(16,2)
   total_entregado : DECIMAL(16,2)

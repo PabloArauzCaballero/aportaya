@@ -58,6 +58,65 @@ normas: [ASFI Consumidor Financiero — transparencia y preaviso]
 - Nunca hay dos tarifarios vigentes solapados para el mismo ámbito.
 - Se puede probar qué se cobraba en cualquier fecha pasada y que se avisó.
 
+## Contrato · `packages/contratos/CU-34.ts`
+
+```ts
+export const EntradaCU34 = z.object({
+  tarifarioBaseId: z.string().uuid(),
+  cambios: z.array(z.object({ conceptoCodigo: z.string(), campo: z.string(), valor: z.string() })),
+  tipoCambio: z.enum(['INCREMENTO','REDUCCION','NUEVO_CONCEPTO','ELIMINACION']),
+  diasPreaviso: z.number().int().min(0).max(90),
+  aprobadoPor: z.string().uuid(),
+  actaComiteId: z.string().uuid(),
+}).strict()
+
+export const SalidaCU34 = z.object({
+  tarifarioNuevoId: z.string().uuid(),
+  version: z.number().int(),
+  estado: z.enum(['BORRADOR','EN_PREAVISO','VIGENTE']),
+  simulacion: z.object({ deltaIngreso: MontoSchema, usuariosImpactados: z.number().int() }),
+  entraEnVigencia: z.string().datetime(),
+}).strict()
+
+export const ErroresCU34 = {
+  PREAVISO_NO_CUMPLIDO: 'AP-CU34-01',
+  TARIFARIO_VIGENTE_INMUTABLE: 'AP-CU34-02',
+  SIN_ACTA_DE_APROBACION: 'AP-CU34-03',
+  VIGENCIAS_SOLAPADAS: 'AP-CU34-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `PREAVISO_NO_CUMPLIDO` | Falta el plazo de aviso para un incremento (R-TAR-08) |
+| `TARIFARIO_VIGENTE_INMUTABLE` | Se intentó editar uno ya vigente (R-TAR-02) |
+| `SIN_ACTA_DE_APROBACION` | Falta el acta del comité (R-LIC-03) |
+| `VIGENCIAS_SOLAPADAS` | Ya hay un tarifario vigente en ese rango (R-TAR-01) |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `simularSobreHistoria` | Recalcula la historia con el tarifario nuevo; puro |
+| Átomo | `calcularEntradaEnVigencia` | Fecha de aviso más días de preaviso |
+| Molécula | `TarifarioRepositorio` | Versión nueva y cierre de la anterior |
+| Molécula | `CambioTarifarioRepositorio` | Expediente del cambio y su aviso |
+| Molécula | `DocumentoPublicadoRepositorio` | Publicación con hash y vigencia |
+| Organismo | `CU34PublicarTarifario` | Transacción: versión, cambio, publicación y programación del aviso |
+| Página | `POST /tarifarios` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `tarifario.en_preaviso` | Notificación masiva a los usuarios alcanzados | `TARIFARIO_PUBLICAR` |
+| `tarifario.vigente` | Entrada en vigencia y sustitución del anterior | — |
+
+## Interfaz
+
+- **App:** Aviso del cambio con la fecha desde la que rige y qué se puede hacer.
+- **Backoffice:** Editor de tarifario con simulación obligatoria antes de aprobar.
+
 ## Restricciones aplicables
 
 `R-TAR-01` · `R-TAR-02` · `R-TAR-07` · `R-TAR-08` · `R-CON-07` · `R-LIC-03`

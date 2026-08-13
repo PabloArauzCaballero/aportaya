@@ -59,6 +59,60 @@ normas: [ASFI Consumidor Financiero, Ley 393 (conservación)]
 - Saldo en cero y cuenta `CERRADA`, o solicitud rechazada con motivo escrito.
 - La historia contable permanece intacta y consultable.
 
+## Contrato · `packages/contratos/CU-16.ts`
+
+```ts
+export const EntradaCU16 = z.object({
+  cuentaBilleteraId: z.string().uuid(),
+  motivo: z.string().min(10).max(200),
+  destinoSaldo: z.enum(['RETIRO','TRANSFERENCIA']),
+  instrumentoDestinoId: z.string().uuid().optional(),
+}).strict()
+
+export const SalidaCU16 = z.object({
+  solicitudId: z.string().uuid(),
+  saldoADevolver: MontoSchema,
+  impedimentos: z.array(z.object({ tipo: z.string(), detalle: z.string() })),
+  estado: z.enum(['SOLICITADA','APROBADA','EJECUTADA','RECHAZADA']),
+}).strict()
+
+export const ErroresCU16 = {
+  OBLIGACIONES_ABIERTAS: 'AP-CU16-01',
+  GRUPO_ACTIVO: 'AP-CU16-02',
+  RETENCION_VIGENTE: 'AP-CU16-03',
+  BLOQUEO_DE_AUTORIDAD: 'AP-CU16-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `OBLIGACIONES_ABIERTAS` | Hay aportes, deuda o comisiones por cobrar |
+| `GRUPO_ACTIVO` | Participa en un grupo en curso |
+| `RETENCION_VIGENTE` | Hay saldo retenido sin resolver |
+| `BLOQUEO_DE_AUTORIDAD` | Existe un oficio vigente (R-BIL-13) |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `listarImpedimentos` | Devuelve todo lo que falta, no solo el primero; puro |
+| Molécula | `SolicitudCierreRepositorio` | Alta y seguimiento |
+| Molécula | `CuentaBilleteraRepositorio` | Cierre y verificación de saldo cero |
+| Organismo | `CU16CerrarBilletera` | Transacción: devolución del saldo y cierre |
+| Página | `POST /billetera/cierre` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `billetera.cierre_solicitado` | Cálculo de impedimentos y aviso | `BILLETERA_OPERAR` |
+| `billetera.cerrada` | Recalculo de retención documental del expediente | — |
+
+## Interfaz
+
+- **App:** *Cerrar mi cuenta*: lista de lo que falta resolver, en lugar de un no genérico.
+- **Backoffice:** Cola de cierres con sus impedimentos, para acompañar al usuario.
+
 ## Restricciones aplicables
 
 `R-BIL-13` · `R-BIL-02` · `R-AUD-08` · `R-CON-05` · `R-SEG-06`

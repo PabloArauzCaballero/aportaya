@@ -52,6 +52,57 @@ normas: [ASFI — central de reclamos / segunda instancia]
 
 - Cada elevación tiene expediente, resolución y, si aplica, resarcimiento.
 
+## Contrato · `packages/contratos/CU-53.ts`
+
+```ts
+export const EntradaCU53 = z.object({
+  reclamoId: z.string().uuid(),
+  instancia: z.enum(['DEFENSORIA','REGULADOR','ARBITRAJE','JUDICIAL']),
+  numeroExpediente: z.string().max(60).optional(),
+}).strict()
+
+export const SalidaCU53 = z.object({
+  instanciaId: z.string().uuid(),
+  estado: z.enum(['PRESENTADA','EN_TRAMITE','RESUELTA','DESISTIDA']),
+  expedienteUrl: z.string().url(),
+  montoResarcido: MontoSchema.nullable(),
+}).strict()
+
+export const ErroresCU53 = {
+  RECLAMO_NO_RESPONDIDO: 'AP-CU53-01',
+  INSTANCIA_DUPLICADA: 'AP-CU53-02',
+  SIN_EVIDENCIA_TECNICA: 'AP-CU53-03',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `RECLAMO_NO_RESPONDIDO` | Todavía está en plazo de primera instancia |
+| `INSTANCIA_DUPLICADA` | Ya hay una elevación abierta en esa instancia |
+| `SIN_EVIDENCIA_TECNICA` | No hay rastro suficiente: es un hallazgo en sí mismo |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `armarExpediente` | Reúne reclamo, respuesta y evidencia técnica; puro |
+| Molécula | `InstanciaReclamoRepositorio` | Elevación y resolución |
+| Molécula | `EvidenciaRepositorio` | Bitácora, movimientos y cotizaciones del caso |
+| Organismo | `CU53ElevarReclamo` | Transacción: elevación, expediente y resarcimiento |
+| Página | `POST /reclamos/:id/instancias` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `reclamo.elevado` | Armado del expediente y plazo del organismo | `RECLAMO_ATENDER` |
+| `instancia.resuelta` | Resarcimiento y actualización de indicadores | — |
+
+## Interfaz
+
+- **App:** El cliente ve que su reclamo fue elevado y a dónde.
+- **Backoffice:** Seguimiento de instancias con resolución y monto resarcido.
+
 ## Restricciones aplicables
 
 `R-CON-04` · `R-CON-05` · `R-AUD-08`

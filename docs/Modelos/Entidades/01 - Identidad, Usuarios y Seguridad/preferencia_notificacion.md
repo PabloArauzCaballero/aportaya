@@ -6,7 +6,7 @@ tabla: preferencia_notificacion
 clase: PreferenciaNotificacion
 modulo: "01 — Identidad, Usuarios y Seguridad"
 clave_primaria: [id]
-columnas: 11
+columnas: 12
 fk_salientes: 1
 fk_entrantes: 0
 append_only: false
@@ -28,6 +28,7 @@ append_only: false
 | `acepta_correo` | BOOLEAN | — | no | — |
 | `acepta_sms` | BOOLEAN | — | no | — |
 | `acepta_push` | BOOLEAN | — | no | — |
+| `tope_diario_mensajes` | SMALLINT | — | no | — |
 | `hora_no_molestar_desde` | TIME | — | sí | NULL |
 | `hora_no_molestar_hasta` | TIME | — | sí | NULL |
 | `frecuencia_resumen` | VARCHAR(15) | — | no | — |

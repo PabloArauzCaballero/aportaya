@@ -1,0 +1,233 @@
+<title>AportaYa — Evaluación y Mejora del Logo</title>
+<style>
+  :root{
+    --g600:#1C5A3A;--g700:#164A30;--g800:#123A26;--g500:#237349;--g300:#7CBE9C;--g100:#E7F2EB;
+    --o500:#E5852B;--o400:#EF9E4E;--o100:#FDF0DF;
+    --ink:#10231A;--muted:#6C7B72;--line:#DCE4DE;--crema:#F6F4EC;--cloud:#F3F6F2;
+    --ok:#1F9D57;--warn:#F0B429;--err:#D64545;
+    --font-d:"Poppins","Sora",system-ui,"Segoe UI",Roboto,Arial,sans-serif;
+    --font-b:"Inter",system-ui,"Segoe UI",Roboto,Arial,sans-serif;
+    --mono:ui-monospace,Menlo,monospace;
+    --bg:var(--crema);--surface:#fff;--surface-2:var(--cloud);--text:var(--ink);--text-2:#38473F;--text-3:var(--muted);--border:var(--line);--brand-ink:var(--g800);
+  }
+  @media(prefers-color-scheme:dark){:root{--bg:#0A1F15;--surface:#0F2B1D;--surface-2:#0C2418;--text:#EAF3ED;--text-2:#B7CCC0;--text-3:#89998E;--border:#1C3A2A;--brand-ink:#EAF3ED}}
+  :root[data-theme="light"]{--bg:#F6F4EC;--surface:#fff;--surface-2:#F3F6F2;--text:#10231A;--text-2:#38473F;--text-3:#6C7B72;--border:#DCE4DE;--brand-ink:#123A26}
+  :root[data-theme="dark"]{--bg:#0A1F15;--surface:#0F2B1D;--surface-2:#0C2418;--text:#EAF3ED;--text-2:#B7CCC0;--text-3:#89998E;--border:#1C3A2A;--brand-ink:#EAF3ED}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-b);line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:44px 24px 90px}
+  h1{font-family:var(--font-d);font-weight:700;letter-spacing:-.025em;font-size:clamp(28px,5vw,40px);margin:0;color:var(--brand-ink);text-wrap:balance}
+  .sub{color:var(--text-2);margin:10px 0 0;max-width:64ch}
+  .eyebrow{font-family:var(--font-d);font-weight:700;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--o500);margin:0 0 10px}
+  h2{font-family:var(--font-d);font-weight:700;font-size:clamp(22px,3.4vw,28px);letter-spacing:-.02em;color:var(--brand-ink);margin:0}
+  section{padding:40px 0;border-top:1px solid var(--border)}
+  h3{font-family:var(--font-d);font-weight:600;font-size:17px;margin:0 0 6px}
+  p{color:var(--text-2)}
+
+  /* Score global */
+  .scorehead{display:flex;gap:28px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:26px;box-shadow:0 8px 30px rgba(16,35,26,.06)}
+  .ring{position:relative;width:130px;height:130px;flex:none}
+  .ring .n{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .n b{font-family:var(--font-d);font-weight:700;font-size:34px;color:var(--brand-ink);line-height:1}
+  .ring .n span{font-size:11px;color:var(--text-3);font-weight:600;letter-spacing:.04em}
+  .verdict h3{font-size:20px}
+  .verdict p{margin:6px 0 0}
+
+  /* Criterios */
+  .crit{display:flex;flex-direction:column;gap:14px;margin-top:8px}
+  .crow{display:grid;grid-template-columns:150px 1fr 42px;gap:14px;align-items:center}
+  .crow .lb{font-weight:600;font-size:13.5px}
+  .crow .lb small{display:block;font-weight:400;color:var(--text-3);font-size:11.5px}
+  .track{height:9px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+  .track i{display:block;height:100%;border-radius:99px}
+  .sc{font-family:var(--font-d);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+  .good i{background:var(--ok)}.mid i{background:var(--warn)}.low i{background:var(--err)}
+  @media(max-width:620px){.crow{grid-template-columns:110px 1fr 34px}}
+
+  /* Pros / contras */
+  .pc{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+  @media(max-width:680px){.pc{grid-template-columns:1fr}}
+  .box{border-radius:16px;padding:20px;border:1px solid}
+  .box.pro{background:color-mix(in srgb,var(--ok) 8%,var(--surface));border-color:color-mix(in srgb,var(--ok) 30%,transparent)}
+  .box.con{background:color-mix(in srgb,var(--warn) 9%,var(--surface));border-color:color-mix(in srgb,var(--warn) 34%,transparent)}
+  .box h3{display:flex;align-items:center;gap:8px}
+  .box ul{margin:8px 0 0;padding-left:2px;list-style:none}
+  .box li{position:relative;padding:6px 0 6px 24px;font-size:14px;color:var(--text-2)}
+  .box li:before{position:absolute;left:0;top:6px;font-weight:700}
+  .box.pro li:before{content:"✓";color:var(--ok)}.box.con li:before{content:"→";color:var(--warn)}
+
+  /* Comparación */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px}
+  @media(max-width:680px){.compare{grid-template-columns:1fr}}
+  .stage{border-radius:18px;overflow:hidden;border:1px solid var(--border);background:var(--surface)}
+  .stage .top{background:var(--g600);display:grid;place-items:center;padding:34px}
+  .stage .cap{padding:14px 18px}
+  .stage .cap .tag{font-family:var(--font-d);font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+  .stage .cap .tag.old{color:var(--text-3)}.stage .cap .tag.new{color:var(--o500)}
+  .stage .cap p{margin:4px 0 0;font-size:13px}
+
+  /* small-size test */
+  .sizes{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap;background:var(--g600);border-radius:16px;padding:26px}
+  .sizes .col{text-align:center}
+  .sizes .lab{color:#BFE0CD;font-size:11px;font-family:var(--mono);margin-top:8px}
+
+  .variants{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+  .vcell{border:1px solid var(--border);border-radius:16px;overflow:hidden;width:150px}
+  .vcell .s{height:110px;display:grid;place-items:center}
+  .vcell .c{padding:9px 12px;font-size:12px;color:var(--text-3);border-top:1px solid var(--border)}
+  .s-green{background:var(--g600)}.s-cream{background:var(--crema)}.s-dark{background:var(--ink)}.s-white{background:#fff}
+
+  .changes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+  @media(max-width:680px){.changes{grid-template-columns:1fr}}
+  .change{display:flex;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px}
+  .change .k{width:30px;height:30px;border-radius:9px;background:var(--o100);color:var(--o500);display:grid;place-items:center;font-weight:700;flex:none;font-family:var(--font-d)}
+  @media(prefers-color-scheme:dark){.change .k{background:rgba(229,133,43,.16)}}
+  .change h4{margin:0 0 2px;font-size:14.5px;font-family:var(--font-d)}
+  .change p{margin:0;font-size:13px}
+  .theme-btn{position:fixed;top:16px;right:16px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:99px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-d);z-index:10}
+  .note{font-size:13px;color:var(--text-3);margin-top:16px}
+</style>
+
+<!-- ===== Definiciones de marcas ===== -->
+<svg width="0" height="0" style="position:absolute"><defs>
+  <!-- ACTUAL (reconstrucción del logo entregado) -->
+  <g id="old">
+    <path d="M92 30 C74 66 52 108 40 168" fill="none" stroke="#fff" stroke-width="13" stroke-linecap="round"/>
+    <path d="M108 30 C126 66 148 108 160 168" fill="none" stroke="#fff" stroke-width="13" stroke-linecap="round"/>
+    <path d="M46 158 C86 140 114 140 154 158" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"/>
+    <path d="M100 58 C84 92 68 130 62 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/>
+    <path d="M100 58 C116 92 132 130 138 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/>
+    <path d="M70 150 C100 134 100 134 130 150" fill="none" stroke="#E5852B" stroke-width="10" stroke-linecap="round"/>
+  </g>
+  <!-- MEJORADO: A/apacheta nítida, dos capas que convergen (turnos), sin arcos que ensucian -->
+  <g id="new">
+    <path d="M52 164 C 60 112 78 76 100 50" fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round"/>
+    <path d="M148 164 C 140 112 122 76 100 50" fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round"/>
+    <path d="M82 160 C 87 122 92 98 100 82" fill="none" stroke="#E5852B" stroke-width="15" stroke-linecap="round"/>
+    <path d="M118 160 C 113 122 108 98 100 82" fill="none" stroke="#E5852B" stroke-width="15" stroke-linecap="round"/>
+  </g>
+  <g id="new-green">
+    <path d="M52 164 C 60 112 78 76 100 50" fill="none" stroke="#1C5A3A" stroke-width="16" stroke-linecap="round"/>
+    <path d="M148 164 C 140 112 122 76 100 50" fill="none" stroke="#1C5A3A" stroke-width="16" stroke-linecap="round"/>
+    <path d="M82 160 C 87 122 92 98 100 82" fill="none" stroke="#E5852B" stroke-width="15" stroke-linecap="round"/>
+    <path d="M118 160 C 113 122 108 98 100 82" fill="none" stroke="#E5852B" stroke-width="15" stroke-linecap="round"/>
+  </g>
+  <g id="new-mono">
+    <path d="M52 164 C 60 112 78 76 100 50" fill="none" stroke="#1C5A3A" stroke-width="16" stroke-linecap="round"/>
+    <path d="M148 164 C 140 112 122 76 100 50" fill="none" stroke="#1C5A3A" stroke-width="16" stroke-linecap="round"/>
+    <path d="M82 160 C 87 122 92 98 100 82" fill="none" stroke="#1C5A3A" stroke-width="15" stroke-linecap="round"/>
+    <path d="M118 160 C 113 122 108 98 100 82" fill="none" stroke="#1C5A3A" stroke-width="15" stroke-linecap="round"/>
+  </g>
+</defs></svg>
+
+<button class="theme-btn" onclick="var r=document.documentElement,c=r.getAttribute('data-theme');r.setAttribute('data-theme',c==='dark'?'light':(c==='light'?'dark':'dark'))">◐ Tema</button>
+
+<div class="wrap">
+  <p class="eyebrow">Auditoría de marca</p>
+  <h1>Evaluación del logo &amp; propuesta de mejora</h1>
+  <p class="sub">Calificación honesta del isotipo actual de AportaYa contra los criterios clásicos de un buen logo, y una versión refinada que corrige lo que hoy lo frena — sin perder su alma.</p>
+
+  <!-- ===== SCORE ===== -->
+  <section style="border-top:0">
+    <div class="scorehead">
+      <div class="ring">
+        <svg width="130" height="130" viewBox="0 0 130 130">
+          <circle cx="65" cy="65" r="56" fill="none" stroke="var(--surface-2)" stroke-width="12"/>
+          <circle cx="65" cy="65" r="56" fill="none" stroke="var(--warn)" stroke-width="12" stroke-linecap="round" stroke-dasharray="352" stroke-dashoffset="106" transform="rotate(-90 65 65)"/>
+        </svg>
+        <div class="n"><b>7.0</b><span>DE 10</span></div>
+      </div>
+      <div class="verdict">
+        <h3>Buen concepto, ejecución mejorable</h3>
+        <p>El logo actual tiene una <strong>idea potente y muy relevante</strong> (aportes que convergen = pasanaku). Pierde puntos en <strong>escalabilidad y simplicidad</strong>: los trazos superpuestos y los arcos se empastan a tamaños chicos (favicon, app icon). Es un <strong>rediseño de refinamiento</strong>, no un cambio de rumbo.</p>
+      </div>
+    </div>
+
+    <div class="crit">
+      <div class="crow good"><div class="lb">Concepto / significado <small>¿dice algo verdadero?</small></div><div class="track"><i style="width:92%"></i></div><div class="sc">9.2</div></div>
+      <div class="crow good"><div class="lb">Relevancia cultural <small>pasanaku / andino</small></div><div class="track"><i style="width:90%"></i></div><div class="sc">9.0</div></div>
+      <div class="crow good"><div class="lb">Distinción <small>¿se diferencia?</small></div><div class="track"><i style="width:80%"></i></div><div class="sc">8.0</div></div>
+      <div class="crow good"><div class="lb">Memorabilidad <small>¿se recuerda?</small></div><div class="track"><i style="width:78%"></i></div><div class="sc">7.8</div></div>
+      <div class="crow mid"><div class="lb">Versatilidad <small>usos y fondos</small></div><div class="track mid"><i style="width:62%"></i></div><div class="sc">6.2</div></div>
+      <div class="crow mid"><div class="lb">Simplicidad <small>economía de trazo</small></div><div class="track mid"><i style="width:58%"></i></div><div class="sc">5.8</div></div>
+      <div class="crow low"><div class="lb">Escalabilidad <small>legible a 16 px</small></div><div class="track low"><i style="width:50%"></i></div><div class="sc">5.0</div></div>
+    </div>
+  </section>
+
+  <!-- ===== PROS / CONTRAS ===== -->
+  <section>
+    <p class="eyebrow">Diagnóstico</p><h2>Qué funciona y qué corregir</h2>
+    <div class="pc">
+      <div class="box pro"><h3>✓ Lo que hay que conservar</h3><ul>
+        <li>La metáfora de <strong>líneas que convergen</strong>: es el pasanaku hecho forma. Oro puro, no tocar.</li>
+        <li>La lectura como <strong>apacheta andina</strong> y como <strong>"A"</strong> de AportaYa.</li>
+        <li>La <strong>dupla verde + naranja</strong>: confianza + acción. Sólida.</li>
+        <li>Los <strong>remates redondeados</strong>: cálidos, coherentes con la marca.</li>
+      </ul></div>
+      <div class="box con"><h3>→ Lo que conviene mejorar</h3><ul>
+        <li><strong>Demasiados trazos</strong> (6 líneas + arcos): a tamaño chico se empastan y pierden forma.</li>
+        <li><strong>Arcos inferiores</strong> añaden ruido y no aportan significado claro.</li>
+        <li><strong>Grosores desiguales</strong> entre blanco y naranja restan prolijidad.</li>
+        <li>Sin <strong>versión simplificada</strong> para favicon / app icon de 16–32 px.</li>
+        <li>El vértice superior es <strong>angosto</strong>: reduce el impacto y la "A".</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- ===== ANTES / DESPUÉS ===== -->
+  <section>
+    <p class="eyebrow">Propuesta</p><h2>Antes → Después</h2>
+    <p>La versión mejorada reduce a <strong>4 trazos de grosor uniforme</strong>: dos capas que convergen (los turnos del pasanaku, uno sostiene al siguiente), una "A" más ancha y estable, y foco limpio en el naranja como núcleo del aporte.</p>
+    <div class="compare">
+      <div class="stage"><div class="top"><svg width="128" height="128" viewBox="0 0 200 200"><use href="#old"/></svg></div><div class="cap"><span class="tag old">Actual</span><p>Expresivo pero recargado; 6 trazos + arcos.</p></div></div>
+      <div class="stage"><div class="top"><svg width="128" height="128" viewBox="0 0 200 200"><use href="#new"/></svg></div><div class="cap"><span class="tag new">Mejorado</span><p>Más nítido y estable; 4 trazos, misma alma.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ===== TEST DE TAMAÑO ===== -->
+  <section>
+    <p class="eyebrow">La prueba que importa</p><h2>Legibilidad a tamaño real</h2>
+    <p>Un logo se juega en el favicon y el ícono de la app. Así se comporta la versión mejorada al achicarse:</p>
+    <div class="sizes">
+      <div class="col"><svg width="16" height="16" viewBox="0 0 200 200"><use href="#new"/></svg><div class="lab">16 px</div></div>
+      <div class="col"><svg width="24" height="24" viewBox="0 0 200 200"><use href="#new"/></svg><div class="lab">24 px</div></div>
+      <div class="col"><svg width="32" height="32" viewBox="0 0 200 200"><use href="#new"/></svg><div class="lab">32 px</div></div>
+      <div class="col"><svg width="48" height="48" viewBox="0 0 200 200"><use href="#new"/></svg><div class="lab">48 px</div></div>
+      <div class="col"><svg width="72" height="72" viewBox="0 0 200 200"><use href="#new"/></svg><div class="lab">72 px</div></div>
+    </div>
+    <p class="note">La "A" se mantiene reconocible incluso a 16 px porque hay menos trazos y más aire entre ellos.</p>
+  </section>
+
+  <!-- ===== VARIANTES ===== -->
+  <section>
+    <p class="eyebrow">Sistema</p><h2>Versiones de la marca mejorada</h2>
+    <div class="variants">
+      <div class="vcell"><div class="s s-green"><svg width="76" height="76" viewBox="0 0 200 200"><use href="#new"/></svg></div><div class="c">Principal · sobre verde</div></div>
+      <div class="vcell"><div class="s s-cream"><svg width="76" height="76" viewBox="0 0 200 200"><use href="#new-green"/></svg></div><div class="c">Sobre crema</div></div>
+      <div class="vcell"><div class="s s-dark"><svg width="76" height="76" viewBox="0 0 200 200"><use href="#new"/></svg></div><div class="c">Sobre oscuro</div></div>
+      <div class="vcell"><div class="s s-white"><svg width="76" height="76" viewBox="0 0 200 200"><use href="#new-mono"/></svg></div><div class="c">Monocromo verde</div></div>
+      <!-- App icon -->
+      <div class="vcell"><div class="s" style="background:var(--crema)">
+        <svg width="96" height="96" viewBox="0 0 200 200">
+          <defs><linearGradient id="ig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#237349"/><stop offset="1" stop-color="#164A30"/></linearGradient></defs>
+          <rect x="8" y="8" width="184" height="184" rx="46" fill="url(#ig)"/>
+          <g transform="translate(0,-2) scale(0.86) translate(16,16)"><use href="#new"/></g>
+        </svg>
+      </div><div class="c">App icon (iOS/Android)</div></div>
+    </div>
+  </section>
+
+  <!-- ===== QUÉ CAMBIÓ ===== -->
+  <section>
+    <p class="eyebrow">Detalle técnico</p><h2>Qué cambió, exactamente</h2>
+    <div class="changes">
+      <div class="change"><div class="k">1</div><div><h4>De 6 trazos a 4</h4><p>Se eliminaron los arcos inferiores. Menos ruido, misma idea de convergencia.</p></div></div>
+      <div class="change"><div class="k">2</div><div><h4>Grosor uniforme</h4><p>Todos los trazos a ~16 px de peso óptico (antes 10–13 mezclados). Más prolijo.</p></div></div>
+      <div class="change"><div class="k">3</div><div><h4>"A" más ancha y estable</h4><p>Base más abierta (52↔148) y vértice más alto: mayor presencia e identidad de letra.</p></div></div>
+      <div class="change"><div class="k">4</div><div><h4>Dos capas anidadas</h4><p>Verde envolvente + naranja interior = los turnos del pasanaku, uno sostiene al otro.</p></div></div>
+      <div class="change"><div class="k">5</div><div><h4>App icon nativo</h4><p>Versión en contenedor redondeado con gradiente verde, lista para tiendas.</p></div></div>
+      <div class="change"><div class="k">6</div><div><h4>Colores intactos</h4><p>Verde <span class="mono">#1C5A3A</span> + naranja <span class="mono">#E5852B</span>. La equidad de marca se conserva.</p></div></div>
+    </div>
+    <p class="note">Nota: ambas marcas de esta página son <strong>interpretaciones vectoriales</strong> para comparar. Si te gusta la dirección mejorada, la entrego como archivo SVG final y actualizo el logotipo horizontal y el app icon.</p>
+  </section>
+</div>

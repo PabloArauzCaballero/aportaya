@@ -59,6 +59,55 @@ normas: [UIF EBR]
 - Ningún cliente activo queda sin revisión más allá de su periodicidad sin que eso
   sea visible y tenga consecuencia operativa.
 
+## Contrato · `packages/contratos/CU-06.ts`
+
+```ts
+export const EntradaCU06 = z.object({
+  usuarioId: z.string().uuid(),
+  motivo:    z.enum(['PROGRAMADA','DESVIO','CAMBIO_DECLARADO','RECLAMO']),
+}).strict()
+
+export const SalidaCU06 = z.object({
+  revisionId: z.string().uuid(),
+  resultado:  z.enum(['RATIFICADA','ELEVADA','OBSERVADA','ESCALADA']),
+  desvioPorcentual: z.string().nullable(),
+  proximaRevision:  z.string().date(),
+}).strict()
+
+export const ErroresCU06 = {
+  SIN_CALIFICACION_VIGENTE: 'AP-CU06-01',
+  PERFIL_NO_DECLARADO: 'AP-CU06-02',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SIN_CALIFICACION_VIGENTE` | El usuario no tiene calificación de riesgo |
+| `PERFIL_NO_DECLARADO` | Falta el perfil transaccional declarado |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `compararPerfil` | Declarado contra observado; devuelve desvío y severidad; puro |
+| Átomo | `periodicidadPorRiesgo` | Meses hasta la próxima revisión |
+| Molécula | `PerfilTransaccionalRepositorio` | Perfil declarado y observado |
+| Molécula | `RevisionKycRepositorio` | Agenda y resultado |
+| Organismo | `CU06RevisarConocimiento` | Trabajo programado, idempotente por usuario y período |
+| Página | — | Sin endpoint: lo dispara el planificador o un evento |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `kyc.revisado` | Reprograma la siguiente revisión | Interno |
+| `perfil.desviado` | Alerta de monitoreo si la severidad lo amerita | — |
+
+## Interfaz
+
+- **App:** Aviso cuando toca actualizar datos, con lo que falta y por qué se pide.
+- **Backoffice:** Tablero de revisiones vencidas y por vencer, ordenado por riesgo.
+
 ## Restricciones aplicables
 
 `R-UIF-09` · `R-UIF-11` · `R-LIM-01` · `R-AUD-04`

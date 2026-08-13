@@ -65,6 +65,56 @@ normas: [UIF — Instructivo EIF, art. 52 (modificado por R.A. UIF/050/2026)]
   cambio que se usaron.
 - El cálculo es reproducible dos años después sin recalcular nada.
 
+## Contrato · `packages/contratos/CU-41.ts`
+
+```ts
+export const EntradaCU41 = z.object({
+  transaccionId: z.string().uuid(),
+}).strict()
+
+export const SalidaCU41 = z.object({
+  registros: z.array(z.object({ registroId: z.string().uuid(), formulario: z.string(), esAcumulada: z.boolean(), montoAcumuladoUsd: MontoSchema })),
+  requiereDeclaracion: z.boolean(),
+  periodoRemision: z.string(),
+}).strict()
+
+export const ErroresCU41 = {
+  SIN_TIPO_DE_CAMBIO: 'AP-CU41-01',
+  TITULAR_NO_IDENTIFICADO: 'AP-CU41-02',
+  REGISTRO_DUPLICADO: 'AP-CU41-03',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SIN_TIPO_DE_CAMBIO` | No hay cotización del día: el umbral no sería reproducible (R-UIF-04) |
+| `TITULAR_NO_IDENTIFICADO` | La operación es de operativa propia y queda exenta |
+| `REGISTRO_DUPLICADO` | Esa transacción ya registró ese umbral (R-UIF-13) |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `acumularEnVentana` | Suma desde el reinicio de la ventana; puro y reproducible |
+| Átomo | `convertirAUsd` | Aplica el tipo de cambio del día y lo devuelve para guardarlo |
+| Molécula | `UmbralUifRepositorio` | Umbrales vigentes por concepto |
+| Molécula | `OperacionRelevanteRepositorio` | Alta del registro con su ventana |
+| Molécula | `TipoCambioRepositorio` | Cotización vigente a la fecha |
+| Organismo | `CU41RegistrarPcc01` | Se ejecuta en la transacción de la operación |
+| Página | — | Sin endpoint: lo dispara el planificador o un evento |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `uif.umbral_alcanzado` | Solicitud de declaración de origen y destino | Interno |
+| `uif.declaracion_recibida` | Cierre del registro para el envío mensual | `PARTICIPANTE` |
+
+## Interfaz
+
+- **App:** Pide origen y destino solo cuando corresponde, explicando por qué.
+- **Backoffice:** Bandeja de formularios del período con su estado.
+
 ## Restricciones aplicables
 
 `R-UIF-01` · `R-UIF-02` · `R-UIF-03` · `R-UIF-04` · `R-UIF-05` · `R-AUD-01`

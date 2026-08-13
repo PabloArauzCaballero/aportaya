@@ -2,13 +2,13 @@
 tags:
   - moc
   - indice
-relaciones_fk: 565
-cross_modulo: 297
+relaciones_fk: 566
+cross_modulo: 298
 ---
 
 # Índice de relaciones (claves foráneas)
 
-Las **565 claves foráneas** del modelo. **297** cruzan módulos.
+Las **566 claves foráneas** del modelo. **298** cruzan módulos.
 
 [[Index|← Índice general]] · [[_Entidades|Entidades →]]
 
@@ -32,6 +32,7 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[reglamento_grupo]] | `redactado_por` | [[usuario]] | 02 → 01 | no | [[reglamento_grupo.redactado_por → usuario\|ver]] |
 | [[solicitud_ingreso]] | `revisada_por` | [[usuario]] | 02 → 01 | sí | [[solicitud_ingreso.revisada_por → usuario\|ver]] |
 | [[solicitud_ingreso]] | `usuario_id` | [[usuario]] | 02 → 01 | no | [[solicitud_ingreso.usuario_id → usuario\|ver]] |
+| [[solicitud_retiro]] | `plan_regularizacion_id` | [[plan_regularizacion]] | 02 → 03 | sí | [[solicitud_retiro.plan_regularizacion_id → plan_regularizacion\|ver]] |
 | [[sorteo_turnos]] | `ejecutado_por` | [[usuario]] | 02 → 01 | no | [[sorteo_turnos.ejecutado_por → usuario\|ver]] |
 | [[asiento_contable]] | `grupo_id` | [[grupo]] | 03 → 02 | sí | [[asiento_contable.grupo_id → grupo\|ver]] |
 | [[asiento_contable]] | `registrado_por` | [[usuario]] | 03 → 01 | sí | [[asiento_contable.registrado_por → usuario\|ver]] |
@@ -397,6 +398,7 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[solicitud_permuta.turno_destino_id → turno]] | [[turno]] | — | no |
 | [[solicitud_permuta.turno_origen_id → turno]] | [[turno]] | — | no |
 | [[solicitud_retiro.participante_id → participante]] | [[participante]] | — | no |
+| [[solicitud_retiro.plan_regularizacion_id → plan_regularizacion]] | [[plan_regularizacion]] | ↗ | sí |
 | [[sorteo_turnos.ejecutado_por → usuario]] | [[usuario]] | ↗ | no |
 | [[sorteo_turnos.grupo_id → grupo]] | [[grupo]] | — | no |
 | [[traspaso_cupo.aprobado_por_acuerdo_id → acuerdo]] | [[acuerdo]] | — | sí |

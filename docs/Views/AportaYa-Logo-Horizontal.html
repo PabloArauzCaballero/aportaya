@@ -1,0 +1,127 @@
+<title>AportaYa — Logotipo Horizontal</title>
+<style>
+  :root{
+    --g600:#1C5A3A; --g700:#164A30; --o500:#E5852B; --o400:#EF9E4E;
+    --crema:#F6F4EC; --ink:#10231A; --line:#DCE4DE; --muted:#6C7B72;
+    --font-d:"Poppins","Sora",system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-b:"Inter",system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --bg:var(--crema); --surface:#fff; --text:var(--ink); --border:var(--line);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#0A1F15;--surface:#0F2B1D;--text:#EAF3ED;--border:#1C3A2A;--muted:#89998E}
+  }
+  :root[data-theme="light"]{--bg:var(--crema);--surface:#fff;--text:var(--ink);--border:var(--line);--muted:#6C7B72}
+  :root[data-theme="dark"]{--bg:#0A1F15;--surface:#0F2B1D;--text:#EAF3ED;--border:#1C3A2A;--muted:#89998E}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-b);line-height:1.6}
+  .wrap{max-width:900px;margin:0 auto;padding:48px 24px 72px}
+  h1{font-family:var(--font-d);font-weight:700;letter-spacing:-.02em;font-size:30px;margin:0 0 6px}
+  .sub{color:var(--muted);margin:0 0 34px}
+  .eyebrow{font-family:var(--font-d);font-weight:600;font-size:12px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--o500);margin:34px 0 12px}
+
+  /* Lockup horizontal */
+  .lockup{display:inline-flex;align-items:center;gap:var(--gap,18px)}
+  .lockup .mark{width:var(--mk,66px);height:var(--mk,66px);flex:none}
+  .lockup .word{font-family:var(--font-d);font-weight:700;letter-spacing:-.03em;
+    font-size:var(--fs,44px);line-height:1;color:var(--wc,var(--g700))}
+  .lockup .word .ya{color:var(--o500)}
+  .lockup .tag{display:block;font-family:var(--font-d);font-weight:500;
+    font-size:calc(var(--fs,44px)*.26);letter-spacing:.02em;color:var(--muted);margin-top:4px}
+
+  .stage{border:1px solid var(--border);border-radius:18px;padding:40px;display:flex;
+    align-items:center;justify-content:center;gap:40px;flex-wrap:wrap}
+  .stage.green{background:var(--g600);border-color:transparent}
+  .stage.green .word{--wc:#F4FBF6} .stage.green .tag{color:#BFE0CD}
+  .stage.cream{background:var(--crema)} .stage.cream .word{--wc:var(--g700)}
+  .stage.dark{background:var(--ink)} .stage.dark .word{--wc:#F4FBF6} .stage.dark .tag{color:#9FCBB1}
+  .stage.surface{background:var(--surface)}
+
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .card{border:1px solid var(--border);border-radius:16px;padding:26px;background:var(--surface)}
+  .card .cap{font-size:12.5px;color:var(--muted);margin-top:16px;font-family:var(--font-d);
+    letter-spacing:.04em;text-transform:uppercase}
+  .note{font-size:13.5px;color:var(--muted);margin-top:10px}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:rgba(28,90,58,.08);
+    padding:2px 6px;border-radius:6px;color:inherit}
+  @media (prefers-color-scheme:dark){code{background:rgba(124,190,156,.14)}}
+  @media (max-width:680px){.row{grid-template-columns:1fr}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <g id="mark">
+    <path d="M92 30 C74 66 52 108 40 168" fill="none" stroke="#fff" stroke-width="13" stroke-linecap="round"/>
+    <path d="M108 30 C126 66 148 108 160 168" fill="none" stroke="#fff" stroke-width="13" stroke-linecap="round"/>
+    <path d="M46 158 C86 140 114 140 154 158" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"/>
+    <path d="M100 58 C84 92 68 130 62 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/>
+    <path d="M100 58 C116 92 132 130 138 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/>
+    <path d="M70 150 C100 134 100 134 130 150" fill="none" stroke="#E5852B" stroke-width="10" stroke-linecap="round"/>
+  </g>
+  <g id="mark-green">
+    <path d="M92 30 C74 66 52 108 40 168" fill="none" stroke="#1C5A3A" stroke-width="13" stroke-linecap="round"/>
+    <path d="M108 30 C126 66 148 108 160 168" fill="none" stroke="#1C5A3A" stroke-width="13" stroke-linecap="round"/>
+    <path d="M46 158 C86 140 114 140 154 158" fill="none" stroke="#1C5A3A" stroke-width="12" stroke-linecap="round"/>
+    <path d="M100 58 C84 92 68 130 62 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/>
+    <path d="M100 58 C116 92 132 130 138 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/>
+    <path d="M70 150 C100 134 100 134 130 150" fill="none" stroke="#E5852B" stroke-width="10" stroke-linecap="round"/>
+  </g>
+</defs></svg>
+
+<div class="wrap">
+  <h1>AportaYa — Logotipo horizontal</h1>
+  <p class="sub">Bloque de firma (lockup): símbolo + palabra, para headers, facturas, correos y footers.</p>
+
+  <p class="eyebrow">Principal · sobre verde</p>
+  <div class="stage green">
+    <div class="lockup" style="--mk:72px;--fs:48px">
+      <svg class="mark" viewBox="0 0 200 200" aria-label="AportaYa"><use href="#mark"/></svg>
+      <div class="word">Aporta<span class="ya">Ya</span></div>
+    </div>
+  </div>
+
+  <p class="eyebrow">Con bajada (tagline)</p>
+  <div class="stage cream">
+    <div class="lockup" style="--mk:76px;--fs:46px">
+      <svg class="mark" viewBox="0 0 200 200"><use href="#mark-green"/></svg>
+      <div class="word">Aporta<span class="ya">Ya</span>
+        <span class="tag">El pasanaku, en tu bolsillo.</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="eyebrow">Variantes de fondo</p>
+  <div class="row">
+    <div class="card">
+      <div class="stage surface" style="padding:26px">
+        <div class="lockup" style="--mk:52px;--fs:34px">
+          <svg class="mark" viewBox="0 0 200 200"><use href="#mark-green"/></svg>
+          <div class="word">Aporta<span class="ya">Ya</span></div>
+        </div>
+      </div>
+      <div class="cap">Sobre superficie clara (símbolo verde)</div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="stage dark" style="padding:26px;border-radius:0">
+        <div class="lockup" style="--mk:52px;--fs:34px">
+          <svg class="mark" viewBox="0 0 200 200"><use href="#mark"/></svg>
+          <div class="word">Aporta<span class="ya">Ya</span></div>
+        </div>
+      </div>
+      <div class="cap" style="padding:0 26px 22px">Sobre fondo oscuro</div>
+    </div>
+  </div>
+
+  <p class="eyebrow">Reducción mínima</p>
+  <div class="stage cream" style="gap:56px">
+    <div class="lockup" style="--mk:34px;--fs:22px;--gap:11px">
+      <svg class="mark" viewBox="0 0 200 200"><use href="#mark-green"/></svg>
+      <div class="word">Aporta<span class="ya">Ya</span></div>
+    </div>
+    <div class="lockup" style="--mk:22px;--fs:15px;--gap:8px">
+      <svg class="mark" viewBox="0 0 200 200"><use href="#mark-green"/></svg>
+      <div class="word">Aporta<span class="ya">Ya</span></div>
+    </div>
+  </div>
+  <p class="note">Tamaño mínimo del lockup horizontal: <strong>18&nbsp;px</strong> de alto de palabra / 22&nbsp;px de símbolo. Por debajo, usar solo el símbolo.</p>
+  <p class="note">Palabra en <code>Poppins 700</code>, tracking <code>-3%</code>. "Ya" siempre en Naranja Aporte <code>#E5852B</code>. Aire lateral mínimo = ancho del símbolo ÷ 2.</p>
+</div>

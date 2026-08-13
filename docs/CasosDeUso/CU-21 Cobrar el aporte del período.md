@@ -59,6 +59,63 @@ normas: [ASFI conciliación y contabilidad, UIF]
 - La obligación refleja exactamente lo pagado, lo condonado y lo cubierto.
 - La bolsa del grupo creció en el importe acreditado, con asiento espejo.
 
+## Contrato · `packages/contratos/CU-21.ts`
+
+```ts
+export const EntradaCU21 = z.object({
+  claveIdempotencia: z.string().uuid(),
+  obligacionId: z.string().uuid(),
+  monto: MontoSchema,
+  medio: z.enum(['SALDO','QR','TRANSFERENCIA']),
+}).strict()
+
+export const SalidaCU21 = z.object({
+  pagoId: z.string().uuid().nullable(),
+  ordenCobroId: z.string().uuid().nullable(),
+  estado: z.enum(['PENDIENTE','PAGADO_PARCIAL','PAGADO','EN_VERIFICACION']),
+  saldoPendiente: MontoSchema,
+  qr: z.object({ payloadEmv: z.string() }).nullable(),
+}).strict()
+
+export const ErroresCU21 = {
+  OBLIGACION_NO_VIGENTE: 'AP-CU21-01',
+  MONTO_NO_COINCIDE: 'AP-CU21-02',
+  SALDO_INSUFICIENTE: 'AP-CU21-03',
+  PERIODO_CERRADO: 'AP-CU21-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `OBLIGACION_NO_VIGENTE` | Está anulada, condonada o ya saldada |
+| `MONTO_NO_COINCIDE` | No coincide con lo esperado y el grupo no acepta parcial |
+| `SALDO_INSUFICIENTE` | Paga con saldo y no le alcanza |
+| `PERIODO_CERRADO` | El período ya se liquidó |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `aplicarPagoAObligacion` | Distribuye el pago entre capital y recargo; puro |
+| Átomo | `clasificarMora` | Días de atraso y su severidad según política |
+| Molécula | `ObligacionRepositorio` | Toma la obligación para actualizar, con bloqueo |
+| Molécula | `OrdenCobroRepositorio` | Emite la orden y su QR conciliable |
+| Molécula | `ConciliacionRepositorio` | Cruce contra el extracto bancario |
+| Organismo | `CU21CobrarAporte` | Transacción: pago, obligación, movimientos y asiento |
+| Página | `POST /aportes` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `aporte.confirmado` | Reputación, tablero del grupo y cancelación de recordatorios | `BILLETERA_OPERAR` |
+| `aporte.vencido` | Recargo y, superado el umbral, incumplimiento | — |
+
+## Interfaz
+
+- **App:** *Mi aporte*: monto, fecha límite y un botón; con saldo es instantáneo.
+- **Backoffice:** Estado de cobranza por grupo y período, con la brecha para completar la bolsa.
+
 ## Restricciones aplicables
 
 `R-GRP-03` · `R-BIL-01` · `R-BIL-06` · `R-AUD-01` · `R-AUD-05` · `R-UIF-02`

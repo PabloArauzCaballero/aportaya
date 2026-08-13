@@ -49,6 +49,59 @@ normas: [ASFI RNSF Libro 3 Título V (continuidad probada y documentada), ISO 22
 
 - Cada proceso crítico tiene evidencia fechada de su última prueba y su resultado.
 
+## Contrato · `packages/contratos/CU-56.ts`
+
+```ts
+export const EntradaCU56 = z.object({
+  planContinuidadId: z.string().uuid(),
+  tipo: z.enum(['ESCRITORIO','PARCIAL','TOTAL','CONMUTACION_REAL']),
+  fecha: z.string().date(),
+  ejecutadaPor: z.string().uuid(),
+}).strict()
+
+export const SalidaCU56 = z.object({
+  pruebaId: z.string().uuid(),
+  rtoObtenido: z.number().int(),
+  rpoObtenido: z.number().int(),
+  resultado: z.enum(['EXITOSA','PARCIAL','FALLIDA']),
+  planAccionId: z.string().uuid().nullable(),
+}).strict()
+
+export const ErroresCU56 = {
+  SIN_ACTA_DE_COMITE: 'AP-CU56-01',
+  OBJETIVOS_NO_ALCANZADOS: 'AP-CU56-02',
+  PLAN_INEXISTENTE: 'AP-CU56-03',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SIN_ACTA_DE_COMITE` | Una prueba exitosa exige acta que la reporte |
+| `OBJETIVOS_NO_ALCANZADOS` | El RTO obtenido supera el comprometido |
+| `PLAN_INEXISTENTE` | El proceso crítico no tiene plan: es un hallazgo |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `compararObjetivos` | RTO y RPO obtenidos contra comprometidos; puro |
+| Molécula | `PruebaContinuidadRepositorio` | Resultado y evidencia |
+| Molécula | `ActaComiteRepositorio` | Acta donde se reportó |
+| Organismo | `CU56ProbarContinuidad` | Transacción: prueba, hallazgos y plan de acción |
+| Página | `POST /continuidad/pruebas` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `continuidad.probada` | Reprogramación de la siguiente prueba | `RESPONSABLE_RIESGOS` |
+| `continuidad.fallida` | Plan de acción obligatorio con responsable | — |
+
+## Interfaz
+
+- **App:** Sin pantalla en la app.
+- **Backoffice:** Calendario de pruebas por proceso crítico, con su último resultado.
+
 ## Restricciones aplicables
 
 `R-RIS-03` · `R-LIC-03` · `R-AUD-08`

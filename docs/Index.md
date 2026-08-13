@@ -2,13 +2,13 @@
 tags:
   - moc
   - indice
-titulo: "Pasanaku Digital — modelo de datos"
+titulo: "AportaYa — modelo de datos"
 entidades: 274
-relaciones_fk: 565
+relaciones_fk: 566
 modulos: 12
 ---
 
-# Pasanaku Digital — Índice
+# AportaYa — Índice
 
 > [!abstract] Qué es esta bóveda
 > El modelo de datos completo del sistema, navegable como grafo. Cada tabla y
@@ -25,13 +25,12 @@ docs/
 │   │   ├── 01 - Identidad, Usuarios y Seguridad/
 │   │   ├── 02 - Grupos, Cupos, Turnos y Gobernanza/
 │   │   └── ...
-│   └── Relaciones/          ← una nota por clave foránea (565), en 12 carpetas
+│   └── Relaciones/          ← una nota por clave foránea (566), en 12 carpetas
 │       ├── 01 - Identidad, Usuarios y Seguridad/
 │       └── ...
 ├── CasosDeUso/              ← un caso de uso por flujo (36), con criterios de aceptación
 ├── Cumplimiento.md          ← matriz normativa ASFI · UIF · BCB · SIN · ISO
 ├── Restricciones.md         ← catálogo de restricciones con DDL
-├── Stack.md                 ← opciones de tecnología para backend y frontend
 └── entidades/               ← justificación de negocio + diagramas .puml
 ```
 
@@ -43,7 +42,6 @@ docs/
 | **Cumplimiento** | Contraste requisito por requisito contra ASFI, UIF, BCB, SIN e ISO, con estado y brechas abiertas. | [[Cumplimiento]] |
 | **Casos de uso** | Cómo se ejecuta cada flujo: pasos, tablas, validaciones, evidencia y criterios de aceptación. | [[_CasosDeUso]] |
 | **Restricciones** | Las reglas que la base de datos hace cumplir, con su DDL y la norma que las obliga. | [[Restricciones]] |
-| **Stack** | Opciones de backend y frontend, evaluadas contra lo que el modelo exige (RLS, decimal, transacción por caso de uso, outbox). | [[Stack]] |
 
 ## Los cinco registros que conviene entender primero
 
@@ -60,7 +58,7 @@ Casi todo el modelo se explica con cinco ideas. Si vas a leer solo cinco notas, 
 | # | Módulo | Foco de negocio | Tablas | FK | Fichas |
 | :-: | --- | --- | --: | --: | --- |
 | 01 | Identidad, Usuarios y Seguridad | Saber con certeza a quién le estás confiando plata ajena | 25 | 32 | [[01_identidad_usuarios\|negocio]] |
-| 02 | Grupos, Cupos, Turnos y Gobernanza | Reglas del juego, orden de cobro y decisiones colectivas | 22 | 48 | [[02_grupos_turnos\|negocio]] |
+| 02 | Grupos, Cupos, Turnos y Gobernanza | Reglas del juego, orden de cobro y decisiones colectivas | 22 | 49 | [[02_grupos_turnos\|negocio]] |
 | 03 | Aportes, Pagos QR y Conciliación | Que "pagué" signifique "el banco lo confirmó" | 23 | 46 | [[03_aportes_pagos_qr\|negocio]] |
 | 04 | Entregas de Fondo | Que la bolsa llegue completa, a la persona correcta, una sola vez | 10 | 24 | [[04_entregas_fondo\|negocio]] |
 | 05 | Notificaciones y Comunicaciones | WhatsApp como canal real de cobro, sin spam ni doble aviso | 15 | 21 | [[05_notificaciones\|negocio]] |
@@ -93,13 +91,13 @@ El grado (FK entrantes + salientes) es un buen proxy de importancia estructural:
 
 ## Acoplamiento entre módulos
 
-De las 565 claves foráneas, **297 cruzan módulos**. La matriz muestra
+De las 566 claves foráneas, **298 cruzan módulos**. La matriz muestra
 cuántas FK van de un módulo (fila) a otro (columna):
 
 | desde \ hacia | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 10 | 11 | 12 |
 | :-: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | **01** | · | · | · | · | · | · | · | 1 | · | · | · | · |
-| **02** | 11 | · | 1 | · | · | · | 1 | 1 | · | · | · | · |
+| **02** | 11 | · | 2 | · | · | · | 1 | 1 | · | · | · | · |
 | **03** | 12 | 9 | · | · | · | · | · | · | · | · | · | · |
 | **04** | 8 | 5 | 1 | · | · | · | · | · | · | · | · | · |
 | **05** | 4 | 1 | 1 | · | · | · | · | · | · | · | · | · |

@@ -111,6 +111,21 @@ VALORES = {
     ("requerimiento_autoridad", "estado"):
         ["RECIBIDO", "EN_PROCESO", "RESPONDIDO", "VENCIDO", "ARCHIVADO"],
     ("tipo_cambio", "fuente"): ["BCB", "PROVEEDOR", "MANUAL"],
+
+    # --- gobernanza, reputación y notificaciones (CU-60..82) ---
+    ("sorteo_turnos", "estado"): ["COMPROMETIDO", "REVELADO", "ANULADO"],
+    ("solicitud_retiro", "posicion"): ["ACREEDORA", "DEUDORA", "NEUTRA"],
+    ("disolucion_anticipada", "causal"):
+        ["ACUERDO", "SIN_REEMPLAZO", "MORA_GENERALIZADA", "CAUSA_GRAVE"],
+    ("evento_reputacion", "referencia_tipo"):
+        ["OBLIGACION_APORTE", "ENTREGA_FONDO", "REGISTRO_INCUMPLIMIENTO",
+         "COBERTURA_INCUMPLIMIENTO", "RESENA_PARTICIPANTE", "TRASPASO_CUPO",
+         "PARTICIPANTE", "GRUPO"],
+    ("verificacion_publica", "resultado"): ["COINCIDE", "NO_COINCIDE", "SIN_DATOS"],
+    ("evento_notificable", "categoria"):
+        ["TRANSACCIONAL", "COBRANZA", "REGULATORIA", "SEGURIDAD", "COMERCIAL", "SOPORTE"],
+    ("lista_supresion", "categoria"):
+        ["TRANSACCIONAL", "COBRANZA", "REGULATORIA", "SEGURIDAD", "COMERCIAL", "SOPORTE", "TODAS"],
     ("catalogo_reporte_regulatorio", "formato"):
         ["CSV", "TXT", "XML", "JSON", "XLSX", "WEB"],
     ("programacion_reporte", "canal_entrega"):

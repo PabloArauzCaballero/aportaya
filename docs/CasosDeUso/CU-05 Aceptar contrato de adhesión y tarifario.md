@@ -55,6 +55,57 @@ normas: [ASFI Consumidor Financiero (RNSF Libro 4 Título I)]
 - Existe una aceptación por (usuario, contrato, versión), con evidencia verificable.
 - El usuario puede reimprimir en cualquier momento la versión que aceptó.
 
+## Contrato · `packages/contratos/CU-05.ts`
+
+```ts
+export const EntradaCU05 = z.object({
+  usuarioId:  z.string().uuid(),
+  contratoId: z.string().uuid(),
+  version:    z.number().int(),
+  tokenFirma: z.string().uuid().optional(),
+}).strict()
+
+export const SalidaCU05 = z.object({
+  aceptacionId: z.string().uuid(),
+  hashEvidencia: z.string().length(64),
+  aceptadoEn:    z.string().datetime(),
+}).strict()
+
+export const ErroresCU05 = {
+  CONTRATO_NO_VIGENTE: 'AP-CU05-01',
+  VERSION_DESACTUALIZADA: 'AP-CU05-02',
+  TARIFARIO_NO_PUBLICADO: 'AP-CU05-03',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `CONTRATO_NO_VIGENTE` | La versión no está vigente o fue sustituida |
+| `VERSION_DESACTUALIZADA` | Hay una versión posterior que debe aceptarse |
+| `TARIFARIO_NO_PUBLICADO` | No hay tarifario publicado que mostrar (R-CON-07) |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `armarEvidencia` | Compone el hash de documento, IP, dispositivo y momento; puro |
+| Molécula | `ContratoRepositorio` | Versión vigente y su hash |
+| Molécula | `AceptacionRepositorio` | Registro con evidencia |
+| Organismo | `CU05AceptarContrato` | Transacción: aceptación y consentimientos por finalidad |
+| Página | `POST /contratos/:id/aceptaciones` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `contrato.aceptado` | Habilita la operación del servicio asociado | Ninguno: parte del alta |
+| `consentimiento.registrado` | Actualiza preferencias de tratamiento | — |
+
+## Interfaz
+
+- **App:** Documento a pantalla completa con el resumen de comisiones arriba, con impuestos incluidos.
+- **Backoffice:** Consulta de aceptaciones por usuario y versión, para responder reclamos.
+
 ## Restricciones aplicables
 
 `R-CON-06` · `R-CON-07` · `R-TAR-12` · `R-AUD-08`

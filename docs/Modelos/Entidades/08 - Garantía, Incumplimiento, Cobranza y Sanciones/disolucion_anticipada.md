@@ -6,7 +6,7 @@ tabla: disolucion_anticipada
 clase: DisolucionAnticipada
 modulo: "08 — Garantía, Incumplimiento, Cobranza y Sanciones"
 clave_primaria: [id]
-columnas: 10
+columnas: 11
 fk_salientes: 2
 fk_entrantes: 1
 append_only: false
@@ -23,6 +23,7 @@ append_only: false
 | `id` | UUID | PK | no | PK |
 | `grupo_id` | UUID | FK UQ | no | FK, UQ |
 | `acuerdo_grupo_id` | UUID | FK | sí | FK, NULL, M2 |
+| `causal` | VARCHAR(25) | — | no | CK |
 | `motivo` | VARCHAR(400) | — | no | — |
 | `total_aportado_grupo` | DECIMAL(16,2) | — | no | — |
 | `total_entregado` | DECIMAL(16,2) | — | no | — |

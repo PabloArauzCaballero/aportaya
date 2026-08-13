@@ -34,7 +34,62 @@ reportes ASFI/UIF) tienen usuarios, ritmos y requisitos distintos.
 
 ---
 
-## Backend — tres opciones
+## La decisión
+
+> **TypeScript de punta a punta: Node 22 + NestJS + Kysely + Graphile Worker sobre
+> PostgreSQL 16; Expo para la app de AportaYa y React + Vite para el backoffice.**
+
+Una sola apuesta, un solo lenguaje en los tres artefactos. El detalle y el motivo de
+cada pieza está en [[_Arquitectura]], una decisión por documento.
+
+| Capa | Elección | En una línea |
+| --- | --- | --- |
+| Runtime y API | Node 22 LTS · **NestJS** sobre Fastify | Módulos y transacción explícita por caso de uso · [[ADR-001 Lenguaje y runtime]] |
+| Acceso a datos | **Kysely** con tipos introspectados de la base viva | Query builder, no ORM: el esquema lo sigue mandando `sql/` · [[ADR-002 Acceso a datos]] |
+| Trabajos y outbox | **Graphile Worker** en la misma Postgres | Encolar es parte del `COMMIT` · [[ADR-003 Trabajos, outbox y planificador]] |
+| App del participante | **Expo / React Native** | QR, biometría, dispositivo de confianza y correcciones OTA · [[ADR-004 Frontend]] |
+| Backoffice | **React + Vite**, TanStack Query/Router | Pantallas densas de cumplimiento · [[ADR-004 Frontend]] |
+| Dinero | `numeric` como *string* + `decimal.js` | Ningún importe pasa por `number` · [[ADR-005 Dinero y decimales]] |
+| Contratos | **Zod** compartido, OpenAPI derivado | El contrato del caso de uso se escribe una vez · [[ADR-006 Contratos y validación]] |
+| Sesión y RLS | `SET LOCAL` dentro de la transacción, PgBouncer *transaction* | Sin contexto no hay política de fila · [[ADR-007 Sesión, RLS y pooling]] |
+| Pruebas | Vitest + Testcontainers con Postgres 16 real | Los criterios de aceptación, uno a uno · [[ADR-008 Pruebas]] |
+
+### Por qué esta y no otra
+
+Las tres alternativas evaluadas **empatan en lo que de verdad importa acá**:
+convivir con un DDL generado, controlar la transacción y poner el contexto de RLS
+en la conexión correcta. En las tres la solución es la misma —query builder o
+codegen, nunca un ORM dueño del esquema—, así que ninguna gana por ahí.
+
+Empatado eso, decide lo práctico: esta bóveda tiene **36 casos de uso con criterios
+de aceptación y 565 relaciones**. El cuello de botella del proyecto es traducir esa
+especificación, no el rendimiento del runtime. Con TypeScript el contrato de cada
+caso de uso se escribe **una vez** en Zod y lo consumen la API, la app y el
+backoffice; con un backend en otro lenguaje se escribe tres veces y se
+desincroniza en la cuarta semana. Ese es todo el argumento, y es suficiente.
+
+### El precio, y cómo se paga
+
+JavaScript **no tiene decimal nativo**, y en un sistema de partida doble eso no es
+un detalle de estilo. Se paga con tres reglas duras desde el primer commit:
+
+1. `pg` devuelve `numeric` como *string* (parser explícito, nunca el de por defecto).
+2. Todo importe vive como `Decimal` de `decimal.js` en el dominio.
+3. Regla de lint que **prohíbe `number`** en cualquier tipo que represente dinero.
+
+Con eso el riesgo queda al nivel de Java. Sin eso, esta opción no se elige.
+
+### Lo único que revierte la decisión
+
+Que el objetivo real a doce meses sea **operar con licencia ASFI e integrarse con
+un core bancario**. Ahí se pasa a **Spring Boot + jOOQ** sin discutir: `BigDecimal`
+nativo, y en una auditoría de sistemas o una integración con banco pesa el stack
+que el auditor ya sabe leer. Python queda para lo que ya hace bien en el repo: los
+generadores de la bóveda y del DDL (`scripts/*.py`).
+
+---
+
+## Las alternativas evaluadas
 
 ### Opción A — TypeScript (NestJS + Kysely/Drizzle)
 
@@ -121,13 +176,10 @@ conexión y ecosistema de colas más frágil que las alternativas.
 | Velocidad al primer caso de uso | Alta | Media | **Alta** |
 | Costo y disponibilidad de equipo | **Alta** | Media | Alta |
 
-**Recomendación: Opción A (TypeScript)** para construir el producto: un solo
-lenguaje en los tres artefactos, contratos compartidos y velocidad, sin ceder nada
-en control de SQL ni de transacciones. **Elige la Opción B** si el horizonte real
-es operar con licencia ASFI e integrarse con un core bancario: ahí la credibilidad
-y el `BigDecimal` nativo valen más que la comodidad del monorepo. **La Opción C**
-es la correcta si el equipo es chico y el objetivo inmediato es demostrar los
-flujos de la bóveda funcionando.
+**Elegida: la Opción A**, por lo dicho arriba. Las otras dos no quedaron fuera por
+malas: la **B** es la mejor a diez años y vuelve a la mesa el día que haya licencia
+ASFI o integración con core bancario; la **C** habría sido la correcta si el
+objetivo fuera solo demostrar los flujos de la bóveda funcionando, sin producto.
 
 ---
 
@@ -159,9 +211,11 @@ biometría y dispositivo de confianza limitados, push en iOS frágil, lector de 
 peor en gama baja y ninguna presencia en tienda. **Sirve para el backoffice, no
 para una billetera.**
 
-**Recomendación: Opción 1.** Expo para la app, React para el backoffice, tipos y
-validaciones compartidos con el backend. Si el equipo ya es fuerte en Dart, la
-Opción 2 es defendible; la 3 solo como MVP desechable.
+**Elegida: la Opción 1.** Expo para la app, React para el backoffice, tipos y
+validaciones compartidos con el backend — que es justamente lo que desempató la
+elección del backend. La identidad visual y el sistema atómico de ambos productos
+están en la skill `disenar-frontend-aportaya`; este documento solo decide la
+tecnología, no el diseño.
 
 ---
 

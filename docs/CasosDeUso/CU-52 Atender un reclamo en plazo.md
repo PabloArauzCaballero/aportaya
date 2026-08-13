@@ -57,6 +57,65 @@ normas: [ASFI RNSF Libro 4 Título I — 5 días hábiles, prórroga a 10, conse
 - Todo reclamo tiene número, plazo guardado, respuesta y —si corresponde—
   reparación trazable.
 
+## Contrato · `packages/contratos/CU-52.ts`
+
+```ts
+export const EntradaCU52 = z.object({
+  usuarioId: z.string().uuid(),
+  puntoReclamoCodigo: z.string(),
+  categoria: z.enum(['COMISION','OPERACION_NO_RECONOCIDA','SALDO','SERVICIO','DATOS_PERSONALES','GRUPO']),
+  montoReclamado: MontoSchema.optional(),
+  descripcion: z.string().min(20).max(4000),
+  canalIngreso: z.enum(['APP','WEB','TELEFONO','PRESENCIAL','CORREO']),
+}).strict()
+
+export const SalidaCU52 = z.object({
+  reclamoId: z.string().uuid(),
+  codigo: z.string(),
+  plazoRespuesta: z.string().datetime(),
+  diasHabilesPlazo: z.number().int(),
+  estado: z.enum(['INGRESADO','EN_ANALISIS','RESPONDIDO','CERRADO','ELEVADO']),
+}).strict()
+
+export const ErroresCU52 = {
+  PUNTO_RECLAMO_INACTIVO: 'AP-CU52-01',
+  PRORROGA_EXCEDIDA: 'AP-CU52-02',
+  FALTA_REPARACION: 'AP-CU52-03',
+  PLAZO_VENCIDO: 'AP-CU52-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `PUNTO_RECLAMO_INACTIVO` | El canal elegido no está habilitado |
+| `PRORROGA_EXCEDIDA` | La prórroga supera el máximo sin comunicación al organismo (R-CON-03) |
+| `FALTA_REPARACION` | Reclamo favorable con monto exige devolución asociada (R-CON-04) |
+| `PLAZO_VENCIDO` | Se responde igual y escala a hallazgo |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `calcularPlazoHabil` | Cinco días hábiles administrativos desde el ingreso; puro |
+| Átomo | `evaluarProrroga` | Verifica límite y comunicación exigida |
+| Molécula | `ReclamoRepositorio` | Alta, prórroga y respuesta |
+| Molécula | `DevolucionRepositorio` | Reparación cuando el resultado es favorable |
+| Organismo | `CU52AtenderReclamo` | Transacción: respuesta, reparación y cierre |
+| Página | `POST /reclamos` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `reclamo.ingresado` | Código al cliente y reloj del plazo | Ninguno: canal público |
+| `reclamo.respondido` | Reparación si corresponde y aviso | `RECLAMO_ATENDER` |
+| `reclamo.vencido` | Hallazgo de auditoría | — |
+
+## Interfaz
+
+- **App:** *Ayuda → Reclamo*: código, plazo y estado siempre a la vista.
+- **Backoffice:** Bandeja con vencimientos primero; sin reparación no se cierra un favorable.
+
 ## Restricciones aplicables
 
 `R-CON-01` · `R-CON-02` · `R-CON-03` · `R-CON-04` · `R-CON-05` · `R-AUD-08`

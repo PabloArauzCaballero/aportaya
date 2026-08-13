@@ -6,7 +6,7 @@ tabla: lista_supresion
 clase: ListaSupresion
 modulo: "05 — Notificaciones y Comunicaciones"
 clave_primaria: [id]
-columnas: 6
+columnas: 8
 fk_salientes: 0
 fk_entrantes: 0
 append_only: false
@@ -24,6 +24,8 @@ append_only: false
 | `identificador` | VARCHAR(150) | UQ | no | UQ+canal |
 | `canal` | VARCHAR(15) | — | no | CK |
 | `motivo` | VARCHAR(25) | — | no | CK |
+| `categoria` | VARCHAR(20) | IDX | no | CK, IDX |
+| `activa` | BOOLEAN | IDX | no | IDX |
 | `agregado_en` | TIMESTAMPTZ | — | no | — |
 | `permanente` | BOOLEAN | — | no | — |
 

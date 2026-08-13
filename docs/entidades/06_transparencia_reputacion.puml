@@ -517,6 +517,7 @@ entity "evento_reputacion" as evtrep {
   # grupo_id : UUID <<FK, NULL, IDX>>
   # participante_id : UUID <<FK, NULL>>
   tipo : VARCHAR(40) <<CK, IDX>>
+  referencia_tipo : VARCHAR(30) <<CK>>
   referencia_origen_id : UUID <<NULL, polimorfica>>
   impacto : DECIMAL(6,2)
   factor_afectado : VARCHAR(40)
@@ -544,6 +545,8 @@ entity "puntaje_reputacion" as puntaje {
   antiguedad_meses : SMALLINT
   eventos_considerados : INTEGER
   modelo_version : VARCHAR(20)
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
   calculado_en : TIMESTAMPTZ
   proximo_recalculo_en : TIMESTAMPTZ <<IDX>>
 }
@@ -649,6 +652,9 @@ entity "verificacion_publica" as verpub {
   tipo_documento : VARCHAR(30) <<CK>>
   referencia_id : UUID <<IDX>>
   hash_esperado : VARCHAR(64)
+  hash_recomputado : VARCHAR(64) <<NULL>>
+  resultado : VARCHAR(15) <<CK, NULL>>
+  verificado_en : TIMESTAMPTZ <<NULL>>
   consultas : INTEGER
   ultima_consulta_en : TIMESTAMPTZ <<NULL>>
 }

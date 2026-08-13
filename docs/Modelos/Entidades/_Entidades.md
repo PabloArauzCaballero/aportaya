@@ -39,7 +39,7 @@ Las **274 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 | [[rol_permiso]] | 2 | 2 | 0 | — |
 | [[asignacion_rol]] | 10 | 3 | 0 | — |
 | [[consentimiento]] | 10 | 1 | 0 | — |
-| [[preferencia_notificacion]] | 11 | 1 | 0 | — |
+| [[preferencia_notificacion]] | 12 | 1 | 0 | — |
 | [[reputacion_usuario]] | 11 | 1 | 0 | — |
 | [[solicitud_baja]] | 6 | 1 | 0 | — |
 
@@ -57,19 +57,19 @@ Las **274 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 | [[participante]] | 13 | 3 | 25 | muy conectada |
 | [[cupo]] | 8 | 2 | 6 | muy conectada |
 | [[traspaso_cupo]] | 10 | 4 | 0 | — |
-| [[solicitud_retiro]] | 7 | 1 | 0 | — |
+| [[solicitud_retiro]] | 9 | 2 | 0 | — |
 | [[solicitud_ingreso]] | 10 | 3 | 0 | — |
 | [[invitacion]] | 12 | 3 | 0 | — |
 | [[periodo]] | 11 | 1 | 6 | — |
 | [[turno]] | 11 | 4 | 4 | muy conectada |
-| [[sorteo_turnos]] | 10 | 2 | 0 | — |
+| [[sorteo_turnos]] | 14 | 2 | 0 | — |
 | [[solicitud_permuta]] | 11 | 4 | 0 | — |
 | [[dia_no_habil]] | 5 | 1 | 0 | — |
 | [[postulacion_emparejamiento]] | 11 | 1 | 1 | — |
 | [[criterio_emparejamiento]] | 8 | 0 | 1 | — |
 | [[propuesta_grupo]] | 10 | 2 | 1 | — |
 | [[propuesta_postulacion]] | 4 | 2 | 0 | — |
-| [[acuerdo]] | 14 | 2 | 8 | muy conectada |
+| [[acuerdo]] | 15 | 2 | 8 | muy conectada |
 | [[voto_participante]] | 7 | 2 | 0 | — |
 
 ## 03 — Aportes, Pagos QR y Conciliación
@@ -80,7 +80,7 @@ Las **274 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 | --- | --: | --: | --: | --- |
 | [[politica_mora]] | 10 | 1 | 2 | — |
 | [[obligacion_aporte]] | 22 | 7 | 7 | muy conectada |
-| [[plan_regularizacion]] | 7 | 2 | 1 | — |
+| [[plan_regularizacion]] | 7 | 2 | 2 | — |
 | [[proveedor_pago]] | 12 | 0 | 8 | muy conectada |
 | [[orden_cobro]] | 11 | 2 | 4 | — |
 | [[qr_cobro]] | 9 | 1 | 0 | — |
@@ -125,14 +125,14 @@ Las **274 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |
-| [[evento_notificable]] | 10 | 0 | 3 | — |
+| [[evento_notificable]] | 12 | 0 | 3 | — |
 | [[plantilla_mensaje]] | 9 | 1 | 1 | — |
 | [[version_plantilla]] | 11 | 1 | 1 | — |
 | [[proveedor_mensajeria]] | 11 | 0 | 1 | — |
 | [[canal_vinculado]] | 12 | 1 | 2 | — |
-| [[lista_supresion]] | 6 | 0 | 0 | — |
+| [[lista_supresion]] | 8 | 0 | 0 | — |
 | [[notificacion]] | 11 | 2 | 5 | — |
-| [[envio_notificacion]] | 20 | 4 | 3 | — |
+| [[envio_notificacion]] | 22 | 4 | 3 | — |
 | [[evento_entrega_mensaje]] | 8 | 1 | 0 | — |
 | [[cola_envio]] | 6 | 1 | 0 | — |
 | [[cola_muerta]] | 6 | 1 | 0 | — |
@@ -150,8 +150,8 @@ Las **274 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 | [[modelo_scoring]] | 12 | 0 | 3 | — |
 | [[peso_factor]] | 7 | 1 | 0 | — |
 | [[regla_impacto_evento]] | 8 | 1 | 0 | — |
-| [[evento_reputacion]] | 14 | 4 | 1 | append-only |
-| [[puntaje_reputacion]] | 16 | 2 | 1 | — |
+| [[evento_reputacion]] | 15 | 4 | 1 | append-only |
+| [[puntaje_reputacion]] | 18 | 2 | 1 | — |
 | [[componente_score]] | 7 | 1 | 0 | — |
 | [[snapshot_reputacion]] | 7 | 1 | 1 | — |
 | [[certificado_reputacion]] | 10 | 2 | 0 | — |
@@ -160,7 +160,7 @@ Las **274 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 | [[metrica_grupo]] | 9 | 2 | 0 | — |
 | [[bloque_transparencia]] | 11 | 1 | 1 | — |
 | [[registro_sellado]] | 7 | 1 | 0 | append-only |
-| [[verificacion_publica]] | 6 | 0 | 0 | — |
+| [[verificacion_publica]] | 9 | 0 | 0 | — |
 | [[resena_participante]] | 10 | 4 | 0 | — |
 | [[alerta_riesgo]] | 10 | 0 | 0 | — |
 
@@ -220,7 +220,7 @@ Las **274 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 | [[reemplazo_participante]] | 12 | 6 | 1 | — |
 | [[candidato_reemplazo]] | 7 | 2 | 0 | — |
 | [[plan_contingencia]] | 11 | 2 | 0 | — |
-| [[disolucion_anticipada]] | 10 | 2 | 1 | — |
+| [[disolucion_anticipada]] | 11 | 2 | 1 | — |
 | [[liquidacion_participante]] | 8 | 2 | 0 | — |
 
 ## 09 — Auditoría, Reportes y Cumplimiento

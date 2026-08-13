@@ -163,7 +163,7 @@ CREATE INDEX IF NOT EXISTS ix_descuadre_custodia_severidad
 CREATE INDEX IF NOT EXISTS ix_descuadre_custodia_estado
   ON descuadre_custodia (estado);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_limite_operativo_billetera_nivel_debida_diligencia__d917af
+CREATE UNIQUE INDEX IF NOT EXISTS uq_limite_operativo_billetera_nivel_debida_diligencia__83365a
   ON limite_operativo_billetera (nivel_debida_diligencia, ventana, concepto);
 
 CREATE INDEX IF NOT EXISTS ix_consumo_limite_cuenta_billetera_id
@@ -208,7 +208,7 @@ CREATE INDEX IF NOT EXISTS ix_bloqueo_saldo_estado
 CREATE INDEX IF NOT EXISTS ix_estado_cuenta_billetera_cuenta_billetera_id
   ON estado_cuenta_billetera (cuenta_billetera_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_estado_cuenta_billetera_cuenta_billetera_id_periodo_05e8b9
+CREATE UNIQUE INDEX IF NOT EXISTS uq_estado_cuenta_billetera_cuenta_billetera_id_periodo_3bea44
   ON estado_cuenta_billetera (cuenta_billetera_id, periodo_hasta, periodo_desde);
 
 CREATE INDEX IF NOT EXISTS ix_certificado_saldo_cuenta_billetera_id

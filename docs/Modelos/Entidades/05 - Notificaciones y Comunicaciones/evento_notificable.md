@@ -7,7 +7,7 @@ clase: EventoNotificable
 modulo: "05 — Notificaciones y Comunicaciones"
 estereotipo: Política configurable
 clave_primaria: [id]
-columnas: 10
+columnas: 12
 fk_salientes: 0
 fk_entrantes: 3
 append_only: false
@@ -24,6 +24,8 @@ append_only: false
 | `id` | UUID | PK | no | PK |
 | `tipo` | VARCHAR(40) | UQ | no | UQ |
 | `descripcion` | VARCHAR(200) | — | no | — |
+| `categoria` | VARCHAR(20) | IDX | no | CK, IDX |
+| `es_obligatorio` | BOOLEAN | — | no | — |
 | `prioridad` | VARCHAR(10) | — | no | CK |
 | `es_transaccional` | BOOLEAN | — | no | — |
 | `permite_agrupacion` | BOOLEAN | — | no | — |

@@ -55,6 +55,64 @@ normas: [ASFI Seguridad de la Información, ISO/IEC 27001 A.5.15-A.5.18]
 - Toda operación sensible tiene sesión, dispositivo y factor identificables.
 - Los intentos fallidos son analizables sin depender de logs de aplicación.
 
+## Contrato · `packages/contratos/CU-04.ts`
+
+```ts
+export const EntradaCU04 = z.object({
+  telefonoE164: z.string(),
+  credencial:   z.string().min(8).optional(),
+  huellaDispositivo: z.string().max(128),
+  factor:       z.object({ tipo: z.enum(['OTP','BIOMETRIA','TOTP']), valor: z.string() }).optional(),
+}).strict()
+
+export const SalidaCU04 = z.object({
+  sesionId:   z.string().uuid(),
+  expiraEn:   z.string().datetime(),
+  requiereFactorAdicional: z.boolean(),
+  dispositivoConfiable:    z.boolean(),
+}).strict()
+
+export const ErroresCU04 = {
+  CREDENCIAL_INVALIDA: 'AP-CU04-01',
+  CUENTA_BLOQUEADA: 'AP-CU04-02',
+  FACTOR_REQUERIDO: 'AP-CU04-03',
+  TOKEN_VENCIDO: 'AP-CU04-04',
+  DEMASIADOS_INTENTOS: 'AP-CU04-05',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `CREDENCIAL_INVALIDA` | Usuario o credencial no coinciden |
+| `CUENTA_BLOQUEADA` | Hay bloqueo vigente por intentos fallidos |
+| `FACTOR_REQUERIDO` | Dispositivo nuevo u operación sensible |
+| `TOKEN_VENCIDO` | El código expiró según su política |
+| `DEMASIADOS_INTENTOS` | Se agotaron los intentos del token |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `evaluarRiesgoDeAcceso` | Combina dispositivo, geo e historial; puro |
+| Átomo | `politicaDeToken` | Vigencia, longitud e intentos según propósito |
+| Molécula | `CredencialRepositorio` | Hash con pepper, nunca la credencial en claro |
+| Molécula | `SesionRepositorio` | Alta y revocación de sesiones |
+| Molécula | `TokenAdaptador` | Emisión y validación del segundo factor |
+| Organismo | `CU04Autenticar` | Registra el intento, valida y abre sesión en una transacción |
+| Página | `POST /sesiones` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `sesion.iniciada` | Registro de dispositivo y notificación si es nuevo | Ninguno: ruta pública |
+| `acceso.bloqueado` | Bloqueo de cuenta y aviso al titular | — |
+
+## Interfaz
+
+- **App:** Ingreso con teléfono y PIN o biometría; el dispositivo nuevo pide siempre segundo factor.
+- **Backoffice:** Auditoría de accesos por usuario, con dispositivos e IP.
+
 ## Restricciones aplicables
 
 `R-SEG-01` · `R-SEG-02` · `R-BIL-09` · `R-AUD-02`

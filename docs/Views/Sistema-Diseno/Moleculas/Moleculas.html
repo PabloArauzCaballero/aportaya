@@ -1,0 +1,80 @@
+<title>AportaYa — Moléculas</title>
+<link rel="stylesheet" href="../estilos.css">
+<svg width="0" height="0" style="position:absolute"><defs>
+  <g id="i-search"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12.5" y1="12.5" x2="17" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></g>
+  <g id="mark"><path d="M92 30 C74 66 52 108 40 168" fill="none" stroke="#7CBE9C" stroke-width="13" stroke-linecap="round"/><path d="M108 30 C126 66 148 108 160 168" fill="none" stroke="#7CBE9C" stroke-width="13" stroke-linecap="round"/><path d="M100 58 C84 92 68 130 62 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/><path d="M100 58 C116 92 132 130 138 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/></g>
+</defs></svg>
+
+<div class="topbar"><div class="topbar-in">
+  <a class="brandmark" href="../Fundamentos/Fundamentos.html"><svg width="26" height="26" viewBox="0 0 200 200"><use href="#mark"/></svg><span>Aporta<span class="ya">Ya</span></span></a>
+  <nav class="navlinks">
+    <a href="../Fundamentos/Fundamentos.html">Fundamentos</a>
+    <a href="../Atomos/Atomos.html">Átomos</a>
+    <a class="on" href="../Moleculas/Moleculas.html">Moléculas</a>
+    <a href="../Organismos/Organismos.html">Organismos</a>
+    <a href="../Moviles/Moviles.html">Móviles</a>
+  </nav>
+  <button class="theme-btn" onclick="toggleTheme()">◐ Tema</button>
+</div></div>
+
+<main>
+<section>
+  <div class="sec-head"><span class="lvl mol">Nivel 2</span><p class="eyebrow">Átomos combinados</p><h1>Moléculas</h1>
+  <p>Unidades funcionales: campos completos, búsqueda, tarjetas de dato, ítems de lista, filas de movimiento, pasos y notificaciones.</p></div>
+
+  <div class="subgrid cols3">
+    <div><div class="clabel">Campo de formulario</div><div class="demo">
+      <label class="field-label">Monto por aporte <span class="req">*</span></label>
+      <div class="input-group"><span class="addon">Bs</span><input class="input" value="250,00"></div>
+      <div class="help">Cada integrante aportará este monto por turno.</div>
+    </div></div>
+    <div><div class="clabel">Búsqueda</div><div class="demo"><div class="searchbar"><svg width="18" height="18" viewBox="0 0 18 18"><use href="#i-search"/></svg><input placeholder="Buscar pasanaku…"></div></div></div>
+    <div><div class="clabel">Wizard / pasos</div><div class="demo"><div class="stepwiz">
+      <div class="st done"><span class="num">✓</span></div><span class="line"></span>
+      <div class="st now"><span class="num">2</span><span class="lb">Reglas</span></div><span class="line"></span>
+      <div class="st"><span class="num">3</span></div>
+    </div></div></div>
+  </div>
+
+  <div class="clabel">Tarjeta de saldo &amp; KPIs <span class="hex">saldo sobre gradiente verde #1C5A3A→#164A30</span></div>
+  <div class="demo"><div class="subgrid cols3">
+    <div class="balcard"><div class="k">SALDO DISPONIBLE</div><div class="v"><span class="cur">Bs</span> 1.240,00</div><div class="qa"><div class="b pri">↑ Recargar</div><div class="b gh">↓ Retirar</div></div></div>
+    <div class="stat"><div class="k">Pasanakus activos</div><div class="v">2</div><div class="delta">de 3 en total</div></div>
+    <div class="stat"><div class="k">Próximo turno</div><div class="v" style="font-size:22px">en 12 días</div><div class="delta down">Familia Aporta</div></div>
+  </div></div>
+
+  <div class="subgrid cols2">
+    <div><div class="clabel">Ítem de pasanaku (progreso)</div><div class="demo">
+      <div class="listitem">
+        <div class="avatar av40" style="background:#1C5A3A">FA</div>
+        <div class="info"><div class="nm">Familia Aporta</div><div class="sub">Bs 250 · quincenal · 8 personas</div><div class="prog"><i style="width:62%"></i></div></div>
+        <div style="text-align:right"><div class="amt">5/8</div><span class="badge warn" style="margin-top:4px"><span class="d"></span>Tu turno</span></div>
+      </div>
+    </div></div>
+    <div><div class="clabel">Filas de movimiento</div><div class="demo">
+      <div class="txrow"><div class="tic in">↓</div><div class="ti"><div class="tn">Recarga QR</div><div class="td">Hoy · 14:32</div></div><div class="ta in">+Bs 500</div></div>
+      <div class="txrow" style="border:0"><div class="tic out">↑</div><div class="ti"><div class="tn">Aporte · Familia Aporta</div><div class="td">10 ago · 09:15</div></div><div class="ta out">−Bs 250</div></div>
+    </div></div>
+  </div>
+
+  <div class="subgrid cols2">
+    <div><div class="clabel">Alertas</div><div class="demo"><div class="demo-col">
+      <div class="alert ok"><span class="ic">✓</span><div><div class="t">Aporte confirmado</div><div class="m">Tu aporte de Bs 250 quedó guardado.</div></div></div>
+      <div class="alert warn"><span class="ic">!</span><div><div class="t">Turno por vencer</div><div class="m">Te toca aportar antes del 20/08.</div></div></div>
+    </div></div></div>
+    <div><div class="clabel">Tabs, breadcrumb, filtros, notificación</div><div class="demo"><div class="demo-col">
+      <div class="breadcrumb"><a href="#">Pasanakus</a> › <span class="cur">Familia Aporta</span></div>
+      <div class="tabs"><button class="on">Resumen</button><button>Movimientos</button><button>Integrantes</button></div>
+      <div class="filterbar"><span class="chip active">Todos <span class="x">×</span></span><span class="chip">Al día</span><span class="chip">Mi turno</span></div>
+      <div class="notif"><span class="nd"></span><div><div class="nt"><strong>Rosa</strong> confirmó su aporte.</div><div class="nm2">hace 5 min</div></div></div>
+    </div></div></div>
+  </div>
+
+  <div class="clabel">Acordeón (FAQ / detalles)</div>
+  <div class="demo" style="max-width:560px">
+    <div class="accordion open" onclick="this.classList.toggle('open')"><div class="ah">¿Cuándo recibo mi turno? <span class="chev">⌄</span></div><div class="ab">Tu turno depende del orden del grupo. Te avisamos con anticipación y verás la fecha en el detalle del pasanaku.</div></div>
+  </div>
+</section>
+</main>
+<footer><a href="../Atomos/Atomos.html">← Átomos</a><a href="../Organismos/Organismos.html">Siguiente: Organismos →</a></footer>
+<script src="../script.js"></script>

@@ -70,6 +70,69 @@ normas: [BCB, UIF art. 52 inc. i, antifraude]
 - O el usuario recibió el dinero y su saldo bajó, o el saldo volvió íntegro a
   disponible. No hay tercer estado.
 
+## Contrato · `packages/contratos/CU-11.ts`
+
+```ts
+export const EntradaCU11 = z.object({
+  claveIdempotencia: z.string().uuid(),
+  cuentaBilleteraId: z.string().uuid(),
+  monto:             MontoSchema,
+  instrumentoDestinoId: z.string().uuid(),
+  factorMfa:         z.string().min(6).max(8),
+}).strict()
+
+export const SalidaCU11 = z.object({
+  ordenRetiroId: z.string().uuid(),
+  estado:        z.enum(['PENDIENTE','EN_REVISION','AUTORIZADA','PAGADA','RECHAZADA']),
+  costoRetiro:   MontoSchema,
+  montoNeto:     MontoSchema,
+  retencionId:   z.string().uuid(),
+}).strict()
+
+export const ErroresCU11 = {
+  SALDO_INSUFICIENTE: 'AP-CU11-01',
+  MFA_REQUERIDO: 'AP-CU11-02',
+  INSTRUMENTO_EN_ENFRIAMIENTO: 'AP-CU11-03',
+  TITULAR_NO_COINCIDE: 'AP-CU11-04',
+  BLOQUEO_DE_AUTORIDAD: 'AP-CU11-05',
+  ENCAJE_INCUMPLIDO: 'AP-CU11-06',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SALDO_INSUFICIENTE` | El disponible no cubre monto más costo (R-BIL-02) |
+| `MFA_REQUERIDO` | Falta el segundo factor o es inválido (R-BIL-09) |
+| `INSTRUMENTO_EN_ENFRIAMIENTO` | El destino se agregó dentro de la ventana de enfriamiento |
+| `TITULAR_NO_COINCIDE` | El instrumento no es del titular |
+| `BLOQUEO_DE_AUTORIDAD` | Hay saldo inmovilizado por oficio |
+| `ENCAJE_INCUMPLIDO` | El sistema está en modo restringido (R-BIL-11) |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `calcularNetoDeRetiro` | Monto menos costo, con redondeo declarado; puro |
+| Átomo | `puedeRetirar` | Reúne las condiciones duras y devuelve el motivo del rechazo |
+| Molécula | `OrdenRetiroRepositorio` | Alta y transiciones |
+| Molécula | `RetencionSaldoRepositorio` | Reserva y liberación del importe |
+| Molécula | `DesembolsoAdaptador` | Instrucción al proveedor con la misma clave de idempotencia |
+| Organismo | `CU11RetirarSaldo` | Transacción: retención primero, pago después; nunca al revés |
+| Página | `POST /billetera/retiros` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `retiro.solicitado` | Retención del importe y evaluación antifraude | `BILLETERA_OPERAR` |
+| `retiro.pagado` | Transacción de billetera, asiento y umbrales UIF | — |
+| `retiro.rechazado` | Liberación de la retención y aviso | — |
+
+## Interfaz
+
+- **App:** *Retirar*: destino, monto, costo y neto a la vista antes de confirmar con biometría.
+- **Backoffice:** Cola de retiros en revisión, con el puntaje antifraude y la decisión del motor.
+
 ## Restricciones aplicables
 
 `R-BIL-01` · `R-BIL-02` · `R-BIL-06` · `R-BIL-07` · `R-BIL-08` · `R-BIL-09` ·

@@ -147,6 +147,10 @@ ALTER TABLE solicitud_retiro
   ADD CONSTRAINT fk_solicitud_retiro_participante_id
   FOREIGN KEY (participante_id) REFERENCES participante (id) ON DELETE RESTRICT ON UPDATE CASCADE;
 
+ALTER TABLE solicitud_retiro
+  ADD CONSTRAINT fk_solicitud_retiro_plan_regularizacion_id
+  FOREIGN KEY (plan_regularizacion_id) REFERENCES plan_regularizacion (id) ON DELETE SET NULL ON UPDATE CASCADE;
+
 ALTER TABLE sorteo_turnos
   ADD CONSTRAINT fk_sorteo_turnos_ejecutado_por
   FOREIGN KEY (ejecutado_por) REFERENCES usuario (id) ON DELETE RESTRICT ON UPDATE CASCADE;

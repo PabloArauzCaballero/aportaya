@@ -55,6 +55,60 @@ normas: [Respaldo de fondos de clientes, ASFI riesgo operativo]
 - Existe una fila por día y por cuenta de custodia que responde "¿está la plata?".
 - Ningún descuadre queda sin expediente ni sin plan de acción.
 
+## Contrato · `packages/contratos/CU-50.ts`
+
+```ts
+export const EntradaCU50 = z.object({
+  fecha: z.string().date(),
+  cuentaCustodiaId: z.string().uuid(),
+}).strict()
+
+export const SalidaCU50 = z.object({
+  conciliacionId: z.string().uuid(),
+  saldoDineroElectronico: MontoSchema,
+  saldoCustodia: MontoSchema,
+  ratioCobertura: z.string(),
+  cumpleEncaje: z.boolean(),
+  descuadres: z.array(z.object({ tipo: z.string(), monto: MontoSchema, severidad: z.string() })),
+}).strict()
+
+export const ErroresCU50 = {
+  SIN_CIERRES_DIARIOS: 'AP-CU50-01',
+  SIN_EXTRACTO_BANCARIO: 'AP-CU50-02',
+  CONCILIACION_DUPLICADA: 'AP-CU50-03',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SIN_CIERRES_DIARIOS` | Faltan saldos diarios sellados de la fecha |
+| `SIN_EXTRACTO_BANCARIO` | No se cargó el movimiento de custodia |
+| `CONCILIACION_DUPLICADA` | Ya existe para esa cuenta y fecha (R-BIL-11) |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `calcularCobertura` | Ratio con guarda de división por cero; puro |
+| Átomo | `clasificarDescuadre` | Faltante, sobrante, desfase o error de registro |
+| Molécula | `ConciliacionCustodiaRepositorio` | Conciliación diaria |
+| Molécula | `SaldoDiarioRepositorio` | Suma de saldos de billetera |
+| Molécula | `MovimientoCustodiaRepositorio` | Saldo real del banco |
+| Organismo | `CU50ConciliarCustodia` | Trabajo diario; bloquea el cierre si no cuadra |
+| Página | — | Sin endpoint: lo dispara el planificador o un evento |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `custodia.conciliada` | Habilita el cierre diario | Interno |
+| `custodia.descuadrada` | Modo restringido, incidente y evento de riesgo | — |
+
+## Interfaz
+
+- **App:** Si hay modo restringido, la app explica por qué no se puede retirar.
+- **Backoffice:** Tablero de encaje con el ratio por día y los descuadres abiertos.
+
 ## Restricciones aplicables
 
 `R-BIL-11` · `R-BIL-12` · `R-AUD-01` · `R-AUD-07`

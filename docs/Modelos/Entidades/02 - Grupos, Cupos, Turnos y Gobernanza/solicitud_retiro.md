@@ -6,8 +6,8 @@ tabla: solicitud_retiro
 clase: SolicitudRetiro
 modulo: "02 — Grupos, Cupos, Turnos y Gobernanza"
 clave_primaria: [id]
-columnas: 7
-fk_salientes: 1
+columnas: 9
+fk_salientes: 2
 fk_entrantes: 0
 append_only: false
 ---
@@ -25,6 +25,8 @@ append_only: false
 | `motivo` | VARCHAR(200) | — | no | — |
 | `solicitado_en` | TIMESTAMPTZ | — | no | — |
 | `estado` | VARCHAR(15) | — | no | CK |
+| `posicion` | VARCHAR(10) | — | sí | CK, NULL |
+| `plan_regularizacion_id` | UUID | FK | sí | FK, NULL |
 | `requiere_reemplazo` | BOOLEAN | — | no | — |
 | `liquidacion_calculada` | DECIMAL(14,2) | — | no | — |
 
@@ -33,10 +35,11 @@ append_only: false
 | Columna | Referencia a | Módulo | Opcional | Relación |
 | --- | --- | :-: | :-: | --- |
 | `participante_id` | [[participante]] | 02 | no | [[solicitud_retiro.participante_id → participante]] |
+| `plan_regularizacion_id` | [[plan_regularizacion]] | ↗ 03 | sí | [[solicitud_retiro.plan_regularizacion_id → plan_regularizacion]] |
 
 ## Entidades vecinas
 
-[[participante]]
+[[participante]] · [[plan_regularizacion]]
 
 ## Ver también
 

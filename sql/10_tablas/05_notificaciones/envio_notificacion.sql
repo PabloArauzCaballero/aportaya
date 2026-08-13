@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS envio_notificacion (
   canal_vinculado_id                 UUID,
   canal                              VARCHAR(15) NOT NULL,
   destinatario                       VARCHAR(150) NOT NULL,
+  clave_idempotencia                 VARCHAR(120) NOT NULL,
+  encolado_en                        TIMESTAMPTZ NOT NULL,
   contenido_enviado                  TEXT NOT NULL,
   estado                             VARCHAR(25) NOT NULL,
   id_mensaje_proveedor               VARCHAR(120),
@@ -35,6 +37,7 @@ COMMENT ON COLUMN envio_notificacion.proveedor_id IS 'FK';
 COMMENT ON COLUMN envio_notificacion.version_plantilla_id IS 'FK';
 COMMENT ON COLUMN envio_notificacion.canal_vinculado_id IS 'FK, NULL';
 COMMENT ON COLUMN envio_notificacion.canal IS 'CK';
+COMMENT ON COLUMN envio_notificacion.clave_idempotencia IS 'UQ';
 COMMENT ON COLUMN envio_notificacion.estado IS 'CK, IDX';
 COMMENT ON COLUMN envio_notificacion.id_mensaje_proveedor IS 'UQ, NULL';
 COMMENT ON COLUMN envio_notificacion.codigo_error IS 'NULL';

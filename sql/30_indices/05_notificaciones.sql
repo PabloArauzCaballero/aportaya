@@ -4,6 +4,9 @@
 CREATE UNIQUE INDEX IF NOT EXISTS uq_evento_notificable_tipo
   ON evento_notificable (tipo);
 
+CREATE INDEX IF NOT EXISTS ix_evento_notificable_categoria
+  ON evento_notificable (categoria);
+
 CREATE UNIQUE INDEX IF NOT EXISTS uq_plantilla_mensaje_codigo
   ON plantilla_mensaje (codigo);
 
@@ -31,6 +34,12 @@ CREATE INDEX IF NOT EXISTS ix_canal_vinculado_estado
 CREATE UNIQUE INDEX IF NOT EXISTS uq_lista_supresion_canal_identificador
   ON lista_supresion (canal, identificador);
 
+CREATE INDEX IF NOT EXISTS ix_lista_supresion_categoria
+  ON lista_supresion (categoria);
+
+CREATE INDEX IF NOT EXISTS ix_lista_supresion_activa
+  ON lista_supresion (activa);
+
 CREATE INDEX IF NOT EXISTS ix_notificacion_usuario_id
   ON notificacion (usuario_id);
 
@@ -51,6 +60,9 @@ CREATE INDEX IF NOT EXISTS ix_notificacion_correlation_id
 
 CREATE INDEX IF NOT EXISTS ix_envio_notificacion_notificacion_id
   ON envio_notificacion (notificacion_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_envio_notificacion_clave_idempotencia
+  ON envio_notificacion (clave_idempotencia);
 
 CREATE INDEX IF NOT EXISTS ix_envio_notificacion_estado
   ON envio_notificacion (estado);
