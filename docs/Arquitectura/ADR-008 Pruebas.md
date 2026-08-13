@@ -92,7 +92,7 @@ produciendo un esquema aplicable.
 
 ## Cómo se verifica
 
-- [ ] `pnpm test` levanta el contenedor, aplica `sql/aplicar.sql` y siembra.
+- [ ] `yarn test` levanta el contenedor, aplica `sql/aplicar.sql` y siembra.
 - [ ] Cada `CU<NN>.spec.ts` cubre todos los criterios de su caso de uso.
 - [ ] Las consultas de verificación de [[Restricciones]] devuelven cero filas al
       terminar la suite.

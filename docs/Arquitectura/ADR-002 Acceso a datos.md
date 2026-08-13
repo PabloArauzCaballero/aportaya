@@ -68,7 +68,7 @@ escrito en `sql/`, lo que hace la revisión más directa.
 
 - El esquema tiene un solo dueño y la bóveda sigue siendo verdad.
 - El SQL es visible, revisable y perfilable.
-- `pnpm datos:tipos` después de aplicar `sql/` deja errores de compilación donde el
+- `yarn datos:tipos` después de aplicar `sql/` deja errores de compilación donde el
   modelo cambió: la desincronización se detecta al compilar, no en producción.
 
 **En contra**

@@ -1,6 +1,6 @@
 ---
 name: entorno-monorepo
-description: "Trabajar en el monorepo de AportaYa: estructura de apps y packages, comandos de pnpm, orden de arranque local, regeneración del esquema y de los tipos, variables de entorno y qué hace el CI. Úsala al montar el entorno, al agregar un paquete o app, cuando algo no compila tras cambiar el modelo, o antes de abrir un PR."
+description: "Trabajar en el monorepo de AportaYa: estructura de apps y packages, comandos de yarn, orden de arranque local, regeneración del esquema y de los tipos, variables de entorno y qué hace el CI. Úsala al montar el entorno, al agregar un paquete o app, cuando algo no compila tras cambiar el modelo, o antes de abrir un PR."
 ---
 
 # Trabajar en el monorepo
@@ -30,7 +30,7 @@ Un archivo nuevo se ubica por **nivel**, no por conveniencia: `arquitectura-atom
 ## Arranque local, en orden
 
 ```bash
-pnpm install
+yarn install
 
 docker compose up -d db                       # PostgreSQL 16
 python3 scripts/generar_ddl.py                # el esquema sale de la bóveda
@@ -39,9 +39,9 @@ psql -d aportaya -v ON_ERROR_STOP=1 -f sql/60_semillas/sembrar.sql
 psql -d aportaya -f sql/60_semillas/99_desarrollo.sql   # solo local
 psql -d aportaya -f sql/50_verificacion/prueba_humo.sql # 69 comprobaciones
 
-pnpm datos:tipos                              # introspección → tipos de Kysely
-pnpm dev                                      # api + worker + backoffice
-pnpm --filter movil start                     # Expo aparte
+yarn datos:tipos                              # introspección → tipos de Kysely
+yarn dev                                      # api + worker + backoffice
+yarn workspace movil start                    # Expo aparte
 ```
 
 Si te salteás las semillas, **nada funciona**: *denegar por omisión* rechaza toda
@@ -51,13 +51,13 @@ operación sin límite, tarifario y licencia vigentes. Es el comportamiento corr
 
 | Comando | Qué hace |
 | --- | --- |
-| `pnpm dev` | Levanta api, worker y backoffice con recarga |
-| `pnpm test` | Suite completa: contenedor, esquema, semillas, pruebas |
-| `pnpm test:atomos` | Solo pruebas puras, sin contenedor (para guardar seguido) |
-| `pnpm lint` · `pnpm typecheck` | Estilo y tipos; ambos bloquean el PR |
-| `pnpm datos:tipos` | Regenera los tipos desde la base viva |
-| `pnpm contratos:openapi` | Deriva el OpenAPI desde los esquemas Zod |
-| `pnpm --filter <app> <script>` | Ejecuta en un solo workspace |
+| `yarn dev` | Levanta api, worker y backoffice con recarga |
+| `yarn test` | Suite completa: contenedor, esquema, semillas, pruebas |
+| `yarn test:atomos` | Solo pruebas puras, sin contenedor (para guardar seguido) |
+| `yarn lint` · `yarn typecheck` | Estilo y tipos; ambos bloquean el PR |
+| `yarn datos:tipos` | Regenera los tipos desde la base viva |
+| `yarn contratos:openapi` | Deriva el OpenAPI desde los esquemas Zod |
+| `yarn workspace <app> <script>` | Ejecuta en un solo workspace |
 
 ## Cuando cambia el modelo
 
@@ -68,7 +68,7 @@ Cambiar una tabla o una columna es un procedimiento, no una edición:
 2. skill restriccion      → si hay regla nueva que garantizar
 3. python3 scripts/generar_ddl.py
 4. aplicar sql/ en la base local
-5. pnpm datos:tipos       → el compilador señala cada lugar a revisar
+5. yarn datos:tipos       → el compilador señala cada lugar a revisar
 6. actualizar contratos y pruebas
 ```
 

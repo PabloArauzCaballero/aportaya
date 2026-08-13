@@ -10,10 +10,10 @@ se **deriva** de la base viva por introspección, nunca al revés
 ([[ADR-002 Acceso a datos]]).
 
 ```bash
-psql -f sql/aplicar.sql && pnpm datos:tipos   # base primero, tipos después
+psql -f sql/aplicar.sql && yarn datos:tipos   # base primero, tipos después
 ```
 
-Si `pnpm datos:tipos` produce un diff, el modelo cambió y hay lugares del código que
+Si `yarn datos:tipos` produce un diff, el modelo cambió y hay lugares del código que
 revisar: el compilador te va a decir cuáles. Ese es todo el mecanismo anti-divergencia.
 
 ## Repositorio: recibe la transacción, no la crea
