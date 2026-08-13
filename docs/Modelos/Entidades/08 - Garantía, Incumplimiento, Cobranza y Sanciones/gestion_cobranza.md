@@ -9,7 +9,7 @@ estereotipo: Raíz de agregado
 clave_primaria: [id]
 columnas: 12
 fk_salientes: 3
-fk_entrantes: 2
+fk_entrantes: 3
 append_only: false
 ---
 
@@ -47,11 +47,12 @@ append_only: false
 | Entidad | Columna | Módulo | Relación |
 | --- | --- | :-: | --- |
 | [[accion_cobranza]] | `gestion_id` | 08 | [[accion_cobranza.gestion_id → gestion_cobranza]] |
+| [[cuenta_por_cobrar_comision]] | `gestion_cobranza_id` | ↗ 11 | [[cuenta_por_cobrar_comision.gestion_cobranza_id → gestion_cobranza]] |
 | [[promesa_pago]] | `gestion_id` | 08 | [[promesa_pago.gestion_id → gestion_cobranza]] |
 
 ## Entidades vecinas
 
-[[accion_cobranza]] · [[estrategia_cobranza]] · [[promesa_pago]] · [[registro_incumplimiento]] · [[usuario]]
+[[accion_cobranza]] · [[cuenta_por_cobrar_comision]] · [[estrategia_cobranza]] · [[promesa_pago]] · [[registro_incumplimiento]] · [[usuario]]
 
 ## Ver también
 

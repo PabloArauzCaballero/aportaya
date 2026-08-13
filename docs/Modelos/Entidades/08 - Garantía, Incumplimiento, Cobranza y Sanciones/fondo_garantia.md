@@ -27,7 +27,7 @@ append_only: false
 | `politica_cobertura_id` | UUID | FK | no | FK |
 | `cuenta_contable_id` | UUID | FK | no | FK, M3 |
 | `moneda` | CHAR(3) | — | no | — |
-| `saldo_disponible` | DECIMAL(16,2) <<CK: >= 0>> | — | no | — |
+| `saldo_disponible` | DECIMAL(16,2) | — | no | CK: >= 0 |
 | `saldo_comprometido` | DECIMAL(16,2) | — | no | — |
 | `total_aportado` | DECIMAL(16,2) | — | no | — |
 | `total_cubierto` | DECIMAL(16,2) | — | no | — |

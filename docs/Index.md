@@ -3,9 +3,9 @@ tags:
   - moc
   - indice
 titulo: "Pasanaku Digital — modelo de datos"
-entidades: 174
-relaciones_fk: 334
-modulos: 9
+entidades: 274
+relaciones_fk: 565
+modulos: 12
 ---
 
 # Pasanaku Digital — Índice
@@ -21,13 +21,17 @@ modulos: 9
 docs/
 ├── Index.md                 ← estás acá
 ├── Modelos/
-│   ├── Entidades/           ← una nota por tabla (174), en 9 carpetas
+│   ├── Entidades/           ← una nota por tabla (274), en 12 carpetas
 │   │   ├── 01 - Identidad, Usuarios y Seguridad/
 │   │   ├── 02 - Grupos, Cupos, Turnos y Gobernanza/
 │   │   └── ...
-│   └── Relaciones/          ← una nota por clave foránea (334), en 9 carpetas
+│   └── Relaciones/          ← una nota por clave foránea (565), en 12 carpetas
 │       ├── 01 - Identidad, Usuarios y Seguridad/
 │       └── ...
+├── CasosDeUso/              ← un caso de uso por flujo (36), con criterios de aceptación
+├── Cumplimiento.md          ← matriz normativa ASFI · UIF · BCB · SIN · ISO
+├── Restricciones.md         ← catálogo de restricciones con DDL
+├── Stack.md                 ← opciones de tecnología para backend y frontend
 └── entidades/               ← justificación de negocio + diagramas .puml
 ```
 
@@ -36,14 +40,20 @@ docs/
 | **Entidades** | Una nota por tabla, agrupadas en una carpeta por módulo: columnas, claves, FK salientes y entrantes, entidades vecinas y las notas del diagrama. | [[_Entidades]] |
 | **Relaciones** | Una nota por FK, agrupadas por el módulo de la tabla de origen: destino, cardinalidad, si es opcional y si cruza módulos. | [[_Relaciones]] |
 | **entidades/** | Por qué existe cada entidad, a nivel de negocio y de sistema. Un documento por módulo. | [[docs/entidades/README\|Fichas de negocio]] |
+| **Cumplimiento** | Contraste requisito por requisito contra ASFI, UIF, BCB, SIN e ISO, con estado y brechas abiertas. | [[Cumplimiento]] |
+| **Casos de uso** | Cómo se ejecuta cada flujo: pasos, tablas, validaciones, evidencia y criterios de aceptación. | [[_CasosDeUso]] |
+| **Restricciones** | Las reglas que la base de datos hace cumplir, con su DDL y la norma que las obliga. | [[Restricciones]] |
+| **Stack** | Opciones de backend y frontend, evaluadas contra lo que el modelo exige (RLS, decimal, transacción por caso de uso, outbox). | [[Stack]] |
 
-## Los tres registros que conviene entender primero
+## Los cinco registros que conviene entender primero
 
-Casi todo el modelo se explica con tres ideas. Si vas a leer solo tres notas, que sean estas:
+Casi todo el modelo se explica con cinco ideas. Si vas a leer solo cinco notas, que sean estas:
 
 1. **[[obligacion_aporte]]** — el eje del dinero. La cubre el fondo, la deduce la entrega y la puntúa la reputación.
 2. **[[registro_incumplimiento]]** — el incumplimiento como expediente, no como bandera.
 3. **[[asiento_contable]]** — doble partida: nada se edita, todo se reversa.
+4. **[[transaccion_billetera]]** — el saldo no se guarda: se deriva de un libro append-only con partida doble interna.
+5. **[[concepto_tarifa]]** — la política de cobro completa en seis columnas: se cambia con un seeder, no con un despliegue.
 
 ## Módulos
 
@@ -51,13 +61,16 @@ Casi todo el modelo se explica con tres ideas. Si vas a leer solo tres notas, qu
 | :-: | --- | --- | --: | --: | --- |
 | 01 | Identidad, Usuarios y Seguridad | Saber con certeza a quién le estás confiando plata ajena | 25 | 32 | [[01_identidad_usuarios\|negocio]] |
 | 02 | Grupos, Cupos, Turnos y Gobernanza | Reglas del juego, orden de cobro y decisiones colectivas | 22 | 48 | [[02_grupos_turnos\|negocio]] |
-| 03 | Aportes, Pagos QR y Conciliación | Que "pagué" signifique "el banco lo confirmó" | 22 | 45 | [[03_aportes_pagos_qr\|negocio]] |
+| 03 | Aportes, Pagos QR y Conciliación | Que "pagué" signifique "el banco lo confirmó" | 23 | 46 | [[03_aportes_pagos_qr\|negocio]] |
 | 04 | Entregas de Fondo | Que la bolsa llegue completa, a la persona correcta, una sola vez | 10 | 24 | [[04_entregas_fondo\|negocio]] |
 | 05 | Notificaciones y Comunicaciones | WhatsApp como canal real de cobro, sin spam ni doble aviso | 15 | 21 | [[05_notificaciones\|negocio]] |
 | 06 | Transparencia y Reputación | Que nadie tenga que "creerle" al organizador | 16 | 22 | [[06_transparencia_reputacion\|negocio]] |
-| 07 | Organizador y Automatización | Administrar es un rol, no un negocio: sin comisión y sin custodia | 12 | 17 | [[07_organizador_automatizacion\|negocio]] |
+| 07 | Organizador y Automatización | Administrar es un rol, no un negocio: el organizador no cobra ni custodia | 12 | 17 | [[07_organizador_automatizacion\|negocio]] |
 | 08 | Garantía, Incumplimiento, Cobranza y Sanciones | El grupo no se detiene, pero la deuda no se perdona sola | 33 | 99 | [[08_garantia_incumplimiento\|negocio]] |
 | 09 | Auditoría, Reportes y Cumplimiento | Poder demostrar todo lo anterior ante un reclamo o un regulador | 19 | 26 | [[09_auditoria_reportes\|negocio]] |
+| 10 | Billetera, Custodia y Dinero Electrónico | El saldo no se guarda: se deriva, y todos los días cuadra contra el banco | 25 | 63 | [[10_billetera_custodia\|negocio]] |
+| 11 | Tarifas, Comisiones, Impuestos y Facturación | La política de cobro es dato, no código: se cambia con un seeder | 27 | 65 | [[11_tarifas_comisiones\|negocio]] |
+| 12 | Cumplimiento Regulatorio y Consumidor Financiero | Que una inspección se responda con consultas, no armando carpetas | 47 | 102 | [[12_cumplimiento_asfi\|negocio]] |
 
 ## Entidades más conectadas
 
@@ -65,35 +78,38 @@ El grado (FK entrantes + salientes) es un buen proxy de importancia estructural:
 
 | Entidad | Módulo | FK salientes | FK entrantes | Grado |
 | --- | :-: | --: | --: | --: |
-| [[usuario]] | 01 | 0 | 107 | **107** |
-| [[grupo]] | 02 | 1 | 38 | **39** |
-| [[participante]] | 02 | 3 | 24 | **27** |
+| [[usuario]] | 01 | 0 | 195 | **195** |
+| [[grupo]] | 02 | 1 | 45 | **46** |
+| [[participante]] | 02 | 3 | 25 | **28** |
 | [[registro_incumplimiento]] | 08 | 9 | 11 | **20** |
+| [[transaccion_billetera]] | 10 | 5 | 14 | **19** |
+| [[cuenta_billetera]] | 10 | 4 | 14 | **18** |
 | [[entrega_fondo]] | 04 | 8 | 8 | **16** |
-| [[token_verificacion]] | 01 | 4 | 9 | **13** |
-| [[obligacion_aporte]] | 03 | 7 | 5 | **12** |
-| [[pago]] | 03 | 3 | 8 | **11** |
-| [[acuerdo]] | 02 | 2 | 7 | **9** |
-| [[cobertura_incumplimiento]] | 08 | 7 | 2 | **9** |
-| [[deuda_participante]] | 08 | 5 | 4 | **9** |
-| [[cupo]] | 02 | 2 | 6 | **8** |
+| [[token_verificacion]] | 01 | 4 | 10 | **14** |
+| [[obligacion_aporte]] | 03 | 7 | 7 | **14** |
+| [[pago]] | 03 | 4 | 9 | **13** |
+| [[devengo_comision]] | 11 | 7 | 6 | **13** |
+| [[asiento_contable]] | 03 | 3 | 8 | **11** |
 
 ## Acoplamiento entre módulos
 
-De las 334 claves foráneas, **164 cruzan módulos**. La matriz muestra
+De las 565 claves foráneas, **297 cruzan módulos**. La matriz muestra
 cuántas FK van de un módulo (fila) a otro (columna):
 
-| desde \ hacia | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 |
-| :-: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| **01** | · | · | · | · | · | · | · | 1 | · |
-| **02** | 11 | · | 1 | · | · | · | 1 | 1 | · |
-| **03** | 12 | 9 | · | · | · | · | · | · | · |
-| **04** | 8 | 5 | 1 | · | · | · | · | · | · |
-| **05** | 4 | 1 | 1 | · | · | · | · | · | · |
-| **06** | 7 | 7 | · | · | · | · | · | · | · |
-| **07** | 7 | 1 | · | · | · | · | · | · | · |
-| **08** | 27 | 29 | 8 | 2 | 1 | · | · | · | · |
-| **09** | 16 | 3 | · | · | · | · | · | · | · |
+| desde \ hacia | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 10 | 11 | 12 |
+| :-: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| **01** | · | · | · | · | · | · | · | 1 | · | · | · | · |
+| **02** | 11 | · | 1 | · | · | · | 1 | 1 | · | · | · | · |
+| **03** | 12 | 9 | · | · | · | · | · | · | · | · | · | · |
+| **04** | 8 | 5 | 1 | · | · | · | · | · | · | · | · | · |
+| **05** | 4 | 1 | 1 | · | · | · | · | · | · | · | · | · |
+| **06** | 7 | 7 | · | · | · | · | · | · | · | · | · | · |
+| **07** | 7 | 1 | · | · | · | · | · | · | · | · | · | · |
+| **08** | 27 | 29 | 8 | 2 | 1 | · | · | · | · | · | · | · |
+| **09** | 16 | 3 | · | · | · | · | · | · | · | · | · | · |
+| **10** | 18 | 3 | 8 | · | · | · | · | · | 1 | · | · | · |
+| **11** | 15 | 6 | 6 | 1 | · | · | · | 1 | · | 3 | · | 1 |
+| **12** | 60 | · | · | · | · | · | · | · | 4 | 5 | 1 | · |
 
 > [!tip] Cómo leerla
 > La columna **01** llena de números confirma que identidad es el cimiento: casi

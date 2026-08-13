@@ -35,6 +35,9 @@ MODULOS = {
     "07": ("Organizador y Automatización", "07_organizador_automatizacion"),
     "08": ("Garantía, Incumplimiento, Cobranza y Sanciones", "08_garantia_incumplimiento"),
     "09": ("Auditoría, Reportes y Cumplimiento", "09_auditoria_reportes"),
+    "10": ("Billetera, Custodia y Dinero Electrónico", "10_billetera_custodia"),
+    "11": ("Tarifas, Comisiones, Impuestos y Facturación", "11_tarifas_comisiones"),
+    "12": ("Cumplimiento Regulatorio y Consumidor Financiero", "12_cumplimiento_asfi"),
 }
 
 APPEND_ONLY = {
@@ -42,6 +45,10 @@ APPEND_ONLY = {
     "registro_acceso_datos", "movimiento_fondo", "abono_recuperacion",
     "historial_estado_incumplimiento", "registro_incumplimiento",
     "asiento_contable", "movimiento_contable",
+    "transaccion_billetera", "movimiento_billetera", "movimiento_custodia",
+    "saldo_diario_billetera", "devengo_comision",
+    "registro_operacion_relevante", "evento_riesgo_operativo",
+    "acta_comite",
 }
 
 # --- FK -> tabla destino: overrides donde el nombre de columna no coincide ---
@@ -85,11 +92,49 @@ OVERRIDES = {
     "plan_regularizacion_id": "plan_regularizacion",
     "actor_usuario_id": "usuario", "suplantando_a_usuario_id": "usuario",
     "aprobado_por_acuerdo_id": "acuerdo",
+    # --- M10: billetera y custodia ---
+    "transaccion_id": "transaccion_billetera",
+    "transaccion_origen_id": "transaccion_billetera",
+    "transaccion_original_id": "transaccion_billetera",
+    "transaccion_reverso_id": "transaccion_billetera",
+    "cuenta_billetera_origen_id": "cuenta_billetera",
+    "cuenta_billetera_destino_id": "cuenta_billetera",
+    "instrumento_destino_id": "instrumento_fondeo",
+    "retencion_id": "retencion_saldo",
+    "limite_id": "limite_operativo_billetera",
+    # --- M11: tarifas y comisiones ---
+    "hecho_generador_id": "catalogo_hecho_generador",
+    "tarifario_anterior_id": "tarifario", "tarifario_nuevo_id": "tarifario",
+    "segmento_id": "segmento_comercial",
+    "cotizacion_id": "cotizacion_comision",
+    "devengo_id": "devengo_comision",
+    "campana_id": "campana_promocional",
+    "cuenta_ingreso_id": "cuenta_contable",
+    "factura_id": "factura_electronica",
+    "evento_significativo_id": "evento_significativo_sin",
+    # --- M12: cumplimiento ---
+    "matriz_riesgo_id": "matriz_riesgo_lft",
+    "calificacion_riesgo_id": "calificacion_riesgo_cliente",
+    "regla_monitoreo_id": "regla_monitoreo_lft",
+    "alerta_monitoreo_id": "alerta_monitoreo_lft",
+    "caso_id": "caso_investigacion_lft",
+    "catalogo_reporte_id": "catalogo_reporte_regulatorio",
+    "reclamo_id": "reclamo_cliente",
+    "evento_riesgo_id": "evento_riesgo_operativo",
+    "hallazgo_id": "hallazgo_auditoria",
+    "control_id": "control_interno",
+    "umbral_reporte_id": "umbral_reporte_uif",
+    "operacion_inicio_ventana_id": "registro_operacion_relevante",
+    "declaracion_origen_fondos_id": "declaracion_origen_fondos",
+    "propietario_id": "usuario", "custodio_id": "usuario",
+    "responsable_id": "usuario", "analista_id": "usuario",
+    "usuario_obligado_id": "usuario", "responsable_usuario_id": "usuario",
 }
 # FK por modulo cuando el nombre es ambiguo
 POR_MODULO = {
     ("03", "proveedor_id"): "proveedor_pago", ("04", "proveedor_id"): "proveedor_pago",
     ("05", "proveedor_id"): "proveedor_mensajeria",
+    ("10", "proveedor_id"): "proveedor_pago", ("11", "proveedor_id"): "proveedor_pago",
     ("04", "regla_id"): "regla_entrega", ("07", "regla_id"): "regla_automatizacion",
     ("09", "regla_id"): "regla_cumplimiento",
     ("05", "evento_id"): "evento_notificable",
@@ -137,8 +182,8 @@ def parse_puml(path):
             if " : " not in line_s:
                 continue
             nombre, resto = line_s.split(" : ", 1)
-            anot = re.findall(r"<<([^>]*)>>", resto)
-            tipo = re.sub(r"<<[^>]*>>", "", resto).strip()
+            anot = re.findall(r"<<(.*?)>>", resto)
+            tipo = re.sub(r"<<.*?>>", "", resto).strip()
             flat = ", ".join(anot)
             cols.append({
                 "nombre": nombre.strip(), "tipo": tipo, "pk": pk or "PK" in flat,
@@ -179,10 +224,11 @@ for k, d in mods.items():
         alias_de[(k, alias)] = e["tabla"]
 
 
-def clase_de(tabla):
+def clase_de(tabla, modulo=None):
     cand = "".join(p.capitalize() for p in tabla.split("_"))
-    for k, d in mods.items():
-        for c, st in d["clases"].items():
+    orden = ([modulo] if modulo else []) + [k for k in mods if k != modulo]
+    for k in orden:
+        for c, st in mods[k]["clases"].items():
             if c.lower() == cand.lower():
                 return c, st
     return None, ""
@@ -279,7 +325,7 @@ for k, d in mods.items():
     for alias in d["orden"]:
         e = d["entidades"][alias]
         t = e["tabla"]
-        clase, ster = clase_de(t)
+        clase, ster = clase_de(t, k)
         ster_txt = {"AR": "Raíz de agregado", "VO": "Objeto de valor",
                     "Svc": "Servicio de dominio", "Pol": "Política configurable"}.get(ster, "")
         pks = [c["nombre"] for c in e["cols"] if c["pk"]]
@@ -443,7 +489,8 @@ for k, d in sorted(mods.items()):
          "[[_Relaciones|← Todas las relaciones]] · [[Index]]\n",
          "| Relación | Destino | Cruza | Opcional |", "| --- | --- | :-: | :-: |"]
     for f in fks_mod:
-        cruza = "↗ " + f["modulo_destino"] if f["modulo_destino"] != k else "—"
+        cruza = ("↗ " + f["modulo_destino"]
+                 if f["modulo_destino"] and f["modulo_destino"] != k else "—")
         L.append(f'| [[{f["origen"]}.{f["columna"]} → {f["destino"]}]] | [[{f["destino"]}]] | '
                  f'{cruza} | {"sí" if f["opcional"] else "no"} |')
     (REL / carpeta_modulo(k) / f"_Relaciones {k}.md").write_text("\n".join(L) + "\n")
@@ -467,9 +514,12 @@ FOCO = {
     "04": "Que la bolsa llegue completa, a la persona correcta, una sola vez",
     "05": "WhatsApp como canal real de cobro, sin spam ni doble aviso",
     "06": 'Que nadie tenga que "creerle" al organizador',
-    "07": "Administrar es un rol, no un negocio: sin comisión y sin custodia",
+    "07": "Administrar es un rol, no un negocio: el organizador no cobra ni custodia",
     "08": "El grupo no se detiene, pero la deuda no se perdona sola",
     "09": "Poder demostrar todo lo anterior ante un reclamo o un regulador",
+    "10": "El saldo no se guarda: se deriva, y todos los días cuadra contra el banco",
+    "11": "La política de cobro es dato, no código: se cambia con un seeder",
+    "12": "Que una inspección se responda con consultas, no armando carpetas",
 }
 
 tablas = []
@@ -491,7 +541,7 @@ L = ["---",
      'titulo: "Pasanaku Digital — modelo de datos"',
      f"entidades: {len(tablas)}",
      f"relaciones_fk: {len(fks)}",
-     "modulos: 9",
+     f"modulos: {len(mods)}",
      "---\n",
      "# Pasanaku Digital — Índice\n",
      "> [!abstract] Qué es esta bóveda",
@@ -503,13 +553,16 @@ L = ["---",
      "docs/",
      "├── Index.md                 ← estás acá",
      "├── Modelos/",
-     "│   ├── Entidades/           ← una nota por tabla (174), en 9 carpetas",
+     f"│   ├── Entidades/           ← una nota por tabla ({len(tablas)}), en {len(mods)} carpetas",
      "│   │   ├── 01 - Identidad, Usuarios y Seguridad/",
      "│   │   ├── 02 - Grupos, Cupos, Turnos y Gobernanza/",
      "│   │   └── ...",
-     "│   └── Relaciones/          ← una nota por clave foránea (334), en 9 carpetas",
+     f"│   └── Relaciones/          ← una nota por clave foránea ({len(fks)}), en {len(mods)} carpetas",
      "│       ├── 01 - Identidad, Usuarios y Seguridad/",
      "│       └── ...",
+     "├── CasosDeUso/              ← un caso de uso por flujo (36), con criterios de aceptación",
+     "├── Cumplimiento.md          ← matriz normativa ASFI · UIF · BCB · SIN · ISO",
+     "├── Restricciones.md         ← catálogo de restricciones con DDL",
      "└── entidades/               ← justificación de negocio + diagramas .puml",
      "```\n",
      "| Carpeta | Qué contiene | Índice |",
@@ -517,11 +570,16 @@ L = ["---",
      "| **Entidades** | Una nota por tabla, agrupadas en una carpeta por módulo: columnas, claves, FK salientes y entrantes, entidades vecinas y las notas del diagrama. | [[_Entidades]] |",
      "| **Relaciones** | Una nota por FK, agrupadas por el módulo de la tabla de origen: destino, cardinalidad, si es opcional y si cruza módulos. | [[_Relaciones]] |",
      "| **entidades/** | Por qué existe cada entidad, a nivel de negocio y de sistema. Un documento por módulo. | [[docs/entidades/README\\|Fichas de negocio]] |",
-     "\n## Los tres registros que conviene entender primero\n",
-     "Casi todo el modelo se explica con tres ideas. Si vas a leer solo tres notas, que sean estas:\n",
+     "| **Cumplimiento** | Contraste requisito por requisito contra ASFI, UIF, BCB, SIN e ISO, con estado y brechas abiertas. | [[Cumplimiento]] |",
+     "| **Casos de uso** | Cómo se ejecuta cada flujo: pasos, tablas, validaciones, evidencia y criterios de aceptación. | [[_CasosDeUso]] |",
+     "| **Restricciones** | Las reglas que la base de datos hace cumplir, con su DDL y la norma que las obliga. | [[Restricciones]] |",
+     "\n## Los cinco registros que conviene entender primero\n",
+     "Casi todo el modelo se explica con cinco ideas. Si vas a leer solo cinco notas, que sean estas:\n",
      "1. **[[obligacion_aporte]]** — el eje del dinero. La cubre el fondo, la deduce la entrega y la puntúa la reputación.",
      "2. **[[registro_incumplimiento]]** — el incumplimiento como expediente, no como bandera.",
-     "3. **[[asiento_contable]]** — doble partida: nada se edita, todo se reversa.\n",
+     "3. **[[asiento_contable]]** — doble partida: nada se edita, todo se reversa.",
+     "4. **[[transaccion_billetera]]** — el saldo no se guarda: se deriva de un libro append-only con partida doble interna.",
+     "5. **[[concepto_tarifa]]** — la política de cobro completa en seis columnas: se cambia con un seeder, no con un despliegue.\n",
      "## Módulos\n",
      "| # | Módulo | Foco de negocio | Tablas | FK | Fichas |",
      "| :-: | --- | --- | --: | --: | --- |"]

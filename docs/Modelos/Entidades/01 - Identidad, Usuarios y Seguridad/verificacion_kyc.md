@@ -8,7 +8,7 @@ modulo: "01 — Identidad, Usuarios y Seguridad"
 clave_primaria: [id]
 columnas: 14
 fk_salientes: 3
-fk_entrantes: 1
+fk_entrantes: 2
 append_only: false
 ---
 
@@ -47,11 +47,12 @@ append_only: false
 
 | Entidad | Columna | Módulo | Relación |
 | --- | --- | :-: | --- |
+| [[debida_diligencia]] | `verificacion_kyc_id` | ↗ 12 | [[debida_diligencia.verificacion_kyc_id → verificacion_kyc]] |
 | [[solicitud_organizador]] | `kyc_reforzado_id` | ↗ 07 | [[solicitud_organizador.kyc_reforzado_id → verificacion_kyc]] |
 
 ## Entidades vecinas
 
-[[documento_identidad]] · [[solicitud_organizador]] · [[usuario]]
+[[debida_diligencia]] · [[documento_identidad]] · [[solicitud_organizador]] · [[usuario]]
 
 ## Ver también
 

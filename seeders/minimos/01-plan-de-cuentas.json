@@ -1,0 +1,147 @@
+{
+  "descripcion": "Plan de cuentas mínimo. El saldo de los usuarios es pasivo exigible (2.1.x), nunca patrimonio.",
+  "entorno": "minimo",
+  "bloques": [
+    {
+      "tabla": "cuenta_contable",
+      "conflicto": [
+        "codigo"
+      ],
+      "filas": [
+        {
+          "codigo": "1.1.01",
+          "nombre": "Cuenta de custodia — dinero electrónico",
+          "tipo": "ACTIVO",
+          "naturaleza": "DEUDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "1.1.02",
+          "nombre": "Bancos recaudadores",
+          "tipo": "ACTIVO",
+          "naturaleza": "DEUDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "1.1.03",
+          "nombre": "Efectivo en puntos de atención",
+          "tipo": "ACTIVO",
+          "naturaleza": "DEUDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "1.2.01",
+          "nombre": "Cuentas por cobrar — comisiones",
+          "tipo": "ACTIVO",
+          "naturaleza": "DEUDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "1.2.02",
+          "nombre": "Cuentas por cobrar — subrogación fondo de garantía",
+          "tipo": "ACTIVO",
+          "naturaleza": "DEUDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "2.1.01",
+          "nombre": "Dinero electrónico por pagar — usuarios",
+          "tipo": "PASIVO",
+          "naturaleza": "ACREEDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "2.1.02",
+          "nombre": "Dinero electrónico por pagar — grupos",
+          "tipo": "PASIVO",
+          "naturaleza": "ACREEDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "2.1.03",
+          "nombre": "Fondo de garantía — recursos de los grupos",
+          "tipo": "PASIVO",
+          "naturaleza": "ACREEDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "2.1.04",
+          "nombre": "Saldos en suspenso no identificados",
+          "tipo": "PASIVO",
+          "naturaleza": "ACREEDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "2.2.01",
+          "nombre": "IVA débito fiscal por pagar",
+          "tipo": "PASIVO",
+          "naturaleza": "ACREEDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "2.2.02",
+          "nombre": "Impuesto a las transacciones por pagar",
+          "tipo": "PASIVO",
+          "naturaleza": "ACREEDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "3.1.01",
+          "nombre": "Capital",
+          "tipo": "PATRIMONIO",
+          "naturaleza": "ACREEDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "3.2.01",
+          "nombre": "Resultados acumulados",
+          "tipo": "PATRIMONIO",
+          "naturaleza": "ACREEDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "4.1.01",
+          "nombre": "Ingresos por comisión de servicio",
+          "tipo": "INGRESO",
+          "naturaleza": "ACREEDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "4.1.02",
+          "nombre": "Ingresos por comisión de retiro",
+          "tipo": "INGRESO",
+          "naturaleza": "ACREEDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "5.1.01",
+          "nombre": "Costos de proveedores de pago",
+          "tipo": "EGRESO",
+          "naturaleza": "DEUDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "5.1.02",
+          "nombre": "Costos de mensajería",
+          "tipo": "EGRESO",
+          "naturaleza": "DEUDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "5.2.01",
+          "nombre": "Pérdidas por riesgo operativo",
+          "tipo": "EGRESO",
+          "naturaleza": "DEUDORA",
+          "saldo": 0
+        },
+        {
+          "codigo": "5.2.02",
+          "nombre": "Devoluciones y bonificaciones a clientes",
+          "tipo": "EGRESO",
+          "naturaleza": "DEUDORA",
+          "saldo": 0
+        }
+      ]
+    }
+  ]
+}

@@ -60,11 +60,15 @@ append_only: false
 ## Notas del modelo
 
 > **RN-18 como ausencia de esquema**
-> No existen tablas esquema_comision,
-> devengo_comision, liquidacion_comision ni
+> No existen esquema_comision_organizador,
+> liquidacion_comision_organizador ni
 > pago_comision: lo que hace imposible el cobro
 > es que no haya donde representarlo, no una
 > validacion que alguien pueda desactivar.
+> devengo_comision (M11) existe, pero su
+> usuario_obligado_id es quien PAGA la comision
+> del servicio, nunca quien la cobra: el unico
+> beneficiario posible es la plataforma.
 
 > usuario_id -> usuario.id (M1).
 > Sin cuenta_cobro_id: no hay egreso hacia el

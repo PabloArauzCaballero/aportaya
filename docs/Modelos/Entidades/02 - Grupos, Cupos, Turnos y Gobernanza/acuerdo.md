@@ -8,7 +8,7 @@ modulo: "02 — Grupos, Cupos, Turnos y Gobernanza"
 clave_primaria: [id]
 columnas: 14
 fk_salientes: 2
-fk_entrantes: 7
+fk_entrantes: 8
 append_only: false
 ---
 
@@ -51,12 +51,13 @@ append_only: false
 | [[plan_contingencia]] | `acuerdo_grupo_id` | ↗ 08 | [[plan_contingencia.acuerdo_grupo_id → acuerdo]] |
 | [[reemplazo_participante]] | `acuerdo_grupo_id` | ↗ 08 | [[reemplazo_participante.acuerdo_grupo_id → acuerdo]] |
 | [[sancion]] | `acuerdo_grupo_id` | ↗ 08 | [[sancion.acuerdo_grupo_id → acuerdo]] |
+| [[tarifa_congelada_grupo]] | `acuerdo_id` | ↗ 11 | [[tarifa_congelada_grupo.acuerdo_id → acuerdo]] |
 | [[traspaso_cupo]] | `aprobado_por_acuerdo_id` | 02 | [[traspaso_cupo.aprobado_por_acuerdo_id → acuerdo]] |
 | [[voto_participante]] | `acuerdo_id` | 02 | [[voto_participante.acuerdo_id → acuerdo]] |
 
 ## Entidades vecinas
 
-[[acuerdo_quita]] · [[disolucion_anticipada]] · [[grupo]] · [[plan_contingencia]] · [[reemplazo_participante]] · [[sancion]] · [[traspaso_cupo]] · [[usuario]] · [[voto_participante]]
+[[acuerdo_quita]] · [[disolucion_anticipada]] · [[grupo]] · [[plan_contingencia]] · [[reemplazo_participante]] · [[sancion]] · [[tarifa_congelada_grupo]] · [[traspaso_cupo]] · [[usuario]] · [[voto_participante]]
 
 ## Notas del modelo
 

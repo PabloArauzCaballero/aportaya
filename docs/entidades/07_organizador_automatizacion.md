@@ -18,10 +18,31 @@ Dos invariantes gobiernan este módulo:
 > le agrega funciones administrativas, no un ingreso.
 
 La segunda parte es una decisión de producto deliberada y tiene una consecuencia
-directa sobre el modelo: **no existe ninguna entidad de comisión**. No hay esquema,
-no hay devengo, no hay liquidación, no hay pago al organizador. La ausencia de la
-estructura es lo que hace imposible el cobro — una garantía mucho más fuerte que
-un permiso o una bandera que alguien pueda cambiar.
+directa sobre el modelo: **no existe ninguna entidad que represente un ingreso del
+organizador**. No hay esquema de comisión suya, no hay devengo a su favor, no hay
+liquidación ni pago hacia él. La ausencia de la estructura es lo que hace imposible
+el cobro — una garantía mucho más fuerte que un permiso o una bandera que alguien
+pueda cambiar.
+
+> [!important] La plataforma sí cobra; el organizador no
+> Desde la incorporación de la billetera (M10), **la plataforma cobra una comisión
+> por el servicio** —custodia, cobro, conciliación, notificación, garantía y
+> soporte— modelada en el módulo 11. Eso no cambia RN-18 en nada, y conviene ser
+> preciso sobre por qué:
+>
+> - El ingreso pertenece a la **empresa que presta el servicio**, con tarifario
+>   público, versionado, con preaviso de cambios y factura. No a la persona que
+>   administra el grupo.
+> - El organizador **no percibe ninguna porción** de esa comisión: no existe
+>   concepto de tarifa con beneficiario `ORGANIZADOR`, ni cuenta por pagar hacia
+>   él, ni deducción a su favor.
+> - El conflicto de interés que RN-18 evita sigue evitado: quien decide si se
+>   exonera un aporte o se expulsa a alguien **no gana más ni menos** por esas
+>   decisiones. La comisión de plataforma no depende de ninguna decisión
+>   discrecional del organizador.
+>
+> En una frase: *administrar sigue sin ser un negocio; prestar el servicio sí lo
+> es, y se cobra con reglas públicas.*
 
 Qué se gana con eso, en términos de negocio:
 
@@ -365,11 +386,13 @@ hizo el sistema de lo que hizo una persona.
 
 ---
 
-## Qué se eliminó del modelo al quitar la comisión
+## Qué se eliminó del modelo al quitar la comisión del organizador
 
 Estas entidades existían en la versión anterior del módulo y **ya no forman parte
 del modelo**. Se documentan acá para que quede constancia de qué se quitó y qué
-consecuencia tuvo:
+consecuencia tuvo. Ninguna reapareció con el módulo 11: las estructuras de
+comisión que ahora existen pertenecen a la plataforma y viven fuera de este
+módulo, sin ninguna FK hacia `organizador`.
 
 | Entidad eliminada | Qué hacía | Efecto de quitarla |
 | --- | --- | --- |
@@ -389,10 +412,19 @@ Y los cambios que esto propagó a otros módulos:
 | Módulo | Qué se quitó |
 | --- | --- |
 | M2 | `acuerdo.referencia_afectada_id` ya no puede apuntar a `esquema_comision.id` |
-| M3 | `TipoObligacion.COMISION_ORGANIZADOR` y `AsientoContable.origenTipo = COMISION` |
-| M4 | `TipoDeduccion.COMISION_ORGANIZADOR`: **la bolsa ya no se descuenta por comisión** |
-| M5 | Evento notificable `LIQUIDACION_COMISION` |
-| M9 | Reporte `LIQUIDACION_COMISIONES` |
+| M3 | `TipoObligacion.COMISION_ORGANIZADOR` |
+| M4 | `TipoDeduccion.COMISION_ORGANIZADOR`: **la bolsa ya no se descuenta para pagarle a quien administra** |
+| M5 | Evento notificable `LIQUIDACION_COMISION` (del organizador) |
+| M9 | Reporte `LIQUIDACION_COMISIONES` (del organizador) |
+
+Y lo que sí existe hoy, para que no se confunda con lo anterior:
+
+| Módulo | Qué existe, y a favor de quién |
+| --- | --- |
+| M3 | `TipoObligacion.COMISION_PLATAFORMA` — solo si el tarifario prorratea la comisión del **servicio** |
+| M4 | `TipoDeduccion.COMISION_PLATAFORMA` — deducción a favor de la **empresa**, con concepto y tarifario trazables |
+| M11 | `tarifario`, `concepto_tarifa`, `devengo_comision`, `factura_electronica` — ingresos de la **plataforma** |
+| M7 | nada: **ninguna tabla de M11 tiene FK hacia `organizador`** |
 
 ---
 

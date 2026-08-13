@@ -8,7 +8,7 @@ modulo: "09 — Auditoría, Reportes y Cumplimiento"
 clave_primaria: [id]
 columnas: 13
 fk_salientes: 2
-fk_entrantes: 0
+fk_entrantes: 1
 append_only: false
 ---
 
@@ -41,9 +41,15 @@ append_only: false
 | `asignado_a` | [[usuario]] | ↗ 01 | sí | [[ticket_soporte.asignado_a → usuario]] |
 | `usuario_id` | [[usuario]] | ↗ 01 | no | [[ticket_soporte.usuario_id → usuario]] |
 
+## Referenciada por
+
+| Entidad | Columna | Módulo | Relación |
+| --- | --- | :-: | --- |
+| [[reclamo_cliente]] | `ticket_soporte_id` | ↗ 12 | [[reclamo_cliente.ticket_soporte_id → ticket_soporte]] |
+
 ## Entidades vecinas
 
-[[usuario]]
+[[reclamo_cliente]] · [[usuario]]
 
 ## Ver también
 

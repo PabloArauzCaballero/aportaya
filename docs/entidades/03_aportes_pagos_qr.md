@@ -52,8 +52,10 @@ desincronizar porque no se escribe a mano.
 el aporte del período, el recargo por mora, el aporte al fondo de garantía, la
 reposición de una cobertura consumida y el ajuste manual. Cada uno se cobra
 distinto, se contabiliza en cuenta distinta y tiene distinto tratamiento si el
-grupo se disuelve. (No hay tipo de comisión: el organizador no cobra por
-administrar, RN-18.)
+grupo se disuelve. Hay un sexto tipo, `COMISION_PLATAFORMA`, que solo se usa
+cuando el tarifario define que la comisión del servicio se prorratea entre los
+participantes en vez de deducirse de la entrega (M11). **Ninguno de los tipos
+representa un ingreso del organizador: administrar sigue sin cobrarse (RN-18).**
 
 `obligacionOrigenId` implementa una decisión de diseño importante: **un recargo
 por mora es OTRA obligación**, que apunta a la original. Así el `montoEsperado`
@@ -607,3 +609,24 @@ favor inexistente.
 | `WebhookPasarela` | Un reintento de la pasarela acredita dos veces el mismo aporte. |
 | Doble partida | Los descuadres se descubren meses después, sin forma de reconstruirlos. |
 | `CierreDiario` | Los descuadres se arrastran hasta volverse irresolubles. |
+
+---
+
+### `TipoCambio` / `tipo_cambio`
+
+**Qué es.** El tipo de cambio por moneda y fecha, con su fuente.
+
+**Para qué sirve (negocio).** Los umbrales de reporte están expresados en dólares
+y las operaciones ocurren en bolivianos. Sin el tipo de cambio del día guardado,
+la pregunta "¿esta operación superaba el umbral?" no tiene respuesta reproducible
+dos años después: cada recálculo daría un número distinto.
+
+**Por qué debe existir.** Porque el registro de la operación relevante
+([[registro_operacion_relevante]], M12) **copia** el `tipo_cambio_aplicado` al
+momento del hecho. Esta tabla es de dónde sale ese número, y `fuente` dice si vino
+del banco central, de un proveedor o de una carga manual.
+
+**A nivel de sistema.** `UNIQUE (moneda_origen, moneda_destino, fecha)`. La
+función `fn_fx_a_usd()` del motor de umbrales toma la cotización vigente más
+reciente y **falla si no hay ninguna**: es preferible bloquear la operación a
+registrarla con una conversión inventada.

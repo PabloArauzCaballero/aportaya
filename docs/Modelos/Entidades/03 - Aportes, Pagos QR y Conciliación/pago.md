@@ -7,9 +7,9 @@ clase: Pago
 modulo: "03 — Aportes, Pagos QR y Conciliación"
 estereotipo: Raíz de agregado
 clave_primaria: [id]
-columnas: 18
-fk_salientes: 3
-fk_entrantes: 8
+columnas: 19
+fk_salientes: 4
+fk_entrantes: 9
 append_only: false
 ---
 
@@ -24,7 +24,8 @@ append_only: false
 | `id` | UUID | PK | no | PK |
 | `obligacion_id` | UUID | FK IDX | no | FK, IDX |
 | `intento_pago_id` | UUID | FK UQ | sí | FK, NULL, UQ |
-| `monto` | DECIMAL(14,2) <<CK: > 0>> | — | no | — |
+| `proveedor_id` | UUID | FK IDX | sí | FK, NULL, IDX |
+| `monto` | DECIMAL(14,2) | — | no | CK: > 0 |
 | `moneda` | CHAR(3) | — | no | — |
 | `monto_comision_proveedor` | DECIMAL(10,2) | — | no | — |
 | `monto_neto_acreditado` | DECIMAL(14,2) | — | no | — |
@@ -32,7 +33,7 @@ append_only: false
 | `estado` | VARCHAR(15) | IDX | no | CK, IDX |
 | `fecha_hora_pago` | TIMESTAMPTZ | IDX | no | IDX |
 | `fecha_hora_acreditacion` | TIMESTAMPTZ | — | sí | NULL |
-| `referencia_proveedor` | VARCHAR(80) | UQ | no | UQ+proveedor |
+| `referencia_proveedor` | VARCHAR(80) | UQ | no | UQ+proveedor_id |
 | `pagador_nombre` | VARCHAR(120) | — | sí | NULL |
 | `pagador_documento` | VARCHAR(30) | — | sí | NULL |
 | `cuenta_origen_enmascarada` | VARCHAR(40) | — | sí | NULL |
@@ -46,6 +47,7 @@ append_only: false
 | --- | --- | :-: | :-: | --- |
 | `intento_pago_id` | [[intento_pago]] | 03 | sí | [[pago.intento_pago_id → intento_pago]] |
 | `obligacion_id` | [[obligacion_aporte]] | 03 | no | [[pago.obligacion_id → obligacion_aporte]] |
+| `proveedor_id` | [[proveedor_pago]] | 03 | sí | [[pago.proveedor_id → proveedor_pago]] |
 | `registrado_por` | [[usuario]] | ↗ 01 | sí | [[pago.registrado_por → usuario]] |
 
 ## Referenciada por
@@ -58,12 +60,13 @@ append_only: false
 | [[constancia_pago]] | `pago_id` | 03 | [[constancia_pago.pago_id → pago]] |
 | [[disputa_pago]] | `pago_id` | 03 | [[disputa_pago.pago_id → pago]] |
 | [[ejecucion_aval]] | `pago_id` | ↗ 08 | [[ejecucion_aval.pago_id → pago]] |
+| [[orden_recarga]] | `pago_id` | ↗ 10 | [[orden_recarga.pago_id → pago]] |
 | [[reembolso]] | `pago_id` | 03 | [[reembolso.pago_id → pago]] |
 | [[webhook_pasarela]] | `pago_id` | 03 | [[webhook_pasarela.pago_id → pago]] |
 
 ## Entidades vecinas
 
-[[abono_recuperacion]] · [[comprobante_manual]] · [[conciliacion]] · [[constancia_pago]] · [[disputa_pago]] · [[ejecucion_aval]] · [[intento_pago]] · [[obligacion_aporte]] · [[reembolso]] · [[usuario]] · [[webhook_pasarela]]
+[[abono_recuperacion]] · [[comprobante_manual]] · [[conciliacion]] · [[constancia_pago]] · [[disputa_pago]] · [[ejecucion_aval]] · [[intento_pago]] · [[obligacion_aporte]] · [[orden_recarga]] · [[proveedor_pago]] · [[reembolso]] · [[usuario]] · [[webhook_pasarela]]
 
 ## Notas del modelo
 

@@ -8,7 +8,7 @@ modulo: "01 — Identidad, Usuarios y Seguridad"
 clave_primaria: [id]
 columnas: 11
 fk_salientes: 1
-fk_entrantes: 2
+fk_entrantes: 4
 append_only: false
 ---
 
@@ -42,12 +42,14 @@ append_only: false
 
 | Entidad | Columna | Módulo | Relación |
 | --- | --- | :-: | --- |
+| [[aceptacion_contrato]] | `dispositivo_id` | ↗ 12 | [[aceptacion_contrato.dispositivo_id → dispositivo]] |
 | [[sesion]] | `dispositivo_id` | 01 | [[sesion.dispositivo_id → dispositivo]] |
 | [[token_verificacion]] | `dispositivo_id` | 01 | [[token_verificacion.dispositivo_id → dispositivo]] |
+| [[transaccion_billetera]] | `dispositivo_id` | ↗ 10 | [[transaccion_billetera.dispositivo_id → dispositivo]] |
 
 ## Entidades vecinas
 
-[[sesion]] · [[token_verificacion]] · [[usuario]]
+[[aceptacion_contrato]] · [[sesion]] · [[token_verificacion]] · [[transaccion_billetera]] · [[usuario]]
 
 ## Ver también
 

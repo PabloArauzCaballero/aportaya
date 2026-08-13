@@ -8,7 +8,7 @@ modulo: "01 — Identidad, Usuarios y Seguridad"
 clave_primaria: [id]
 columnas: 11
 fk_salientes: 2
-fk_entrantes: 0
+fk_entrantes: 1
 append_only: false
 ---
 
@@ -39,9 +39,15 @@ append_only: false
 | `dispositivo_id` | [[dispositivo]] | 01 | no | [[sesion.dispositivo_id → dispositivo]] |
 | `usuario_id` | [[usuario]] | 01 | no | [[sesion.usuario_id → usuario]] |
 
+## Referenciada por
+
+| Entidad | Columna | Módulo | Relación |
+| --- | --- | :-: | --- |
+| [[transaccion_billetera]] | `sesion_id` | ↗ 10 | [[transaccion_billetera.sesion_id → sesion]] |
+
 ## Entidades vecinas
 
-[[dispositivo]] · [[usuario]]
+[[dispositivo]] · [[transaccion_billetera]] · [[usuario]]
 
 ## Ver también
 

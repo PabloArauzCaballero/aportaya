@@ -2,13 +2,13 @@
 tags:
   - moc
   - indice
-relaciones_fk: 334
-cross_modulo: 164
+relaciones_fk: 565
+cross_modulo: 297
 ---
 
 # Índice de relaciones (claves foráneas)
 
-Las **334 claves foráneas** del modelo. **164** cruzan módulos.
+Las **565 claves foráneas** del modelo. **297** cruzan módulos.
 
 [[Index|← Índice general]] · [[_Entidades|Entidades →]]
 
@@ -182,6 +182,139 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[solicitud_datos_personales]] | `usuario_id` | [[usuario]] | 09 → 01 | no | [[solicitud_datos_personales.usuario_id → usuario\|ver]] |
 | [[ticket_soporte]] | `asignado_a` | [[usuario]] | 09 → 01 | sí | [[ticket_soporte.asignado_a → usuario\|ver]] |
 | [[ticket_soporte]] | `usuario_id` | [[usuario]] | 09 → 01 | no | [[ticket_soporte.usuario_id → usuario\|ver]] |
+| [[arqueo_punto_atencion]] | `arqueado_por` | [[usuario]] | 10 → 01 | no | [[arqueo_punto_atencion.arqueado_por → usuario\|ver]] |
+| [[bloqueo_saldo]] | `levantada_por` | [[usuario]] | 10 → 01 | sí | [[bloqueo_saldo.levantada_por → usuario\|ver]] |
+| [[certificado_saldo]] | `solicitado_por` | [[usuario]] | 10 → 01 | no | [[certificado_saldo.solicitado_por → usuario\|ver]] |
+| [[conciliacion_custodia]] | `cierre_diario_id` | [[cierre_diario]] | 10 → 03 | sí | [[conciliacion_custodia.cierre_diario_id → cierre_diario\|ver]] |
+| [[conciliacion_custodia]] | `ejecutada_por` | [[usuario]] | 10 → 01 | sí | [[conciliacion_custodia.ejecutada_por → usuario\|ver]] |
+| [[cuenta_billetera]] | `cuenta_contable_id` | [[cuenta_contable]] | 10 → 03 | sí | [[cuenta_billetera.cuenta_contable_id → cuenta_contable\|ver]] |
+| [[cuenta_billetera]] | `grupo_id` | [[grupo]] | 10 → 02 | sí | [[cuenta_billetera.grupo_id → grupo\|ver]] |
+| [[cuenta_billetera]] | `usuario_id` | [[usuario]] | 10 → 01 | sí | [[cuenta_billetera.usuario_id → usuario\|ver]] |
+| [[descuadre_custodia]] | `incidente_operativo_id` | [[incidente_operativo]] | 10 → 09 | sí | [[descuadre_custodia.incidente_operativo_id → incidente_operativo\|ver]] |
+| [[descuadre_custodia]] | `resuelto_por` | [[usuario]] | 10 → 01 | sí | [[descuadre_custodia.resuelto_por → usuario\|ver]] |
+| [[evaluacion_antifraude]] | `revisada_por` | [[usuario]] | 10 → 01 | sí | [[evaluacion_antifraude.revisada_por → usuario\|ver]] |
+| [[instrumento_fondeo]] | `usuario_id` | [[usuario]] | 10 → 01 | no | [[instrumento_fondeo.usuario_id → usuario\|ver]] |
+| [[movimiento_custodia]] | `movimiento_bancario_id` | [[movimiento_bancario]] | 10 → 03 | sí | [[movimiento_custodia.movimiento_bancario_id → movimiento_bancario\|ver]] |
+| [[orden_recarga]] | `pago_id` | [[pago]] | 10 → 03 | sí | [[orden_recarga.pago_id → pago\|ver]] |
+| [[orden_recarga]] | `proveedor_id` | [[proveedor_pago]] | 10 → 03 | sí | [[orden_recarga.proveedor_id → proveedor_pago\|ver]] |
+| [[orden_retiro]] | `aprobada_por` | [[usuario]] | 10 → 01 | sí | [[orden_retiro.aprobada_por → usuario\|ver]] |
+| [[orden_retiro]] | `proveedor_id` | [[proveedor_pago]] | 10 → 03 | sí | [[orden_retiro.proveedor_id → proveedor_pago\|ver]] |
+| [[politica_billetera]] | `aprobada_por` | [[usuario]] | 10 → 01 | sí | [[politica_billetera.aprobada_por → usuario\|ver]] |
+| [[punto_atencion]] | `responsable_usuario_id` | [[usuario]] | 10 → 01 | sí | [[punto_atencion.responsable_usuario_id → usuario\|ver]] |
+| [[regla_antifraude]] | `aprobada_por` | [[usuario]] | 10 → 01 | sí | [[regla_antifraude.aprobada_por → usuario\|ver]] |
+| [[retencion_saldo]] | `liberada_por` | [[usuario]] | 10 → 01 | sí | [[retencion_saldo.liberada_por → usuario\|ver]] |
+| [[reverso_transaccion]] | `autorizada_por` | [[usuario]] | 10 → 01 | no | [[reverso_transaccion.autorizada_por → usuario\|ver]] |
+| [[solicitud_cierre_billetera]] | `aprobada_por` | [[usuario]] | 10 → 01 | sí | [[solicitud_cierre_billetera.aprobada_por → usuario\|ver]] |
+| [[transaccion_billetera]] | `asiento_contable_id` | [[asiento_contable]] | 10 → 03 | sí | [[transaccion_billetera.asiento_contable_id → asiento_contable\|ver]] |
+| [[transaccion_billetera]] | `dispositivo_id` | [[dispositivo]] | 10 → 01 | sí | [[transaccion_billetera.dispositivo_id → dispositivo\|ver]] |
+| [[transaccion_billetera]] | `grupo_id` | [[grupo]] | 10 → 02 | sí | [[transaccion_billetera.grupo_id → grupo\|ver]] |
+| [[transaccion_billetera]] | `iniciada_por` | [[usuario]] | 10 → 01 | sí | [[transaccion_billetera.iniciada_por → usuario\|ver]] |
+| [[transaccion_billetera]] | `sesion_id` | [[sesion]] | 10 → 01 | sí | [[transaccion_billetera.sesion_id → sesion\|ver]] |
+| [[transferencia_p2p]] | `grupo_id` | [[grupo]] | 10 → 02 | sí | [[transferencia_p2p.grupo_id → grupo\|ver]] |
+| [[transferencia_p2p]] | `obligacion_id` | [[obligacion_aporte]] | 10 → 03 | sí | [[transferencia_p2p.obligacion_id → obligacion_aporte\|ver]] |
+| [[asignacion_tarifario]] | `autorizado_por` | [[usuario]] | 11 → 01 | sí | [[asignacion_tarifario.autorizado_por → usuario\|ver]] |
+| [[asignacion_tarifario]] | `grupo_id` | [[grupo]] | 11 → 02 | sí | [[asignacion_tarifario.grupo_id → grupo\|ver]] |
+| [[asignacion_tarifario]] | `usuario_id` | [[usuario]] | 11 → 01 | sí | [[asignacion_tarifario.usuario_id → usuario\|ver]] |
+| [[cambio_tarifario]] | `aprobado_por` | [[usuario]] | 11 → 01 | no | [[cambio_tarifario.aprobado_por → usuario\|ver]] |
+| [[campana_promocional]] | `aprobada_por` | [[usuario]] | 11 → 01 | no | [[campana_promocional.aprobada_por → usuario\|ver]] |
+| [[cargo_comision]] | `deduccion_entrega_id` | [[deduccion_entrega]] | 11 → 04 | sí | [[cargo_comision.deduccion_entrega_id → deduccion_entrega\|ver]] |
+| [[cargo_comision]] | `obligacion_id` | [[obligacion_aporte]] | 11 → 03 | sí | [[cargo_comision.obligacion_id → obligacion_aporte\|ver]] |
+| [[cargo_comision]] | `transaccion_id` | [[transaccion_billetera]] | 11 → 10 | sí | [[cargo_comision.transaccion_id → transaccion_billetera\|ver]] |
+| [[concepto_tarifa]] | `cuenta_ingreso_id` | [[cuenta_contable]] | 11 → 03 | sí | [[concepto_tarifa.cuenta_ingreso_id → cuenta_contable\|ver]] |
+| [[costo_proveedor_operacion]] | `proveedor_id` | [[proveedor_pago]] | 11 → 03 | no | [[costo_proveedor_operacion.proveedor_id → proveedor_pago\|ver]] |
+| [[costo_proveedor_operacion]] | `transaccion_id` | [[transaccion_billetera]] | 11 → 10 | sí | [[costo_proveedor_operacion.transaccion_id → transaccion_billetera\|ver]] |
+| [[cuenta_por_cobrar_comision]] | `gestion_cobranza_id` | [[gestion_cobranza]] | 11 → 08 | sí | [[cuenta_por_cobrar_comision.gestion_cobranza_id → gestion_cobranza\|ver]] |
+| [[cuenta_por_cobrar_comision]] | `usuario_id` | [[usuario]] | 11 → 01 | no | [[cuenta_por_cobrar_comision.usuario_id → usuario\|ver]] |
+| [[datos_facturacion]] | `usuario_id` | [[usuario]] | 11 → 01 | no | [[datos_facturacion.usuario_id → usuario\|ver]] |
+| [[devengo_comision]] | `asiento_contable_id` | [[asiento_contable]] | 11 → 03 | sí | [[devengo_comision.asiento_contable_id → asiento_contable\|ver]] |
+| [[devengo_comision]] | `grupo_id` | [[grupo]] | 11 → 02 | sí | [[devengo_comision.grupo_id → grupo\|ver]] |
+| [[devengo_comision]] | `participante_id` | [[participante]] | 11 → 02 | sí | [[devengo_comision.participante_id → participante\|ver]] |
+| [[devengo_comision]] | `usuario_obligado_id` | [[usuario]] | 11 → 01 | no | [[devengo_comision.usuario_obligado_id → usuario\|ver]] |
+| [[devolucion_comision]] | `autorizada_por` | [[usuario]] | 11 → 01 | no | [[devolucion_comision.autorizada_por → usuario\|ver]] |
+| [[devolucion_comision]] | `reclamo_id` | [[reclamo_cliente]] | 11 → 12 | sí | [[devolucion_comision.reclamo_id → reclamo_cliente\|ver]] |
+| [[devolucion_comision]] | `transaccion_id` | [[transaccion_billetera]] | 11 → 10 | sí | [[devolucion_comision.transaccion_id → transaccion_billetera\|ver]] |
+| [[evento_significativo_sin]] | `registrado_por` | [[usuario]] | 11 → 01 | sí | [[evento_significativo_sin.registrado_por → usuario\|ver]] |
+| [[exencion_comision]] | `autorizada_por` | [[usuario]] | 11 → 01 | no | [[exencion_comision.autorizada_por → usuario\|ver]] |
+| [[exencion_comision]] | `grupo_id` | [[grupo]] | 11 → 02 | sí | [[exencion_comision.grupo_id → grupo\|ver]] |
+| [[exencion_comision]] | `usuario_id` | [[usuario]] | 11 → 01 | sí | [[exencion_comision.usuario_id → usuario\|ver]] |
+| [[factura_electronica]] | `usuario_id` | [[usuario]] | 11 → 01 | no | [[factura_electronica.usuario_id → usuario\|ver]] |
+| [[impuesto]] | `cuenta_contable_id` | [[cuenta_contable]] | 11 → 03 | sí | [[impuesto.cuenta_contable_id → cuenta_contable\|ver]] |
+| [[liquidacion_ingresos]] | `asiento_contable_id` | [[asiento_contable]] | 11 → 03 | sí | [[liquidacion_ingresos.asiento_contable_id → asiento_contable\|ver]] |
+| [[liquidacion_ingresos]] | `cerrada_por` | [[usuario]] | 11 → 01 | sí | [[liquidacion_ingresos.cerrada_por → usuario\|ver]] |
+| [[simulacion_tarifa]] | `ejecutada_por` | [[usuario]] | 11 → 01 | no | [[simulacion_tarifa.ejecutada_por → usuario\|ver]] |
+| [[tarifa_congelada_grupo]] | `acuerdo_id` | [[acuerdo]] | 11 → 02 | sí | [[tarifa_congelada_grupo.acuerdo_id → acuerdo\|ver]] |
+| [[tarifa_congelada_grupo]] | `grupo_id` | [[grupo]] | 11 → 02 | no | [[tarifa_congelada_grupo.grupo_id → grupo\|ver]] |
+| [[tarifario]] | `aprobado_por` | [[usuario]] | 11 → 01 | sí | [[tarifario.aprobado_por → usuario\|ver]] |
+| [[aceptacion_contrato]] | `dispositivo_id` | [[dispositivo]] | 12 → 01 | sí | [[aceptacion_contrato.dispositivo_id → dispositivo\|ver]] |
+| [[aceptacion_contrato]] | `token_firma_id` | [[token_verificacion]] | 12 → 01 | sí | [[aceptacion_contrato.token_firma_id → token_verificacion\|ver]] |
+| [[aceptacion_contrato]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[aceptacion_contrato.usuario_id → usuario\|ver]] |
+| [[acta_comite]] | `elaborada_por` | [[usuario]] | 12 → 01 | sí | [[acta_comite.elaborada_por → usuario\|ver]] |
+| [[activo_informacion]] | `custodio_id` | [[usuario]] | 12 → 01 | sí | [[activo_informacion.custodio_id → usuario\|ver]] |
+| [[activo_informacion]] | `propietario_id` | [[usuario]] | 12 → 01 | sí | [[activo_informacion.propietario_id → usuario\|ver]] |
+| [[alerta_monitoreo_lft]] | `asignada_a` | [[usuario]] | 12 → 01 | sí | [[alerta_monitoreo_lft.asignada_a → usuario\|ver]] |
+| [[alerta_monitoreo_lft]] | `cuenta_billetera_id` | [[cuenta_billetera]] | 12 → 10 | sí | [[alerta_monitoreo_lft.cuenta_billetera_id → cuenta_billetera\|ver]] |
+| [[alerta_monitoreo_lft]] | `transaccion_id` | [[transaccion_billetera]] | 12 → 10 | sí | [[alerta_monitoreo_lft.transaccion_id → transaccion_billetera\|ver]] |
+| [[alerta_monitoreo_lft]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[alerta_monitoreo_lft.usuario_id → usuario\|ver]] |
+| [[beneficiario_final]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[beneficiario_final.usuario_id → usuario\|ver]] |
+| [[calificacion_riesgo_cliente]] | `calificado_por` | [[usuario]] | 12 → 01 | sí | [[calificacion_riesgo_cliente.calificado_por → usuario\|ver]] |
+| [[calificacion_riesgo_cliente]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[calificacion_riesgo_cliente.usuario_id → usuario\|ver]] |
+| [[capacitacion_cumplimiento]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[capacitacion_cumplimiento.usuario_id → usuario\|ver]] |
+| [[caso_investigacion_lft]] | `analista_id` | [[usuario]] | 12 → 01 | no | [[caso_investigacion_lft.analista_id → usuario\|ver]] |
+| [[caso_investigacion_lft]] | `reporte_operacion_sospechosa_id` | [[reporte_operacion_sospechosa]] | 12 → 09 | sí | [[caso_investigacion_lft.reporte_operacion_sospechosa_id → reporte_operacion_sospechosa\|ver]] |
+| [[caso_investigacion_lft]] | `revisado_por` | [[usuario]] | 12 → 01 | sí | [[caso_investigacion_lft.revisado_por → usuario\|ver]] |
+| [[caso_investigacion_lft]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[caso_investigacion_lft.usuario_id → usuario\|ver]] |
+| [[contrato_adhesion]] | `aprobado_por` | [[usuario]] | 12 → 01 | sí | [[contrato_adhesion.aprobado_por → usuario\|ver]] |
+| [[contrato_tercero]] | `responsable_id` | [[usuario]] | 12 → 01 | sí | [[contrato_tercero.responsable_id → usuario\|ver]] |
+| [[control_interno]] | `responsable_id` | [[usuario]] | 12 → 01 | sí | [[control_interno.responsable_id → usuario\|ver]] |
+| [[debida_diligencia]] | `aprobada_por` | [[usuario]] | 12 → 01 | sí | [[debida_diligencia.aprobada_por → usuario\|ver]] |
+| [[debida_diligencia]] | `segunda_revision_por` | [[usuario]] | 12 → 01 | sí | [[debida_diligencia.segunda_revision_por → usuario\|ver]] |
+| [[debida_diligencia]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[debida_diligencia.usuario_id → usuario\|ver]] |
+| [[debida_diligencia]] | `verificacion_kyc_id` | [[verificacion_kyc]] | 12 → 01 | sí | [[debida_diligencia.verificacion_kyc_id → verificacion_kyc\|ver]] |
+| [[declaracion_origen_fondos]] | `transaccion_id` | [[transaccion_billetera]] | 12 → 10 | sí | [[declaracion_origen_fondos.transaccion_id → transaccion_billetera\|ver]] |
+| [[declaracion_origen_fondos]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[declaracion_origen_fondos.usuario_id → usuario\|ver]] |
+| [[declaracion_origen_fondos]] | `verificada_por` | [[usuario]] | 12 → 01 | sí | [[declaracion_origen_fondos.verificada_por → usuario\|ver]] |
+| [[declaracion_pep]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[declaracion_pep.usuario_id → usuario\|ver]] |
+| [[declaracion_pep]] | `verificada_por` | [[usuario]] | 12 → 01 | sí | [[declaracion_pep.verificada_por → usuario\|ver]] |
+| [[designacion_regulatoria]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[designacion_regulatoria.usuario_id → usuario\|ver]] |
+| [[desvio_perfil]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[desvio_perfil.usuario_id → usuario\|ver]] |
+| [[documento_publicado]] | `publicado_por` | [[usuario]] | 12 → 01 | sí | [[documento_publicado.publicado_por → usuario\|ver]] |
+| [[envio_regulatorio]] | `enviado_por` | [[usuario]] | 12 → 01 | sí | [[envio_regulatorio.enviado_por → usuario\|ver]] |
+| [[evaluacion_riesgo_producto]] | `aprobada_por` | [[usuario]] | 12 → 01 | sí | [[evaluacion_riesgo_producto.aprobada_por → usuario\|ver]] |
+| [[evaluacion_tercero]] | `evaluado_por` | [[usuario]] | 12 → 01 | no | [[evaluacion_tercero.evaluado_por → usuario\|ver]] |
+| [[evento_riesgo_operativo]] | `incidente_operativo_id` | [[incidente_operativo]] | 12 → 09 | sí | [[evento_riesgo_operativo.incidente_operativo_id → incidente_operativo\|ver]] |
+| [[evento_riesgo_operativo]] | `registrado_por` | [[usuario]] | 12 → 01 | no | [[evento_riesgo_operativo.registrado_por → usuario\|ver]] |
+| [[expediente_cliente]] | `responsable_id` | [[usuario]] | 12 → 01 | sí | [[expediente_cliente.responsable_id → usuario\|ver]] |
+| [[expediente_cliente]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[expediente_cliente.usuario_id → usuario\|ver]] |
+| [[factor_riesgo_evaluado]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[factor_riesgo_evaluado.usuario_id → usuario\|ver]] |
+| [[hallazgo_auditoria]] | `responsable_id` | [[usuario]] | 12 → 01 | sí | [[hallazgo_auditoria.responsable_id → usuario\|ver]] |
+| [[incidente_seguridad]] | `incidente_operativo_id` | [[incidente_operativo]] | 12 → 09 | sí | [[incidente_seguridad.incidente_operativo_id → incidente_operativo\|ver]] |
+| [[incidente_seguridad]] | `responsable_id` | [[usuario]] | 12 → 01 | sí | [[incidente_seguridad.responsable_id → usuario\|ver]] |
+| [[licencia_regulatoria]] | `responsable_id` | [[usuario]] | 12 → 01 | sí | [[licencia_regulatoria.responsable_id → usuario\|ver]] |
+| [[matriz_riesgo_lft]] | `aprobada_por` | [[usuario]] | 12 → 01 | sí | [[matriz_riesgo_lft.aprobada_por → usuario\|ver]] |
+| [[observacion_regulatoria]] | `responsable_id` | [[usuario]] | 12 → 01 | sí | [[observacion_regulatoria.responsable_id → usuario\|ver]] |
+| [[oficial_cumplimiento]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[oficial_cumplimiento.usuario_id → usuario\|ver]] |
+| [[perfil_transaccional]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[perfil_transaccional.usuario_id → usuario\|ver]] |
+| [[plan_accion_riesgo]] | `responsable_id` | [[usuario]] | 12 → 01 | no | [[plan_accion_riesgo.responsable_id → usuario\|ver]] |
+| [[plan_continuidad]] | `responsable_id` | [[usuario]] | 12 → 01 | sí | [[plan_continuidad.responsable_id → usuario\|ver]] |
+| [[politica_interna]] | `responsable_id` | [[usuario]] | 12 → 01 | sí | [[politica_interna.responsable_id → usuario\|ver]] |
+| [[prueba_continuidad]] | `ejecutada_por` | [[usuario]] | 12 → 01 | no | [[prueba_continuidad.ejecutada_por → usuario\|ver]] |
+| [[prueba_control]] | `ejecutada_por` | [[usuario]] | 12 → 01 | no | [[prueba_control.ejecutada_por → usuario\|ver]] |
+| [[punto_reclamo]] | `responsable_id` | [[usuario]] | 12 → 01 | sí | [[punto_reclamo.responsable_id → usuario\|ver]] |
+| [[reclamo_cliente]] | `devolucion_comision_id` | [[devolucion_comision]] | 12 → 11 | sí | [[reclamo_cliente.devolucion_comision_id → devolucion_comision\|ver]] |
+| [[reclamo_cliente]] | `responsable_id` | [[usuario]] | 12 → 01 | sí | [[reclamo_cliente.responsable_id → usuario\|ver]] |
+| [[reclamo_cliente]] | `ticket_soporte_id` | [[ticket_soporte]] | 12 → 09 | sí | [[reclamo_cliente.ticket_soporte_id → ticket_soporte\|ver]] |
+| [[reclamo_cliente]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[reclamo_cliente.usuario_id → usuario\|ver]] |
+| [[registro_operacion_relevante]] | `transaccion_id` | [[transaccion_billetera]] | 12 → 10 | no | [[registro_operacion_relevante.transaccion_id → transaccion_billetera\|ver]] |
+| [[registro_operacion_relevante]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[registro_operacion_relevante.usuario_id → usuario\|ver]] |
+| [[regla_monitoreo_lft]] | `aprobada_por` | [[usuario]] | 12 → 01 | sí | [[regla_monitoreo_lft.aprobada_por → usuario\|ver]] |
+| [[reporte_regulatorio]] | `aprobado_por` | [[usuario]] | 12 → 01 | sí | [[reporte_regulatorio.aprobado_por → usuario\|ver]] |
+| [[reporte_regulatorio]] | `generado_por` | [[usuario]] | 12 → 01 | sí | [[reporte_regulatorio.generado_por → usuario\|ver]] |
+| [[reporte_regulatorio]] | `revisado_por` | [[usuario]] | 12 → 01 | sí | [[reporte_regulatorio.revisado_por → usuario\|ver]] |
+| [[requerimiento_autoridad]] | `bloqueo_saldo_id` | [[bloqueo_saldo]] | 12 → 10 | sí | [[requerimiento_autoridad.bloqueo_saldo_id → bloqueo_saldo\|ver]] |
+| [[requerimiento_autoridad]] | `respondido_por` | [[usuario]] | 12 → 01 | sí | [[requerimiento_autoridad.respondido_por → usuario\|ver]] |
+| [[requerimiento_autoridad]] | `usuario_afectado_id` | [[usuario]] | 12 → 01 | sí | [[requerimiento_autoridad.usuario_afectado_id → usuario\|ver]] |
+| [[revision_periodica_kyc]] | `ejecutada_por` | [[usuario]] | 12 → 01 | sí | [[revision_periodica_kyc.ejecutada_por → usuario\|ver]] |
+| [[revision_periodica_kyc]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[revision_periodica_kyc.usuario_id → usuario\|ver]] |
 
 ## 01 — Identidad, Usuarios y Seguridad
 
@@ -318,6 +451,7 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[orden_cobro.proveedor_id → proveedor_pago]] | [[proveedor_pago]] | — | no |
 | [[pago.intento_pago_id → intento_pago]] | [[intento_pago]] | — | sí |
 | [[pago.obligacion_id → obligacion_aporte]] | [[obligacion_aporte]] | — | no |
+| [[pago.proveedor_id → proveedor_pago]] | [[proveedor_pago]] | — | sí |
 | [[pago.registrado_por → usuario]] | [[usuario]] | ↗ | sí |
 | [[plan_regularizacion.aprobado_por → usuario]] | [[usuario]] | ↗ | no |
 | [[plan_regularizacion.participante_id → participante]] | [[participante]] | ↗ | no |
@@ -579,4 +713,255 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[solicitud_datos_personales.usuario_id → usuario]] | [[usuario]] | ↗ | no |
 | [[ticket_soporte.asignado_a → usuario]] | [[usuario]] | ↗ | sí |
 | [[ticket_soporte.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+
+## 10 — Billetera, Custodia y Dinero Electrónico
+
+> [[_Relaciones 10|índice del módulo]]
+
+| Relación | Destino | Cruza | Opcional |
+| --- | --- | :-: | :-: |
+| [[arqueo_punto_atencion.arqueado_por → usuario]] | [[usuario]] | ↗ | no |
+| [[arqueo_punto_atencion.punto_atencion_id → punto_atencion]] | [[punto_atencion]] | — | no |
+| [[bloqueo_saldo.cuenta_billetera_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
+| [[bloqueo_saldo.levantada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[bloqueo_saldo.retencion_id → retencion_saldo]] | [[retencion_saldo]] | — | sí |
+| [[certificado_saldo.cuenta_billetera_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
+| [[certificado_saldo.solicitado_por → usuario]] | [[usuario]] | ↗ | no |
+| [[conciliacion_custodia.cierre_diario_id → cierre_diario]] | [[cierre_diario]] | ↗ | sí |
+| [[conciliacion_custodia.cuenta_custodia_id → cuenta_custodia]] | [[cuenta_custodia]] | — | no |
+| [[conciliacion_custodia.ejecutada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[consumo_limite.cuenta_billetera_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
+| [[consumo_limite.limite_id → limite_operativo_billetera]] | [[limite_operativo_billetera]] | — | no |
+| [[cuenta_billetera.cuenta_contable_id → cuenta_contable]] | [[cuenta_contable]] | ↗ | sí |
+| [[cuenta_billetera.grupo_id → grupo]] | [[grupo]] | ↗ | sí |
+| [[cuenta_billetera.politica_billetera_id → politica_billetera]] | [[politica_billetera]] | — | sí |
+| [[cuenta_billetera.usuario_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[descuadre_custodia.conciliacion_custodia_id → conciliacion_custodia]] | [[conciliacion_custodia]] | — | no |
+| [[descuadre_custodia.incidente_operativo_id → incidente_operativo]] | [[incidente_operativo]] | ↗ | sí |
+| [[descuadre_custodia.resuelto_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[estado_cuenta_billetera.cuenta_billetera_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
+| [[evaluacion_antifraude.cuenta_billetera_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
+| [[evaluacion_antifraude.revisada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[evaluacion_antifraude.transaccion_id → transaccion_billetera]] | [[transaccion_billetera]] | — | sí |
+| [[instrumento_fondeo.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[movimiento_billetera.cuenta_billetera_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
+| [[movimiento_billetera.transaccion_id → transaccion_billetera]] | [[transaccion_billetera]] | — | no |
+| [[movimiento_custodia.cuenta_custodia_id → cuenta_custodia]] | [[cuenta_custodia]] | — | no |
+| [[movimiento_custodia.movimiento_bancario_id → movimiento_bancario]] | [[movimiento_bancario]] | ↗ | sí |
+| [[orden_recarga.cuenta_billetera_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
+| [[orden_recarga.instrumento_fondeo_id → instrumento_fondeo]] | [[instrumento_fondeo]] | — | sí |
+| [[orden_recarga.pago_id → pago]] | [[pago]] | ↗ | sí |
+| [[orden_recarga.proveedor_id → proveedor_pago]] | [[proveedor_pago]] | ↗ | sí |
+| [[orden_recarga.punto_atencion_id → punto_atencion]] | [[punto_atencion]] | — | sí |
+| [[orden_recarga.transaccion_id → transaccion_billetera]] | [[transaccion_billetera]] | — | sí |
+| [[orden_retiro.aprobada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[orden_retiro.cuenta_billetera_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
+| [[orden_retiro.instrumento_destino_id → instrumento_fondeo]] | [[instrumento_fondeo]] | — | no |
+| [[orden_retiro.proveedor_id → proveedor_pago]] | [[proveedor_pago]] | ↗ | sí |
+| [[orden_retiro.retencion_id → retencion_saldo]] | [[retencion_saldo]] | — | sí |
+| [[orden_retiro.transaccion_id → transaccion_billetera]] | [[transaccion_billetera]] | — | sí |
+| [[politica_billetera.aprobada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[punto_atencion.responsable_usuario_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[regla_antifraude.aprobada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[retencion_saldo.cuenta_billetera_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
+| [[retencion_saldo.liberada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[retencion_saldo.transaccion_origen_id → transaccion_billetera]] | [[transaccion_billetera]] | — | sí |
+| [[reverso_transaccion.autorizada_por → usuario]] | [[usuario]] | ↗ | no |
+| [[reverso_transaccion.transaccion_original_id → transaccion_billetera]] | [[transaccion_billetera]] | — | no |
+| [[reverso_transaccion.transaccion_reverso_id → transaccion_billetera]] | [[transaccion_billetera]] | — | sí |
+| [[saldo_diario_billetera.cuenta_billetera_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
+| [[solicitud_cierre_billetera.aprobada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[solicitud_cierre_billetera.cuenta_billetera_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
+| [[solicitud_cierre_billetera.orden_retiro_id → orden_retiro]] | [[orden_retiro]] | — | sí |
+| [[transaccion_billetera.asiento_contable_id → asiento_contable]] | [[asiento_contable]] | ↗ | sí |
+| [[transaccion_billetera.dispositivo_id → dispositivo]] | [[dispositivo]] | ↗ | sí |
+| [[transaccion_billetera.grupo_id → grupo]] | [[grupo]] | ↗ | sí |
+| [[transaccion_billetera.iniciada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[transaccion_billetera.sesion_id → sesion]] | [[sesion]] | ↗ | sí |
+| [[transferencia_p2p.cuenta_billetera_destino_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
+| [[transferencia_p2p.cuenta_billetera_origen_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
+| [[transferencia_p2p.grupo_id → grupo]] | [[grupo]] | ↗ | sí |
+| [[transferencia_p2p.obligacion_id → obligacion_aporte]] | [[obligacion_aporte]] | ↗ | sí |
+| [[transferencia_p2p.transaccion_id → transaccion_billetera]] | [[transaccion_billetera]] | — | no |
+
+## 11 — Tarifas, Comisiones, Impuestos y Facturación
+
+> [[_Relaciones 11|índice del módulo]]
+
+| Relación | Destino | Cruza | Opcional |
+| --- | --- | :-: | :-: |
+| [[aplicacion_promocion.campana_id → campana_promocional]] | [[campana_promocional]] | — | no |
+| [[aplicacion_promocion.devengo_id → devengo_comision]] | [[devengo_comision]] | — | no |
+| [[asignacion_tarifario.autorizado_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[asignacion_tarifario.grupo_id → grupo]] | [[grupo]] | ↗ | sí |
+| [[asignacion_tarifario.segmento_id → segmento_comercial]] | [[segmento_comercial]] | — | sí |
+| [[asignacion_tarifario.tarifario_id → tarifario]] | [[tarifario]] | — | no |
+| [[asignacion_tarifario.usuario_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[calculo_impuesto.devengo_id → devengo_comision]] | [[devengo_comision]] | — | no |
+| [[calculo_impuesto.impuesto_id → impuesto]] | [[impuesto]] | — | no |
+| [[cambio_tarifario.aprobado_por → usuario]] | [[usuario]] | ↗ | no |
+| [[cambio_tarifario.tarifario_anterior_id → tarifario]] | [[tarifario]] | — | no |
+| [[cambio_tarifario.tarifario_nuevo_id → tarifario]] | [[tarifario]] | — | no |
+| [[campana_promocional.aprobada_por → usuario]] | [[usuario]] | ↗ | no |
+| [[cargo_comision.deduccion_entrega_id → deduccion_entrega]] | [[deduccion_entrega]] | ↗ | sí |
+| [[cargo_comision.devengo_id → devengo_comision]] | [[devengo_comision]] | — | no |
+| [[cargo_comision.obligacion_id → obligacion_aporte]] | [[obligacion_aporte]] | ↗ | sí |
+| [[cargo_comision.transaccion_id → transaccion_billetera]] | [[transaccion_billetera]] | ↗ | sí |
+| [[concepto_tarifa.cuenta_ingreso_id → cuenta_contable]] | [[cuenta_contable]] | ↗ | sí |
+| [[concepto_tarifa.hecho_generador_id → catalogo_hecho_generador]] | [[catalogo_hecho_generador]] | — | no |
+| [[concepto_tarifa.politica_redondeo_id → politica_redondeo]] | [[politica_redondeo]] | — | sí |
+| [[concepto_tarifa.tarifario_id → tarifario]] | [[tarifario]] | — | no |
+| [[costo_proveedor_operacion.liquidacion_ingresos_id → liquidacion_ingresos]] | [[liquidacion_ingresos]] | — | sí |
+| [[costo_proveedor_operacion.proveedor_id → proveedor_pago]] | [[proveedor_pago]] | ↗ | no |
+| [[costo_proveedor_operacion.transaccion_id → transaccion_billetera]] | [[transaccion_billetera]] | ↗ | sí |
+| [[cotizacion_comision.concepto_tarifa_id → concepto_tarifa]] | [[concepto_tarifa]] | — | no |
+| [[cotizacion_comision.tarifario_id → tarifario]] | [[tarifario]] | — | no |
+| [[cuenta_por_cobrar_comision.devengo_id → devengo_comision]] | [[devengo_comision]] | — | no |
+| [[cuenta_por_cobrar_comision.gestion_cobranza_id → gestion_cobranza]] | [[gestion_cobranza]] | ↗ | sí |
+| [[cuenta_por_cobrar_comision.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[datos_facturacion.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[devengo_comision.asiento_contable_id → asiento_contable]] | [[asiento_contable]] | ↗ | sí |
+| [[devengo_comision.concepto_tarifa_id → concepto_tarifa]] | [[concepto_tarifa]] | — | no |
+| [[devengo_comision.cotizacion_id → cotizacion_comision]] | [[cotizacion_comision]] | — | sí |
+| [[devengo_comision.grupo_id → grupo]] | [[grupo]] | ↗ | sí |
+| [[devengo_comision.participante_id → participante]] | [[participante]] | ↗ | sí |
+| [[devengo_comision.tarifario_id → tarifario]] | [[tarifario]] | — | no |
+| [[devengo_comision.usuario_obligado_id → usuario]] | [[usuario]] | ↗ | no |
+| [[devolucion_comision.autorizada_por → usuario]] | [[usuario]] | ↗ | no |
+| [[devolucion_comision.devengo_id → devengo_comision]] | [[devengo_comision]] | — | no |
+| [[devolucion_comision.reclamo_id → reclamo_cliente]] | [[reclamo_cliente]] | ↗ | sí |
+| [[devolucion_comision.transaccion_id → transaccion_billetera]] | [[transaccion_billetera]] | ↗ | sí |
+| [[evento_significativo_sin.registrado_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[exencion_comision.autorizada_por → usuario]] | [[usuario]] | ↗ | no |
+| [[exencion_comision.concepto_tarifa_id → concepto_tarifa]] | [[concepto_tarifa]] | — | sí |
+| [[exencion_comision.grupo_id → grupo]] | [[grupo]] | ↗ | sí |
+| [[exencion_comision.segmento_id → segmento_comercial]] | [[segmento_comercial]] | — | sí |
+| [[exencion_comision.usuario_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[factura_electronica.datos_facturacion_id → datos_facturacion]] | [[datos_facturacion]] | — | no |
+| [[factura_electronica.devengo_id → devengo_comision]] | [[devengo_comision]] | — | sí |
+| [[factura_electronica.evento_significativo_id → evento_significativo_sin]] | [[evento_significativo_sin]] | — | sí |
+| [[factura_electronica.lote_envio_sin_id → lote_envio_sin]] | [[lote_envio_sin]] | — | sí |
+| [[factura_electronica.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[impuesto.cuenta_contable_id → cuenta_contable]] | [[cuenta_contable]] | ↗ | sí |
+| [[liquidacion_ingresos.asiento_contable_id → asiento_contable]] | [[asiento_contable]] | ↗ | sí |
+| [[liquidacion_ingresos.cerrada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[nota_credito_debito.devolucion_comision_id → devolucion_comision]] | [[devolucion_comision]] | — | sí |
+| [[nota_credito_debito.factura_id → factura_electronica]] | [[factura_electronica]] | — | no |
+| [[regla_tarifa.concepto_tarifa_id → concepto_tarifa]] | [[concepto_tarifa]] | — | no |
+| [[simulacion_tarifa.ejecutada_por → usuario]] | [[usuario]] | ↗ | no |
+| [[simulacion_tarifa.tarifario_id → tarifario]] | [[tarifario]] | — | no |
+| [[tarifa_congelada_grupo.acuerdo_id → acuerdo]] | [[acuerdo]] | ↗ | sí |
+| [[tarifa_congelada_grupo.grupo_id → grupo]] | [[grupo]] | ↗ | no |
+| [[tarifa_congelada_grupo.tarifario_id → tarifario]] | [[tarifario]] | — | no |
+| [[tarifario.aprobado_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[tarifario.tarifario_anterior_id → tarifario]] | [[tarifario]] | — | sí |
+
+## 12 — Cumplimiento Regulatorio y Consumidor Financiero
+
+> [[_Relaciones 12|índice del módulo]]
+
+| Relación | Destino | Cruza | Opcional |
+| --- | --- | :-: | :-: |
+| [[aceptacion_contrato.contrato_adhesion_id → contrato_adhesion]] | [[contrato_adhesion]] | — | no |
+| [[aceptacion_contrato.dispositivo_id → dispositivo]] | [[dispositivo]] | ↗ | sí |
+| [[aceptacion_contrato.token_firma_id → token_verificacion]] | [[token_verificacion]] | ↗ | sí |
+| [[aceptacion_contrato.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[acta_comite.comite_gobierno_id → comite_gobierno]] | [[comite_gobierno]] | — | no |
+| [[acta_comite.elaborada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[activo_informacion.contrato_tercero_id → contrato_tercero]] | [[contrato_tercero]] | — | sí |
+| [[activo_informacion.custodio_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[activo_informacion.propietario_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[alerta_monitoreo_lft.asignada_a → usuario]] | [[usuario]] | ↗ | sí |
+| [[alerta_monitoreo_lft.caso_id → caso_investigacion_lft]] | [[caso_investigacion_lft]] | — | sí |
+| [[alerta_monitoreo_lft.cuenta_billetera_id → cuenta_billetera]] | [[cuenta_billetera]] | ↗ | sí |
+| [[alerta_monitoreo_lft.regla_monitoreo_id → regla_monitoreo_lft]] | [[regla_monitoreo_lft]] | — | no |
+| [[alerta_monitoreo_lft.transaccion_id → transaccion_billetera]] | [[transaccion_billetera]] | ↗ | sí |
+| [[alerta_monitoreo_lft.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[beneficiario_final.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[calificacion_riesgo_cliente.calificado_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[calificacion_riesgo_cliente.matriz_riesgo_id → matriz_riesgo_lft]] | [[matriz_riesgo_lft]] | — | sí |
+| [[calificacion_riesgo_cliente.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[capacitacion_cumplimiento.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[caso_investigacion_lft.analista_id → usuario]] | [[usuario]] | ↗ | no |
+| [[caso_investigacion_lft.reporte_operacion_sospechosa_id → reporte_operacion_sospechosa]] | [[reporte_operacion_sospechosa]] | ↗ | sí |
+| [[caso_investigacion_lft.revisado_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[caso_investigacion_lft.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[contrato_adhesion.aprobado_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[contrato_tercero.responsable_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[control_interno.responsable_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[debida_diligencia.aprobada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[debida_diligencia.calificacion_riesgo_id → calificacion_riesgo_cliente]] | [[calificacion_riesgo_cliente]] | — | sí |
+| [[debida_diligencia.segunda_revision_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[debida_diligencia.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[debida_diligencia.verificacion_kyc_id → verificacion_kyc]] | [[verificacion_kyc]] | ↗ | sí |
+| [[declaracion_origen_fondos.transaccion_id → transaccion_billetera]] | [[transaccion_billetera]] | ↗ | sí |
+| [[declaracion_origen_fondos.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[declaracion_origen_fondos.verificada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[declaracion_pep.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[declaracion_pep.verificada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[designacion_regulatoria.acta_comite_id → acta_comite]] | [[acta_comite]] | — | sí |
+| [[designacion_regulatoria.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[desvio_perfil.alerta_monitoreo_id → alerta_monitoreo_lft]] | [[alerta_monitoreo_lft]] | — | sí |
+| [[desvio_perfil.perfil_transaccional_id → perfil_transaccional]] | [[perfil_transaccional]] | — | no |
+| [[desvio_perfil.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[documento_publicado.publicado_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[entorno_prueba_regulado.licencia_regulatoria_id → licencia_regulatoria]] | [[licencia_regulatoria]] | — | no |
+| [[envio_regulatorio.enviado_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[envio_regulatorio.reporte_regulatorio_id → reporte_regulatorio]] | [[reporte_regulatorio]] | — | no |
+| [[evaluacion_riesgo_producto.aprobada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[evaluacion_tercero.contrato_tercero_id → contrato_tercero]] | [[contrato_tercero]] | — | no |
+| [[evaluacion_tercero.evaluado_por → usuario]] | [[usuario]] | ↗ | no |
+| [[evento_riesgo_operativo.incidente_operativo_id → incidente_operativo]] | [[incidente_operativo]] | ↗ | sí |
+| [[evento_riesgo_operativo.registrado_por → usuario]] | [[usuario]] | ↗ | no |
+| [[expediente_cliente.responsable_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[expediente_cliente.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[factor_riesgo_evaluado.matriz_riesgo_id → matriz_riesgo_lft]] | [[matriz_riesgo_lft]] | — | no |
+| [[factor_riesgo_evaluado.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[hallazgo_auditoria.responsable_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[incidente_seguridad.activo_informacion_id → activo_informacion]] | [[activo_informacion]] | — | sí |
+| [[incidente_seguridad.evento_riesgo_id → evento_riesgo_operativo]] | [[evento_riesgo_operativo]] | — | sí |
+| [[incidente_seguridad.incidente_operativo_id → incidente_operativo]] | [[incidente_operativo]] | ↗ | sí |
+| [[incidente_seguridad.responsable_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[instancia_reclamo.reclamo_id → reclamo_cliente]] | [[reclamo_cliente]] | — | no |
+| [[licencia_regulatoria.responsable_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[matriz_riesgo_lft.aprobada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[observacion_regulatoria.envio_regulatorio_id → envio_regulatorio]] | [[envio_regulatorio]] | — | sí |
+| [[observacion_regulatoria.responsable_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[oficial_cumplimiento.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[perfil_transaccional.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[plan_accion_riesgo.evento_riesgo_id → evento_riesgo_operativo]] | [[evento_riesgo_operativo]] | — | sí |
+| [[plan_accion_riesgo.hallazgo_id → hallazgo_auditoria]] | [[hallazgo_auditoria]] | — | sí |
+| [[plan_accion_riesgo.responsable_id → usuario]] | [[usuario]] | ↗ | no |
+| [[plan_continuidad.politica_interna_id → politica_interna]] | [[politica_interna]] | — | sí |
+| [[plan_continuidad.responsable_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[politica_interna.acta_comite_id → acta_comite]] | [[acta_comite]] | — | sí |
+| [[politica_interna.responsable_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[prueba_continuidad.acta_comite_id → acta_comite]] | [[acta_comite]] | — | sí |
+| [[prueba_continuidad.ejecutada_por → usuario]] | [[usuario]] | ↗ | no |
+| [[prueba_continuidad.plan_continuidad_id → plan_continuidad]] | [[plan_continuidad]] | — | no |
+| [[prueba_control.control_id → control_interno]] | [[control_interno]] | — | no |
+| [[prueba_control.ejecutada_por → usuario]] | [[usuario]] | ↗ | no |
+| [[punto_reclamo.responsable_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[reclamo_cliente.devolucion_comision_id → devolucion_comision]] | [[devolucion_comision]] | ↗ | sí |
+| [[reclamo_cliente.punto_reclamo_id → punto_reclamo]] | [[punto_reclamo]] | — | no |
+| [[reclamo_cliente.responsable_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[reclamo_cliente.ticket_soporte_id → ticket_soporte]] | [[ticket_soporte]] | ↗ | sí |
+| [[reclamo_cliente.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[registro_operacion_relevante.declaracion_origen_fondos_id → declaracion_origen_fondos]] | [[declaracion_origen_fondos]] | — | sí |
+| [[registro_operacion_relevante.operacion_inicio_ventana_id → registro_operacion_relevante]] | [[registro_operacion_relevante]] | — | sí |
+| [[registro_operacion_relevante.reporte_regulatorio_id → reporte_regulatorio]] | [[reporte_regulatorio]] | — | sí |
+| [[registro_operacion_relevante.transaccion_id → transaccion_billetera]] | [[transaccion_billetera]] | ↗ | no |
+| [[registro_operacion_relevante.umbral_reporte_id → umbral_reporte_uif]] | [[umbral_reporte_uif]] | — | no |
+| [[registro_operacion_relevante.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+| [[regla_monitoreo_lft.aprobada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[reporte_regulatorio.aprobado_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[reporte_regulatorio.catalogo_reporte_id → catalogo_reporte_regulatorio]] | [[catalogo_reporte_regulatorio]] | — | no |
+| [[reporte_regulatorio.generado_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[reporte_regulatorio.revisado_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[requerimiento_autoridad.bloqueo_saldo_id → bloqueo_saldo]] | [[bloqueo_saldo]] | ↗ | sí |
+| [[requerimiento_autoridad.respondido_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[requerimiento_autoridad.usuario_afectado_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[revision_periodica_kyc.calificacion_riesgo_id → calificacion_riesgo_cliente]] | [[calificacion_riesgo_cliente]] | — | sí |
+| [[revision_periodica_kyc.ejecutada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[revision_periodica_kyc.usuario_id → usuario]] | [[usuario]] | ↗ | no |
 

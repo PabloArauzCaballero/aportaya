@@ -1,0 +1,221 @@
+#!/usr/bin/env python3
+"""
+Convierte los seeders JSON de seeders/ en SQL aplicable.
+
+    python3 scripts/generar_semillas.py
+
+Lee
+    seeders/minimos/*.json   catálogos que también van a producción
+    seeders/prueba/*.json    datos de prueba, solo desarrollo y QA
+Escribe
+    sql/60_semillas/         SQL de los seeders mínimos + sembrar.sql
+    sql/61_prueba/           SQL de los datos de prueba + sembrar_prueba.sql
+
+Los JSON son la fuente de verdad. El SQL es un derivado: no lo edite.
+
+Formato de cada archivo:
+
+    {
+      "descripcion": "…",
+      "bloques": [
+        {
+          "tabla": "cuenta_contable",
+          "conflicto": ["codigo"],       // ON CONFLICT (…) DO NOTHING
+          "filas": [ { "codigo": "1.1.01", … } ]
+        }
+      ]
+    }
+
+Valores especiales dentro de una fila:
+
+    {"$ref": "tarifario", "codigo": "GENERAL", "version": 1}
+        → subconsulta (SELECT id FROM tarifario WHERE codigo=… AND version=…)
+    {"$sql": "now()"}          → se emite tal cual
+    {"$fecha": "+30 days"}     → current_date + intervalo
+    listas y objetos comunes   → literal JSONB
+"""
+
+import json
+import pathlib
+import shutil
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from modelo import cargar, clase_de  # noqa: E402
+
+ORIGEN = pathlib.Path("seeders")
+DESTINOS = {
+    "minimos": (pathlib.Path("sql/60_semillas"), "sembrar.sql",
+                "Catálogos mínimos — también se aplican en producción"),
+    "prueba": (pathlib.Path("sql/61_prueba"), "sembrar_prueba.sql",
+               "Datos de prueba — NO aplicar en producción"),
+}
+
+
+def lit(valor):
+    if valor is None:
+        return "NULL"
+    if isinstance(valor, bool):
+        return "TRUE" if valor else "FALSE"
+    if isinstance(valor, (int, float)):
+        return str(valor)
+    if isinstance(valor, dict):
+        if "$sql" in valor:
+            return valor["$sql"]
+        if "$fecha" in valor:
+            return f"(current_date + interval '{valor['$fecha']}')"
+        if "$ref" in valor:
+            tabla = valor["$ref"]
+            cond = " AND ".join(f"{k} = {lit(v)}" for k, v in valor.items() if k != "$ref")
+            return f"(SELECT id FROM {tabla} WHERE {cond})"
+        return "'" + json.dumps(valor, ensure_ascii=False).replace("'", "''") + "'::jsonb"
+    if isinstance(valor, list):
+        return "'" + json.dumps(valor, ensure_ascii=False).replace("'", "''") + "'::jsonb"
+    return "'" + str(valor).replace("'", "''") + "'"
+
+
+def bloque_sql(b):
+    # Bloque de SQL suelto (por ejemplo, ajustes de entorno de prueba)
+    if "sql" in b and "tabla" not in b:
+        prefijo = f"-- {b['comentario']}\n" if b.get("comentario") else ""
+        return prefijo + b["sql"].rstrip() + "\n"
+    tabla = b["tabla"]
+    filas = b["filas"]
+    if not filas:
+        return ""
+    columnas = list(dict.fromkeys(c for f in filas for c in f))
+    L = []
+    if b.get("comentario"):
+        L.append(f"-- {b['comentario']}")
+    L.append(f"INSERT INTO {tabla} ({', '.join(columnas)}) VALUES")
+    valores = []
+    for f in filas:
+        valores.append("  (" + ", ".join(lit(f.get(c)) for c in columnas) + ")")
+    L.append(",\n".join(valores))
+    conflicto = b.get("conflicto", [])
+    if conflicto == "ninguno":
+        L[-1] += ";"
+    elif conflicto:
+        L.append(f"ON CONFLICT ({', '.join(conflicto)}) DO NOTHING;")
+    else:
+        L.append("ON CONFLICT DO NOTHING;")
+    sql = "\n".join(L) + "\n"
+
+    # Tablas sin clave natural: se cargan solo si están vacías, para que
+    # volver a sembrar no duplique.
+    if b.get("solo_si_vacia"):
+        cuerpo = "\n".join("  " + l for l in sql.splitlines())
+        sql = (f"DO $$\nBEGIN\n  IF NOT EXISTS (SELECT 1 FROM {tabla}) THEN\n"
+               f"{cuerpo}\n  END IF;\nEND $$;\n")
+    return sql
+
+
+def validar(entorno, mods):
+    """Contrasta cada seeder contra el modelo: tablas, columnas y referencias.
+
+    Es la verificación que atrapa el error más común al escribir semillas: una
+    columna que no existe. No sustituye a aplicar el SQL contra PostgreSQL, pero
+    no depende de tener una base a mano.
+    """
+    columnas = {}
+    for d in mods.values():
+        for e in d["entidades"].values():
+            columnas[e["tabla"]] = {c["nombre"] for c in e["cols"]}
+
+    errores = []
+    carpeta = ORIGEN / entorno
+    manifiesto = json.loads((carpeta / "manifiesto.json").read_text(encoding="utf-8"))
+
+    def revisar_ref(valor, origen):
+        if not isinstance(valor, dict):
+            return
+        if "$ref" in valor:
+            tabla = valor["$ref"]
+            if tabla not in columnas:
+                errores.append(f"{origen}: $ref a tabla inexistente '{tabla}'")
+                return
+            for k, v in valor.items():
+                if k == "$ref":
+                    continue
+                if k not in columnas[tabla]:
+                    errores.append(f"{origen}: $ref {tabla}.{k} no existe")
+                revisar_ref(v, origen)
+
+    for nombre in manifiesto["orden"]:
+        ruta = carpeta / nombre
+        if not ruta.exists():
+            errores.append(f"{nombre}: declarado en el manifiesto pero no existe")
+            continue
+        datos = json.loads(ruta.read_text(encoding="utf-8"))
+        for b in datos.get("bloques", []):
+            if "tabla" not in b:
+                continue
+            tabla = b["tabla"]
+            if tabla not in columnas:
+                errores.append(f"{nombre}: tabla inexistente '{tabla}'")
+                continue
+            for i, fila in enumerate(b.get("filas", []), start=1):
+                for col, valor in fila.items():
+                    if col not in columnas[tabla]:
+                        errores.append(f"{nombre}: {tabla}.{col} no existe (fila {i})")
+                    revisar_ref(valor, f"{nombre}: {tabla} fila {i}")
+
+    sueltos = {p.name for p in carpeta.glob("*.json")} - {"manifiesto.json"}
+    for extra in sorted(sueltos - set(manifiesto["orden"])):
+        errores.append(f"{extra}: existe pero no está en el manifiesto")
+    return errores
+
+
+def procesar(entorno):
+    carpeta = ORIGEN / entorno
+    destino, orquestador, titulo = DESTINOS[entorno]
+    if destino.exists():
+        shutil.rmtree(destino)
+    destino.mkdir(parents=True, exist_ok=True)
+
+    manifiesto = json.loads((carpeta / "manifiesto.json").read_text(encoding="utf-8"))
+    archivos, filas_totales = [], 0
+
+    for nombre in manifiesto["orden"]:
+        datos = json.loads((carpeta / nombre).read_text(encoding="utf-8"))
+        salida = nombre.replace(".json", ".sql")
+        L = [f"-- {datos.get('descripcion', nombre)}",
+             f"-- GENERADO desde seeders/{entorno}/{nombre} — no editar a mano.", ""]
+        for b in datos["bloques"]:
+            L.append(bloque_sql(b))
+            filas_totales += len(b.get("filas", []))
+        (destino / salida).write_text("\n".join(L), encoding="utf-8")
+        archivos.append(salida)
+
+    L = [f"-- {titulo}",
+         f"--   psql -d pasanaku -v ON_ERROR_STOP=1 -f {destino}/{orquestador}",
+         "-- GENERADO desde seeders/ — no editar a mano.", "",
+         "\\set ON_ERROR_STOP on", "BEGIN;", ""]
+    L += [f"\\ir {a}" for a in archivos]
+    L += ["", "COMMIT;", ""]
+    (destino / orquestador).write_text("\n".join(L), encoding="utf-8")
+    return len(archivos), filas_totales
+
+
+def main():
+    mods, _, _ = cargar()
+    problemas = []
+    for entorno in DESTINOS:
+        problemas += validar(entorno, mods)
+    if problemas:
+        print(f"SEMILLAS INVÁLIDAS ({len(problemas)}):")
+        for p in problemas:
+            print(f"  - {p}")
+        return 1
+
+    total = 0
+    for entorno in DESTINOS:
+        archivos, filas = procesar(entorno)
+        print(f"{entorno:8} → {DESTINOS[entorno][0]}: {archivos} archivos, {filas} filas")
+        total += filas
+    print(f"total: {total} filas de semilla · validadas contra el modelo")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

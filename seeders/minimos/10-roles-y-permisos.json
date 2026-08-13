@@ -1,0 +1,190 @@
+{
+  "descripcion": "Roles y permisos base del control de accesos (M1).",
+  "entorno": "minimo",
+  "bloques": [
+    {
+      "tabla": "rol",
+      "conflicto": [
+        "codigo"
+      ],
+      "filas": [
+        {
+          "codigo": "ADMIN_PLATAFORMA",
+          "nombre": "Administrador de plataforma",
+          "ambito": "GLOBAL",
+          "es_sistema": true
+        },
+        {
+          "codigo": "OFICIAL_CUMPLIMIENTO",
+          "nombre": "Oficial de cumplimiento",
+          "ambito": "GLOBAL",
+          "es_sistema": true
+        },
+        {
+          "codigo": "ANALISTA_CUMPLIMIENTO",
+          "nombre": "Analista de cumplimiento",
+          "ambito": "GLOBAL",
+          "es_sistema": true
+        },
+        {
+          "codigo": "AUDITOR_INTERNO",
+          "nombre": "Auditor interno",
+          "ambito": "GLOBAL",
+          "es_sistema": true
+        },
+        {
+          "codigo": "RESPONSABLE_RIESGOS",
+          "nombre": "Responsable de gestión de riesgos",
+          "ambito": "GLOBAL",
+          "es_sistema": true
+        },
+        {
+          "codigo": "RESPONSABLE_SEGURIDAD",
+          "nombre": "Responsable de seguridad de la información",
+          "ambito": "GLOBAL",
+          "es_sistema": true
+        },
+        {
+          "codigo": "SOPORTE",
+          "nombre": "Soporte y atención al cliente",
+          "ambito": "GLOBAL",
+          "es_sistema": true
+        },
+        {
+          "codigo": "PUNTO_RECLAMO",
+          "nombre": "Responsable del Punto de Reclamo",
+          "ambito": "GLOBAL",
+          "es_sistema": true
+        },
+        {
+          "codigo": "TESORERIA",
+          "nombre": "Tesorería y conciliación",
+          "ambito": "GLOBAL",
+          "es_sistema": true
+        },
+        {
+          "codigo": "CONTABILIDAD",
+          "nombre": "Contabilidad",
+          "ambito": "GLOBAL",
+          "es_sistema": true
+        },
+        {
+          "codigo": "ORGANIZADOR",
+          "nombre": "Organizador de grupo",
+          "ambito": "GRUPO",
+          "es_sistema": true
+        },
+        {
+          "codigo": "PARTICIPANTE",
+          "nombre": "Participante de grupo",
+          "ambito": "GRUPO",
+          "es_sistema": true
+        }
+      ]
+    },
+    {
+      "tabla": "permiso",
+      "conflicto": [
+        "codigo"
+      ],
+      "filas": [
+        {
+          "codigo": "BILLETERA_VER",
+          "descripcion": "Ver saldo y movimientos propios",
+          "recurso": "billetera",
+          "accion": "LEER"
+        },
+        {
+          "codigo": "BILLETERA_OPERAR",
+          "descripcion": "Recargar, transferir y retirar",
+          "recurso": "billetera",
+          "accion": "ESCRIBIR"
+        },
+        {
+          "codigo": "BILLETERA_VER_TERCEROS",
+          "descripcion": "Ver billeteras de terceros (backoffice)",
+          "recurso": "billetera",
+          "accion": "LEER_TERCEROS"
+        },
+        {
+          "codigo": "GRUPO_CREAR",
+          "descripcion": "Crear un grupo de pasanaku",
+          "recurso": "grupo",
+          "accion": "CREAR"
+        },
+        {
+          "codigo": "GRUPO_ADMINISTRAR",
+          "descripcion": "Administrar un grupo",
+          "recurso": "grupo",
+          "accion": "ADMINISTRAR"
+        },
+        {
+          "codigo": "ENTREGA_AUTORIZAR",
+          "descripcion": "Autorizar una entrega de fondo",
+          "recurso": "entrega_fondo",
+          "accion": "AUTORIZAR"
+        },
+        {
+          "codigo": "ENTREGA_EJECUTAR",
+          "descripcion": "Ejecutar una entrega de fondo",
+          "recurso": "entrega_fondo",
+          "accion": "EJECUTAR"
+        },
+        {
+          "codigo": "REVERSO_AUTORIZAR",
+          "descripcion": "Autorizar el reverso de una transacción",
+          "recurso": "transaccion_billetera",
+          "accion": "REVERSAR"
+        },
+        {
+          "codigo": "CUMPLIMIENTO_ALERTAS",
+          "descripcion": "Ver y tratar alertas de monitoreo",
+          "recurso": "alerta_monitoreo_lft",
+          "accion": "GESTIONAR"
+        },
+        {
+          "codigo": "CUMPLIMIENTO_CASOS",
+          "descripcion": "Abrir y decidir casos de investigación",
+          "recurso": "caso_investigacion_lft",
+          "accion": "GESTIONAR"
+        },
+        {
+          "codigo": "CUMPLIMIENTO_REPORTAR",
+          "descripcion": "Generar y enviar reportes regulatorios",
+          "recurso": "reporte_regulatorio",
+          "accion": "ENVIAR"
+        },
+        {
+          "codigo": "RECLAMO_ATENDER",
+          "descripcion": "Atender y responder reclamos",
+          "recurso": "reclamo_cliente",
+          "accion": "GESTIONAR"
+        },
+        {
+          "codigo": "TARIFARIO_PUBLICAR",
+          "descripcion": "Publicar un tarifario nuevo",
+          "recurso": "tarifario",
+          "accion": "PUBLICAR"
+        },
+        {
+          "codigo": "CATALOGO_EDITAR",
+          "descripcion": "Editar catálogos regulatorios",
+          "recurso": "catalogo",
+          "accion": "ESCRIBIR"
+        },
+        {
+          "codigo": "AUDITORIA_LEER",
+          "descripcion": "Consultar la bitácora y los registros de acceso",
+          "recurso": "bitacora_evento",
+          "accion": "LEER"
+        },
+        {
+          "codigo": "DATOS_SENSIBLES_LEER",
+          "descripcion": "Consultar documentos y cuentas de clientes",
+          "recurso": "documento_identidad",
+          "accion": "LEER"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "descripcion": "Calendario de reportes obligatorios. De acá salen los vencimientos: un reporte no enviado es visible antes de vencer.",
+  "entorno": "minimo",
+  "estado": "confirmar plazos con legal",
+  "bloques": [
+    {
+      "tabla": "catalogo_reporte_regulatorio",
+      "conflicto": [
+        "codigo"
+      ],
+      "filas": [
+        {
+          "codigo": "PCC-01",
+          "organismo": "UIF",
+          "nombre": "Formularios PCC-01 del mes anterior",
+          "periodicidad": "MENSUAL",
+          "formato": "CSV",
+          "plazo_dias": 15,
+          "base_normativa": "Instructivo EIF art. 52 par. VIII — remisión hasta el 15 de cada mes",
+          "obligatorio": true,
+          "activo": true
+        },
+        {
+          "codigo": "ROG-01",
+          "organismo": "UIF",
+          "nombre": "Retiros en efectivo de moneda extranjera",
+          "periodicidad": "MENSUAL",
+          "formato": "CSV",
+          "plazo_dias": 15,
+          "base_normativa": "Instructivo EIF art. 53 par. III",
+          "obligatorio": true,
+          "activo": true
+        },
+        {
+          "codigo": "ROG-02",
+          "organismo": "UIF",
+          "nombre": "Retiros por cambio de moneda extranjera",
+          "periodicidad": "MENSUAL",
+          "formato": "CSV",
+          "plazo_dias": 15,
+          "base_normativa": "Instructivo EIF art. 53 par. III",
+          "obligatorio": true,
+          "activo": true
+        },
+        {
+          "codigo": "ROG-03",
+          "organismo": "UIF",
+          "nombre": "Operaciones electrónicas sobre umbral",
+          "periodicidad": "MENSUAL",
+          "formato": "CSV",
+          "plazo_dias": 15,
+          "base_normativa": "Instructivo EIF art. 53 par. III",
+          "obligatorio": true,
+          "activo": true
+        },
+        {
+          "codigo": "ROG-04",
+          "organismo": "UIF",
+          "nombre": "Operaciones con activos virtuales",
+          "periodicidad": "MENSUAL",
+          "formato": "CSV",
+          "plazo_dias": 15,
+          "base_normativa": "Instructivo EIF art. 53 par. III — inactivo: el producto no ofrece activos virtuales",
+          "obligatorio": true,
+          "activo": false
+        },
+        {
+          "codigo": "ROS",
+          "organismo": "UIF",
+          "nombre": "Reporte de operación sospechosa",
+          "periodicidad": "EVENTUAL",
+          "formato": "WEB",
+          "plazo_dias": 0,
+          "base_normativa": "Sin límite de monto; se remite al concluir el análisis",
+          "obligatorio": true,
+          "activo": true
+        },
+        {
+          "codigo": "RECLAMOS-M",
+          "organismo": "ASFI",
+          "nombre": "Módulo de reporte de reclamos — mensual",
+          "periodicidad": "MENSUAL",
+          "formato": "CSV",
+          "plazo_dias": 10,
+          "base_normativa": "RNSF Libro 4 Título I — Anexo 1",
+          "obligatorio": true,
+          "activo": true
+        },
+        {
+          "codigo": "RECLAMOS-A",
+          "organismo": "ASFI",
+          "nombre": "Reporte anual de reclamos",
+          "periodicidad": "ANUAL",
+          "formato": "CSV",
+          "plazo_dias": 30,
+          "base_normativa": "RNSF Libro 4 Título I — Anexo 2",
+          "obligatorio": true,
+          "activo": true
+        },
+        {
+          "codigo": "CIRO",
+          "organismo": "ASFI",
+          "nombre": "Central de Información de Riesgo Operativo",
+          "periodicidad": "TRIMESTRAL",
+          "formato": "CSV",
+          "plazo_dias": 20,
+          "base_normativa": "RNSF Libro 3 Título V — base de datos de eventos de riesgo operativo",
+          "obligatorio": true,
+          "activo": true
+        },
+        {
+          "codigo": "ETF-ADEC",
+          "organismo": "ASFI",
+          "nombre": "Información de adecuación de Empresa de Tecnología Financiera",
+          "periodicidad": "TRIMESTRAL",
+          "formato": "XLSX",
+          "plazo_dias": 20,
+          "base_normativa": "Reglamento para Empresas de Tecnología Financiera — Res. ASFI/540/2025",
+          "obligatorio": true,
+          "activo": true
+        }
+      ]
+    }
+  ]
+}

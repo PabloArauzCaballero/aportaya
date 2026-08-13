@@ -8,7 +8,7 @@ modulo: "03 — Aportes, Pagos QR y Conciliación"
 clave_primaria: [id]
 columnas: 8
 fk_salientes: 2
-fk_entrantes: 2
+fk_entrantes: 5
 append_only: false
 ---
 
@@ -40,12 +40,15 @@ append_only: false
 
 | Entidad | Columna | Módulo | Relación |
 | --- | --- | :-: | --- |
+| [[concepto_tarifa]] | `cuenta_ingreso_id` | ↗ 11 | [[concepto_tarifa.cuenta_ingreso_id → cuenta_contable]] |
+| [[cuenta_billetera]] | `cuenta_contable_id` | ↗ 10 | [[cuenta_billetera.cuenta_contable_id → cuenta_contable]] |
 | [[fondo_garantia]] | `cuenta_contable_id` | ↗ 08 | [[fondo_garantia.cuenta_contable_id → cuenta_contable]] |
+| [[impuesto]] | `cuenta_contable_id` | ↗ 11 | [[impuesto.cuenta_contable_id → cuenta_contable]] |
 | [[movimiento_contable]] | `cuenta_id` | 03 | [[movimiento_contable.cuenta_id → cuenta_contable]] |
 
 ## Entidades vecinas
 
-[[fondo_garantia]] · [[grupo]] · [[movimiento_contable]] · [[participante]]
+[[concepto_tarifa]] · [[cuenta_billetera]] · [[fondo_garantia]] · [[grupo]] · [[impuesto]] · [[movimiento_contable]] · [[participante]]
 
 ## Ver también
 

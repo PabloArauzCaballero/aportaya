@@ -1,0 +1,1120 @@
+@startuml 10_billetera_custodia_clases
+' ============================================================
+'  MODULO 10: Billetera, Custodia y Dinero Electronico
+'  Diagrama de CLASES  (modelo detallado)
+'  Cubre: RF-22 (billetera con saldo), RN-23 (encaje 100%),
+'         RN-24 (limites por nivel de debida diligencia)
+'  Principio rector: el saldo de un usuario NO es un numero
+'  que se suma y se resta. Es el resultado de un libro de
+'  movimientos append-only, con partida doble interna, que
+'  debe cuadrar TODOS LOS DIAS contra el dinero real que la
+'  plataforma tiene depositado en una cuenta de custodia.
+'  Si el libro y el banco no cuadran, el sistema lo grita:
+'  no lo ajusta.
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 10 - Billetera, Custodia y Dinero Electronico (clases)
+
+legend top right
+  <b>Las tres invariantes del modulo</b>
+  1) Por transaccion:  SUM(debitos) = SUM(creditos)
+  2) Por cuenta:       saldo = SUM(movimientos) desde el origen
+  3) Por sistema:      SUM(saldos billetera) = saldo custodia
+                       (encaje 100%, verificado cada dia)
+  Ningun saldo se escribe: se deriva. La columna de saldo es
+  una cache con version optimista; la verdad es el libro.
+endlegend
+
+' ============================================================
+package "Cuentas de billetera" {
+
+  enum TipoCuentaBilletera {
+    USUARIO
+    GRUPO
+    PLATAFORMA_INGRESOS
+    PLATAFORMA_IMPUESTOS_POR_PAGAR
+    PUENTE_CUSTODIA
+    FONDO_GARANTIA
+    SUSPENSO_NO_IDENTIFICADO
+    LIQUIDACION_PROVEEDOR
+  }
+
+  enum EstadoBilletera {
+    EN_APERTURA
+    ACTIVA
+    LIMITADA
+    CONGELADA
+    BLOQUEADA_AUTORIDAD
+    EN_CIERRE
+    CERRADA
+  }
+
+  class CuentaBilletera <<AR>> {
+    - id: UUID
+    - numeroCuenta: String <<correlativo publico>>
+    - tipo: TipoCuentaBilletera
+    - titularUsuarioId: UUID <<null en cuentas de sistema>>
+    - grupoId: UUID <<null salvo cuentas de grupo>>
+    - moneda: String <<ISO-4217>>
+    - estado: EstadoBilletera
+    - nivelDebidaDiligencia: String <<SIMPLIFICADA | ESTANDAR | AMPLIADA | REFORZADA>>
+    - saldoDisponible: Decimal <<cache derivada>>
+    - saldoRetenido: Decimal <<cache derivada>>
+    - saldoTotal: Decimal <<derivado>>
+    - permiteSaldoNegativo: Boolean <<false salvo cuentas tecnicas>>
+    - cuentaContableId: UUID <<M3: espejo en el mayor>>
+    - fechaApertura: DateTime
+    - fechaCierre: DateTime
+    - version: Integer
+    --
+    + debitar(monto, transaccion): MovimientoBilletera
+    + acreditar(monto, transaccion): MovimientoBilletera
+    + retener(monto, motivo): RetencionSaldo
+    + liberar(retencionId)
+    + saldoA(fechaCorte): Decimal <<recalculado desde el libro>>
+    + puedeOperar(monto, concepto): ResultadoLimite
+    + congelar(motivo, autoridad)
+    + cerrar(destinoSaldo)
+  }
+
+  class PoliticaBilletera <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - moneda: String
+    - saldoMaximoPorNivel: Map
+    - diasInactividadParaLimitar: Integer
+    - permiteTransferenciaP2P: Boolean
+    - requiereMfaDesde: Decimal
+    - ventanaEnfriamientoRetiroHoras: Integer
+    - vigenteDesde: DateTime
+    --
+    + evaluar(cuenta, operacion): Decision
+  }
+
+  class SaldoDiarioBilletera <<VO>> {
+    - id: UUID
+    - cuentaBilleteraId: UUID
+    - fecha: Date
+    - saldoDisponible: Decimal
+    - saldoRetenido: Decimal
+    - cantidadMovimientos: Integer
+    - hashRegistro: String
+    - hashAnterior: String
+    --
+    + verificarCadena(): Boolean
+  }
+
+  note bottom of SaldoDiarioBilletera
+    Cierre de saldos del dia, encadenado por hash.
+    Permite responder "cuanto tenia esta persona
+    el 31 de marzo" sin recorrer el libro entero,
+    y probar que la respuesta no fue alterada.
+  end note
+}
+
+' ============================================================
+package "Libro de movimientos (append-only)" {
+
+  enum TipoTransaccion {
+    RECARGA
+    RETIRO
+    APORTE_A_GRUPO
+    ENTREGA_DE_FONDO
+    COBRO_COMISION
+    COBRO_IMPUESTO
+    TRANSFERENCIA_P2P
+    COBERTURA_GARANTIA
+    REPOSICION_GARANTIA
+    DEVOLUCION
+    AJUSTE_OPERATIVO
+    REVERSO
+  }
+
+  enum EstadoTransaccion {
+    INICIADA
+    AUTORIZADA
+    APLICADA
+    RECHAZADA
+    REVERSADA
+    EN_REVISION_FRAUDE
+  }
+
+  class TransaccionBilletera <<AR>> {
+    - id: UUID
+    - secuencia: Long <<correlativo global>>
+    - tipo: TipoTransaccion
+    - estado: EstadoTransaccion
+    - moneda: String
+    - montoTotal: Decimal
+    - grupoId: UUID
+    - origenTipo: String <<polimorfico>>
+    - origenId: UUID
+    - canal: String <<APP | WEB | API | BATCH | AGENTE>>
+    - sesionId: UUID <<M1>>
+    - dispositivoId: UUID <<M1>>
+    - ipOrigen: String
+    - claveIdempotencia: String
+    - asientoContableId: UUID <<M3>>
+    - hashRegistro: String
+    - hashAnterior: String
+    - ocurridaEn: DateTime
+    - registradaEn: DateTime
+    --
+    + agregarMovimiento(cuenta, debe, haber)
+    + validarPartidaDoble(): Boolean
+    + aplicar(): ResultadoAplicacion
+    + reversar(motivo): TransaccionBilletera
+    + calcularHash(): String
+  }
+
+  class MovimientoBilletera <<VO>> {
+    - id: UUID
+    - transaccionId: UUID
+    - cuentaBilleteraId: UUID
+    - orden: Integer
+    - sentido: String <<DEBITO | CREDITO>>
+    - monto: Decimal
+    - saldoDisponiblePosterior: Decimal
+    - saldoRetenidoPosterior: Decimal
+    - glosa: String
+    --
+    + esDebito(): Boolean
+  }
+
+  class RetencionSaldo {
+    - id: UUID
+    - cuentaBilleteraId: UUID
+    - transaccionOrigenId: UUID
+    - motivo: String <<APORTE_PROGRAMADO | ENTREGA_EN_CURSO | DISPUTA | ORDEN_AUTORIDAD | ANTIFRAUDE | COMISION_PENDIENTE>>
+    - monto: Decimal
+    - estado: String <<VIGENTE | LIBERADA | EJECUTADA | VENCIDA>>
+    - expiraEn: DateTime
+    - liberadaEn: DateTime
+    --
+    + ejecutar(transaccion)
+    + liberar(motivo)
+    + venceHoy(): Boolean
+  }
+
+  class ReversoTransaccion {
+    - id: UUID
+    - transaccionOriginalId: UUID
+    - transaccionReversoId: UUID
+    - tipo: String <<ANULACION | CONTRACARGO | ERROR_OPERATIVO | ORDEN_AUTORIDAD>>
+    - motivo: String
+    - montoReversado: Decimal
+    - autorizadaPor: UUID
+    - estado: String
+    --
+    + ejecutar(): TransaccionBilletera
+  }
+
+  TransaccionBilletera "1" *-- "2..*" MovimientoBilletera
+  TransaccionBilletera "1" o-- "0..*" RetencionSaldo
+  TransaccionBilletera "1" o-- "0..1" ReversoTransaccion
+}
+
+' ============================================================
+package "Entrada y salida de dinero" {
+
+  class InstrumentoFondeo {
+    - id: UUID
+    - usuarioId: UUID
+    - tipo: String <<CUENTA_BANCARIA | TARJETA | QR_BANCARIO | AGENTE | EFECTIVO>>
+    - entidadFinanciera: String
+    - tokenProveedor: String <<nunca el PAN ni el numero completo>>
+    - hashIdentificador: String
+    - enmascarado: String
+    - titularCoincideConUsuario: Boolean
+    - estadoVerificacion: String
+    - esPrincipal: Boolean
+    - bloqueadoHasta: DateTime
+    --
+    + verificar(metodo): ResultadoVerificacion
+    + puedeUsarse(): Boolean
+  }
+
+  class OrdenRecarga <<AR>> {
+    - id: UUID
+    - cuentaBilleteraId: UUID
+    - instrumentoFondeoId: UUID
+    - proveedorId: UUID <<M3>>
+    - puntoAtencionId: UUID
+    - montoBruto: Decimal
+    - costoProveedor: Decimal
+    - montoAcreditado: Decimal
+    - moneda: String
+    - estado: String <<PENDIENTE | ACREDITADA | RECHAZADA | EXPIRADA | REVERSADA>>
+    - referenciaExterna: String
+    - pagoId: UUID <<M3>>
+    - claveIdempotencia: String
+    - expiraEn: DateTime
+    --
+    + acreditar(referencia): TransaccionBilletera
+    + rechazar(motivo)
+  }
+
+  class OrdenRetiro <<AR>> {
+    - id: UUID
+    - cuentaBilleteraId: UUID
+    - instrumentoDestinoId: UUID
+    - montoSolicitado: Decimal
+    - costoRetiro: Decimal
+    - montoNeto: Decimal
+    - estado: String
+    - retencionId: UUID
+    - mfaVerificado: Boolean
+    - requiereDobleAprobacion: Boolean
+    - aprobadaPor: UUID
+    - ventanaEnfriamientoHasta: DateTime
+    - referenciaProveedor: String
+    - claveIdempotencia: String
+    --
+    + autorizar(factorMfa)
+    + ejecutar(): TransaccionBilletera
+    + rechazar(motivo)
+  }
+
+  class TransferenciaP2P {
+    - id: UUID
+    - transaccionId: UUID
+    - cuentaOrigenId: UUID
+    - cuentaDestinoId: UUID
+    - monto: Decimal
+    - concepto: String
+    - grupoId: UUID <<null si no es aporte>>
+    - estado: String
+    --
+    + ejecutar(): TransaccionBilletera
+  }
+
+  class PuntoAtencion {
+    - id: UUID
+    - codigo: String
+    - tipo: String <<AGENCIA_PROPIA | AGENTE_CORRESPONSAL | CAJERO>>
+    - razonSocial: String
+    - nit: String
+    - municipio: String
+    - responsableUsuarioId: UUID
+    - limiteEfectivoDiario: Decimal
+    - estado: String
+    --
+    + puedeOperar(monto): Boolean
+  }
+
+  class ArqueoPuntoAtencion {
+    - id: UUID
+    - puntoAtencionId: UUID
+    - fecha: Date
+    - saldoInicial: Decimal
+    - totalRecargas: Decimal
+    - totalRetiros: Decimal
+    - saldoTeorico: Decimal
+    - saldoContado: Decimal
+    - diferencia: Decimal
+    - estado: String
+    --
+    + cuadra(): Boolean
+  }
+
+  PuntoAtencion "1" o-- "0..*" ArqueoPuntoAtencion
+  InstrumentoFondeo "1" o-- "0..*" OrdenRecarga
+  InstrumentoFondeo "1" o-- "0..*" OrdenRetiro
+}
+
+' ============================================================
+package "Custodia y encaje" {
+
+  class CuentaCustodia <<AR>> {
+    - id: UUID
+    - tipo: String <<FIDEICOMISO | CUENTA_ENCAJE | CUENTA_RECAUDADORA>>
+    - entidadFinanciera: String
+    - numeroCuentaCifrado: String
+    - moneda: String
+    - saldoSegunBanco: Decimal
+    - saldoSegunLibro: Decimal
+    - fechaSaldo: DateTime
+    - contratoReferencia: String
+    - esPrincipal: Boolean
+    - estado: String
+    --
+    + registrarMovimiento(mov)
+    + cobertura(): Decimal
+  }
+
+  class MovimientoCustodia <<VO>> {
+    - id: UUID
+    - cuentaCustodiaId: UUID
+    - fechaValor: Date
+    - tipo: String <<INGRESO | EGRESO | COSTO_BANCARIO | RENDIMIENTO>>
+    - monto: Decimal
+    - referenciaBancaria: String
+    - movimientoBancarioId: UUID <<M3>>
+    - conciliado: Boolean
+  }
+
+  class ConciliacionCustodia <<AR>> {
+    - id: UUID
+    - cuentaCustodiaId: UUID
+    - fecha: Date
+    - saldoDineroElectronico: Decimal <<SUM saldos billetera>>
+    - saldoCustodia: Decimal
+    - diferencia: Decimal
+    - ratioCobertura: Decimal <<derivado>>
+    - cumpleEncaje: Boolean
+    - estado: String <<CUADRADA | DESCUADRADA | EN_ANALISIS>>
+    - cierreDiarioId: UUID <<M3>>
+    - ejecutadaPor: UUID
+    --
+    + ejecutar(fecha): ResultadoConciliacion
+    + bloqueaOperacion(): Boolean
+  }
+
+  class DescuadreCustodia {
+    - id: UUID
+    - conciliacionCustodiaId: UUID
+    - tipo: String <<FALTANTE | SOBRANTE | DESFASE_TEMPORAL | ERROR_REGISTRO>>
+    - montoDiferencia: Decimal
+    - severidad: String
+    - explicacion: String
+    - planAccion: String
+    - incidenteOperativoId: UUID <<M9>>
+    - estado: String
+    --
+    + escalar()
+    + resolver(explicacion, evidencia)
+  }
+
+  CuentaCustodia "1" o-- "0..*" MovimientoCustodia
+  CuentaCustodia "1" o-- "0..*" ConciliacionCustodia
+  ConciliacionCustodia "1" o-- "0..*" DescuadreCustodia
+}
+
+' ============================================================
+package "Limites, fraude y medidas restrictivas" {
+
+  class LimiteOperativoBilletera <<Pol>> {
+    - id: UUID
+    - concepto: String <<RECARGA | RETIRO | TRANSFERENCIA | APORTE | SALDO_MAXIMO>>
+    - nivelDebidaDiligencia: String
+    - ventana: String <<OPERACION | DIA | SEMANA | MES | ANIO>>
+    - montoMaximo: Decimal
+    - cantidadMaxima: Integer
+    - moneda: String
+    - baseNormativa: String <<articulo que lo obliga>>
+    - vigenteDesde: Date
+    --
+    + evaluar(cuenta, monto): ResultadoLimite
+  }
+
+  class ConsumoLimite <<VO>> {
+    - id: UUID
+    - cuentaBilleteraId: UUID
+    - limiteId: UUID
+    - ventanaInicio: DateTime
+    - ventanaFin: DateTime
+    - montoAcumulado: Decimal
+    - cantidadAcumulada: Integer
+    --
+    + disponible(): Decimal
+  }
+
+  class ReglaAntifraude <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - descripcion: String
+    - expresion: Json <<declarativa, sin codigo>>
+    - accion: String <<PERMITIR | DESAFIAR_MFA | REVISAR | RECHAZAR>>
+    - prioridad: Integer
+    - activa: Boolean
+    --
+    + evaluar(contexto): Decision
+  }
+
+  class EvaluacionAntifraude <<VO>> {
+    - id: UUID
+    - transaccionId: UUID
+    - cuentaBilleteraId: UUID
+    - motorVersion: String
+    - puntajeRiesgo: Decimal
+    - decision: String
+    - reglasDisparadas: Json
+    - latenciaMs: Integer
+    - revisadaPor: UUID
+  }
+
+  class BloqueoSaldo {
+    - id: UUID
+    - cuentaBilleteraId: UUID
+    - autoridad: String <<JUZGADO | UIF | ASFI | FISCALIA | INTERNO>>
+    - tipoOrden: String
+    - numeroOficio: String
+    - montoBloqueado: Decimal
+    - alcance: String <<TOTAL | PARCIAL>>
+    - documentoUrl: String
+    - hashDocumento: String
+    - estado: String
+    - venceEn: DateTime
+    - levantadoEn: DateTime
+    --
+    + aplicar(): RetencionSaldo
+    + levantar(oficio)
+  }
+
+  LimiteOperativoBilletera "1" o-- "0..*" ConsumoLimite
+  ReglaAntifraude "1" o-- "0..*" EvaluacionAntifraude
+}
+
+' ============================================================
+package "Servicio al titular" {
+
+  class EstadoCuentaBilletera {
+    - id: UUID
+    - cuentaBilleteraId: UUID
+    - periodoDesde: Date
+    - periodoHasta: Date
+    - saldoInicial: Decimal
+    - totalCreditos: Decimal
+    - totalDebitos: Decimal
+    - saldoFinal: Decimal
+    - cantidadMovimientos: Integer
+    - urlArchivo: String
+    - hashArchivo: String
+    - emitidoEn: DateTime
+    --
+    + generar(): Documento
+  }
+
+  class CertificadoSaldo {
+    - id: UUID
+    - cuentaBilleteraId: UUID
+    - folio: String
+    - motivo: String
+    - saldoCertificado: Decimal
+    - fechaCorte: DateTime
+    - hashDocumento: String
+    --
+    + verificar(folio, hash): Boolean
+  }
+
+  class SolicitudCierreBilletera {
+    - id: UUID
+    - cuentaBilleteraId: UUID
+    - motivo: String
+    - saldoAlSolicitar: Decimal
+    - destinoSaldo: String <<RETIRO | TRANSFERENCIA>>
+    - ordenRetiroId: UUID
+    - estado: String
+    --
+    + validarSinObligacionesAbiertas(): Boolean
+    + ejecutar()
+  }
+}
+
+' ============================================================
+CuentaBilletera "1" o-- "0..*" MovimientoBilletera
+CuentaBilletera "1" o-- "0..*" RetencionSaldo
+CuentaBilletera "1" o-- "0..*" OrdenRecarga
+CuentaBilletera "1" o-- "0..*" OrdenRetiro
+CuentaBilletera "1" o-- "0..*" ConsumoLimite
+CuentaBilletera "1" o-- "0..*" BloqueoSaldo
+CuentaBilletera "1" o-- "0..*" SaldoDiarioBilletera
+CuentaBilletera "1" o-- "0..*" EstadoCuentaBilletera
+CuentaBilletera "1" o-- "0..1" SolicitudCierreBilletera
+PoliticaBilletera "1" o-- "0..*" CuentaBilletera
+
+note top of CuentaBilletera
+  <b>Cuenta de grupo, no cuenta del organizador</b>
+  El dinero del pasanaku vive en una cuenta de
+  billetera cuyo titular es el GRUPO, no una persona.
+  El organizador tiene permisos para operarla dentro
+  del reglamento, pero nunca es el titular y nunca
+  puede retirar a una cuenta propia (RN-18).
+end note
+
+note bottom of TransaccionBilletera
+  <b>Idempotencia y trazabilidad</b>
+  UNIQUE (clave_idempotencia). Un reintento del cliente,
+  del proveedor o del job nocturno no mueve el saldo dos
+  veces. Cada transaccion queda encadenada por hash con
+  la anterior: reescribir el pasado obliga a reescribir
+  todo lo que vino despues.
+end note
+
+note bottom of ConciliacionCustodia
+  <b>La prueba de que el dinero existe</b>
+  Todos los dias: SUM(saldo de todas las billeteras)
+  contra el saldo real de la cuenta de custodia.
+  Si ratio_cobertura < 1, el sistema entra en modo
+  restringido: se aceptan recargas y aportes, se
+  suspenden retiros discrecionales, y el descuadre
+  escala como incidente operativo (M9) y evento de
+  riesgo operativo (M12).
+end note
+
+@enduml
+
+
+@startuml 10_billetera_custodia_relacional
+' ============================================================
+'  MODULO 10: Billetera, Custodia y Dinero Electronico
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 10 - Billetera, Custodia y Dinero Electronico (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> CHECK    <<NULL>> admite nulos
+  Importes DECIMAL(16,2) + moneda CHAR(3) ISO-4217.
+  transaccion_billetera, movimiento_billetera,
+  movimiento_custodia y saldo_diario_billetera son
+  append-only: REVOKE UPDATE, DELETE.
+endlegend
+
+entity "politica_billetera" as polbill {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(40) <<UQ>>
+  moneda : CHAR(3)
+  dias_inactividad_para_limitar : SMALLINT
+  permite_transferencia_p2p : BOOLEAN
+  requiere_mfa_desde : DECIMAL(16,2)
+  ventana_enfriamiento_retiro_horas : SMALLINT
+  dias_vigencia_retencion : SMALLINT
+  permite_saldo_negativo : BOOLEAN
+  vigente_desde : TIMESTAMPTZ
+  # aprobada_por : UUID <<FK, NULL>>
+}
+
+entity "cuenta_billetera" as ctabill {
+  * id : UUID <<PK>>
+  --
+  numero_cuenta : VARCHAR(20) <<UQ>>
+  tipo : VARCHAR(35) <<CK, IDX>>
+  # usuario_id : UUID <<FK, NULL, IDX>>
+  # grupo_id : UUID <<FK, NULL, IDX>>
+  # politica_billetera_id : UUID <<FK, NULL>>
+  # cuenta_contable_id : UUID <<FK, NULL, M3>>
+  moneda : CHAR(3)
+  estado : VARCHAR(25) <<CK, IDX>>
+  nivel_debida_diligencia : VARCHAR(15) <<CK>>
+  saldo_disponible : DECIMAL(16,2) <<CK: >= 0>>
+  saldo_retenido : DECIMAL(16,2) <<CK: >= 0>>
+  saldo_total : DECIMAL(16,2) <<GENERATED>>
+  permite_saldo_negativo : BOOLEAN
+  fecha_apertura : TIMESTAMPTZ
+  fecha_cierre : TIMESTAMPTZ <<NULL>>
+  version : INTEGER
+}
+
+entity "saldo_diario_billetera" as saldodia {
+  * id : UUID <<PK>>
+  --
+  # cuenta_billetera_id : UUID <<FK, IDX>>
+  fecha : DATE <<UQ+cuenta_billetera_id>>
+  saldo_disponible : DECIMAL(16,2)
+  saldo_retenido : DECIMAL(16,2)
+  cantidad_movimientos : INTEGER
+  hash_registro : VARCHAR(64)
+  hash_anterior : VARCHAR(64) <<NULL>>
+  cerrado_en : TIMESTAMPTZ
+}
+
+entity "transaccion_billetera" as txbill {
+  * id : UUID <<PK>>
+  --
+  secuencia : BIGSERIAL <<UQ>>
+  tipo : VARCHAR(30) <<CK, IDX>>
+  estado : VARCHAR(20) <<CK, IDX>>
+  moneda : CHAR(3)
+  monto_total : DECIMAL(16,2) <<CK: > 0>>
+  # grupo_id : UUID <<FK, NULL, IDX>>
+  # asiento_contable_id : UUID <<FK, NULL, M3>>
+  # sesion_id : UUID <<FK, NULL, M1>>
+  # dispositivo_id : UUID <<FK, NULL, M1>>
+  # iniciada_por : UUID <<FK, NULL>>
+  origen_tipo : VARCHAR(30) <<CK>>
+  origen_id : UUID <<IDX, polimorfica>>
+  canal : VARCHAR(15) <<CK>>
+  ip_origen : INET <<NULL>>
+  clave_idempotencia : VARCHAR(100) <<UQ>>
+  hash_registro : VARCHAR(64)
+  hash_anterior : VARCHAR(64) <<NULL>>
+  ocurrida_en : TIMESTAMPTZ <<IDX>>
+  registrada_en : TIMESTAMPTZ
+}
+
+entity "movimiento_billetera" as movbill {
+  * id : UUID <<PK>>
+  --
+  # transaccion_id : UUID <<FK, IDX>>
+  # cuenta_billetera_id : UUID <<FK, IDX>>
+  orden : SMALLINT
+  sentido : VARCHAR(7) <<CK: DEBITO|CREDITO>>
+  monto : DECIMAL(16,2) <<CK: > 0>>
+  saldo_disponible_posterior : DECIMAL(16,2)
+  saldo_retenido_posterior : DECIMAL(16,2)
+  glosa : VARCHAR(160)
+  registrado_en : TIMESTAMPTZ <<IDX>>
+}
+
+entity "retencion_saldo" as reten {
+  * id : UUID <<PK>>
+  --
+  # cuenta_billetera_id : UUID <<FK, IDX>>
+  # transaccion_origen_id : UUID <<FK, NULL>>
+  # liberada_por : UUID <<FK, NULL>>
+  motivo : VARCHAR(30) <<CK, IDX>>
+  referencia_tipo : VARCHAR(30) <<NULL>>
+  referencia_id : UUID <<NULL, polimorfica>>
+  monto : DECIMAL(16,2) <<CK: > 0>>
+  estado : VARCHAR(12) <<CK, IDX>>
+  expira_en : TIMESTAMPTZ <<NULL, IDX>>
+  creada_en : TIMESTAMPTZ
+  liberada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "reverso_transaccion" as revtx {
+  * id : UUID <<PK>>
+  --
+  # transaccion_original_id : UUID <<FK, IDX>>
+  # transaccion_reverso_id : UUID <<FK, NULL, UQ>>
+  # autorizada_por : UUID <<FK>>
+  tipo : VARCHAR(25) <<CK>>
+  motivo : VARCHAR(300)
+  monto_reversado : DECIMAL(16,2)
+  estado : VARCHAR(15) <<CK>>
+  solicitada_en : TIMESTAMPTZ
+  ejecutada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "instrumento_fondeo" as instr {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(20) <<CK>>
+  entidad_financiera : VARCHAR(60)
+  token_proveedor : VARCHAR(255) <<NULL>>
+  hash_identificador : VARCHAR(64) <<UQ+usuario_id>>
+  enmascarado : VARCHAR(30)
+  titular_nombre : VARCHAR(120)
+  titular_documento : VARCHAR(30)
+  titular_coincide : BOOLEAN
+  moneda : CHAR(3)
+  es_principal : BOOLEAN
+  estado_verificacion : VARCHAR(15) <<CK>>
+  metodo_verificacion : VARCHAR(20) <<NULL>>
+  verificado_en : TIMESTAMPTZ <<NULL>>
+  bloqueado_hasta : TIMESTAMPTZ <<NULL>>
+}
+
+entity "punto_atencion" as punto {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(20) <<UQ>>
+  tipo : VARCHAR(25) <<CK>>
+  razon_social : VARCHAR(120)
+  nit : VARCHAR(20) <<NULL>>
+  departamento : VARCHAR(30)
+  municipio : VARCHAR(60)
+  direccion : VARCHAR(200)
+  # responsable_usuario_id : UUID <<FK, NULL>>
+  limite_efectivo_diario : DECIMAL(16,2)
+  estado : VARCHAR(15) <<CK, IDX>>
+  habilitado_desde : DATE
+}
+
+entity "arqueo_punto_atencion" as arqueo {
+  * id : UUID <<PK>>
+  --
+  # punto_atencion_id : UUID <<FK, IDX>>
+  # arqueado_por : UUID <<FK>>
+  fecha : DATE <<UQ+punto_atencion_id>>
+  saldo_inicial : DECIMAL(16,2)
+  total_recargas : DECIMAL(16,2)
+  total_retiros : DECIMAL(16,2)
+  saldo_teorico : DECIMAL(16,2)
+  saldo_contado : DECIMAL(16,2)
+  diferencia : DECIMAL(16,2) <<GENERATED>>
+  estado : VARCHAR(15) <<CK>>
+  observaciones : VARCHAR(300) <<NULL>>
+  cerrado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "orden_recarga" as orecarga {
+  * id : UUID <<PK>>
+  --
+  # cuenta_billetera_id : UUID <<FK, IDX>>
+  # instrumento_fondeo_id : UUID <<FK, NULL>>
+  # proveedor_id : UUID <<FK, NULL, M3>>
+  # punto_atencion_id : UUID <<FK, NULL>>
+  # pago_id : UUID <<FK, NULL, M3>>
+  # transaccion_id : UUID <<FK, NULL>>
+  monto_bruto : DECIMAL(16,2) <<CK: > 0>>
+  costo_proveedor : DECIMAL(10,2)
+  monto_acreditado : DECIMAL(16,2)
+  moneda : CHAR(3)
+  estado : VARCHAR(15) <<CK, IDX>>
+  referencia_externa : VARCHAR(80) <<UQ, NULL>>
+  clave_idempotencia : VARCHAR(100) <<UQ>>
+  solicitada_en : TIMESTAMPTZ
+  acreditada_en : TIMESTAMPTZ <<NULL>>
+  expira_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "orden_retiro" as oretiro {
+  * id : UUID <<PK>>
+  --
+  # cuenta_billetera_id : UUID <<FK, IDX>>
+  # instrumento_destino_id : UUID <<FK>>
+  # retencion_id : UUID <<FK, NULL, UQ>>
+  # transaccion_id : UUID <<FK, NULL>>
+  # aprobada_por : UUID <<FK, NULL>>
+  # proveedor_id : UUID <<FK, NULL, M3>>
+  monto_solicitado : DECIMAL(16,2) <<CK: > 0>>
+  costo_retiro : DECIMAL(10,2)
+  monto_neto : DECIMAL(16,2)
+  moneda : CHAR(3)
+  estado : VARCHAR(20) <<CK, IDX>>
+  mfa_verificado : BOOLEAN
+  requiere_doble_aprobacion : BOOLEAN
+  ventana_enfriamiento_hasta : TIMESTAMPTZ <<NULL>>
+  referencia_proveedor : VARCHAR(80) <<UQ, NULL>>
+  clave_idempotencia : VARCHAR(100) <<UQ>>
+  solicitada_en : TIMESTAMPTZ
+  pagada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "transferencia_p2p" as p2p {
+  * id : UUID <<PK>>
+  --
+  # transaccion_id : UUID <<FK, UQ>>
+  # cuenta_billetera_origen_id : UUID <<FK, IDX>>
+  # cuenta_billetera_destino_id : UUID <<FK, IDX>>
+  # grupo_id : UUID <<FK, NULL>>
+  # obligacion_id : UUID <<FK, NULL, M3>>
+  monto : DECIMAL(16,2) <<CK: > 0>>
+  moneda : CHAR(3)
+  concepto : VARCHAR(140)
+  estado : VARCHAR(15) <<CK>>
+  ejecutada_en : TIMESTAMPTZ
+}
+
+entity "cuenta_custodia" as ctacust {
+  * id : UUID <<PK>>
+  --
+  tipo : VARCHAR(25) <<CK>>
+  entidad_financiera : VARCHAR(60)
+  numero_cuenta_cifrado : VARCHAR(255)
+  numero_enmascarado : VARCHAR(30)
+  moneda : CHAR(3)
+  saldo_segun_banco : DECIMAL(18,2)
+  saldo_segun_libro : DECIMAL(18,2)
+  fecha_saldo : TIMESTAMPTZ
+  contrato_referencia : VARCHAR(80)
+  es_principal : BOOLEAN
+  estado : VARCHAR(15) <<CK>>
+  abierta_en : DATE
+}
+
+entity "movimiento_custodia" as movcust {
+  * id : UUID <<PK>>
+  --
+  # cuenta_custodia_id : UUID <<FK, IDX>>
+  # movimiento_bancario_id : UUID <<FK, NULL, UQ, M3>>
+  fecha_valor : DATE <<IDX>>
+  tipo : VARCHAR(20) <<CK>>
+  sentido : VARCHAR(7) <<CK>>
+  monto : DECIMAL(18,2) <<CK: > 0>>
+  referencia_bancaria : VARCHAR(80) <<UQ>>
+  glosa : VARCHAR(200)
+  conciliado : BOOLEAN <<IDX>>
+  registrado_en : TIMESTAMPTZ
+}
+
+entity "conciliacion_custodia" as concust {
+  * id : UUID <<PK>>
+  --
+  # cuenta_custodia_id : UUID <<FK, IDX>>
+  # cierre_diario_id : UUID <<FK, NULL, M3>>
+  # ejecutada_por : UUID <<FK, NULL>>
+  fecha : DATE <<UQ+cuenta_custodia_id>>
+  saldo_dinero_electronico : DECIMAL(18,2)
+  saldo_custodia : DECIMAL(18,2)
+  saldo_en_transito : DECIMAL(18,2)
+  diferencia : DECIMAL(18,2) <<GENERATED>>
+  ratio_cobertura : DECIMAL(9,6) <<GENERATED>>
+  cumple_encaje : BOOLEAN <<IDX>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  ejecutada_en : TIMESTAMPTZ
+}
+
+entity "descuadre_custodia" as descuadre {
+  * id : UUID <<PK>>
+  --
+  # conciliacion_custodia_id : UUID <<FK, IDX>>
+  # incidente_operativo_id : UUID <<FK, NULL, M9>>
+  # resuelto_por : UUID <<FK, NULL>>
+  tipo : VARCHAR(25) <<CK>>
+  monto_diferencia : DECIMAL(18,2)
+  severidad : VARCHAR(10) <<CK, IDX>>
+  explicacion : VARCHAR(500) <<NULL>>
+  plan_accion : VARCHAR(500) <<NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  detectado_en : TIMESTAMPTZ
+  resuelto_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "limite_operativo_billetera" as limite {
+  * id : UUID <<PK>>
+  --
+  concepto : VARCHAR(25) <<CK, UQ+nivel_debida_diligencia+ventana>>
+  nivel_debida_diligencia : VARCHAR(15) <<CK>>
+  ventana : VARCHAR(10) <<CK>>
+  monto_maximo : DECIMAL(16,2) <<NULL>>
+  cantidad_maxima : INTEGER <<NULL>>
+  moneda : CHAR(3)
+  base_normativa : VARCHAR(120)
+  vigente_desde : DATE
+  vigente_hasta : DATE <<NULL>>
+  activo : BOOLEAN
+}
+
+entity "consumo_limite" as consumo {
+  * id : UUID <<PK>>
+  --
+  # cuenta_billetera_id : UUID <<FK, IDX>>
+  # limite_id : UUID <<FK, IDX>>
+  ventana_inicio : TIMESTAMPTZ <<UQ+cuenta_billetera_id+limite_id>>
+  ventana_fin : TIMESTAMPTZ
+  monto_acumulado : DECIMAL(16,2)
+  cantidad_acumulada : INTEGER
+  actualizado_en : TIMESTAMPTZ
+}
+
+entity "regla_antifraude" as reglafraude {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(40) <<UQ>>
+  descripcion : VARCHAR(300)
+  expresion : JSONB
+  accion : VARCHAR(20) <<CK>>
+  umbral_puntaje : DECIMAL(5,2)
+  prioridad : SMALLINT
+  activa : BOOLEAN <<IDX>>
+  vigente_desde : TIMESTAMPTZ
+  # aprobada_por : UUID <<FK, NULL>>
+}
+
+entity "evaluacion_antifraude" as evalfraude {
+  * id : UUID <<PK>>
+  --
+  # transaccion_id : UUID <<FK, NULL, IDX>>
+  # cuenta_billetera_id : UUID <<FK, IDX>>
+  # revisada_por : UUID <<FK, NULL>>
+  motor_version : VARCHAR(20)
+  puntaje_riesgo : DECIMAL(5,2) <<IDX>>
+  decision : VARCHAR(20) <<CK, IDX>>
+  reglas_disparadas : JSONB
+  latencia_ms : INTEGER
+  evaluada_en : TIMESTAMPTZ <<IDX>>
+  revisada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "bloqueo_saldo" as bloqsaldo {
+  * id : UUID <<PK>>
+  --
+  # cuenta_billetera_id : UUID <<FK, IDX>>
+  # retencion_id : UUID <<FK, NULL>>
+  # levantada_por : UUID <<FK, NULL>>
+  autoridad : VARCHAR(20) <<CK>>
+  tipo_orden : VARCHAR(30) <<CK>>
+  numero_oficio : VARCHAR(60) <<UQ>>
+  monto_bloqueado : DECIMAL(16,2) <<NULL>>
+  alcance : VARCHAR(10) <<CK>>
+  documento_url : VARCHAR(255)
+  hash_documento : VARCHAR(64)
+  estado : VARCHAR(15) <<CK, IDX>>
+  recibido_en : TIMESTAMPTZ
+  vence_en : TIMESTAMPTZ <<NULL>>
+  levantado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "estado_cuenta_billetera" as extracto {
+  * id : UUID <<PK>>
+  --
+  # cuenta_billetera_id : UUID <<FK, IDX>>
+  periodo_desde : DATE <<UQ+cuenta_billetera_id+periodo_hasta>>
+  periodo_hasta : DATE
+  saldo_inicial : DECIMAL(16,2)
+  total_creditos : DECIMAL(16,2)
+  total_debitos : DECIMAL(16,2)
+  saldo_final : DECIMAL(16,2)
+  cantidad_movimientos : INTEGER
+  url_archivo : VARCHAR(255)
+  hash_archivo : VARCHAR(64)
+  emitido_en : TIMESTAMPTZ
+  entregado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "certificado_saldo" as certsaldo {
+  * id : UUID <<PK>>
+  --
+  # cuenta_billetera_id : UUID <<FK, IDX>>
+  # solicitado_por : UUID <<FK>>
+  folio : VARCHAR(30) <<UQ>>
+  motivo : VARCHAR(120)
+  saldo_certificado : DECIMAL(16,2)
+  fecha_corte : TIMESTAMPTZ
+  hash_documento : VARCHAR(64)
+  url_documento : VARCHAR(255)
+  emitido_en : TIMESTAMPTZ
+}
+
+entity "solicitud_cierre_billetera" as solcierre {
+  * id : UUID <<PK>>
+  --
+  # cuenta_billetera_id : UUID <<FK, UQ>>
+  # orden_retiro_id : UUID <<FK, NULL>>
+  # aprobada_por : UUID <<FK, NULL>>
+  motivo : VARCHAR(200)
+  saldo_al_solicitar : DECIMAL(16,2)
+  destino_saldo : VARCHAR(20) <<CK>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  solicitada_en : TIMESTAMPTZ
+  ejecutada_en : TIMESTAMPTZ <<NULL>>
+}
+
+polbill ||--o{ ctabill : "parametriza"
+ctabill ||--o{ movbill : "acumula"
+ctabill ||--o{ reten : "retiene"
+ctabill ||--o{ orecarga : "se fondea con"
+ctabill ||--o{ oretiro : "retira con"
+ctabill ||--o{ consumo : "consume limite"
+ctabill ||--o{ bloqsaldo : "sufre"
+ctabill ||--o{ saldodia : "cierra el dia como"
+ctabill ||--o{ extracto : "reporta en"
+ctabill ||--o{ certsaldo : "certifica en"
+ctabill ||--o| solcierre : "se cierra con"
+txbill ||--|{ movbill : "detalla"
+txbill ||--o{ reten : "origina"
+txbill ||--o| revtx : "se reversa con"
+txbill ||--o| p2p : "materializa"
+txbill ||--o{ evalfraude : "se evalua en"
+instr ||--o{ orecarga : "acredita desde"
+instr ||--o{ oretiro : "paga hacia"
+punto ||--o{ orecarga : "atiende"
+punto ||--o{ arqueo : "cuadra en"
+ctacust ||--o{ movcust : "registra"
+ctacust ||--o{ concust : "se concilia en"
+concust ||--o{ descuadre : "levanta"
+limite ||--o{ consumo : "se mide en"
+reglafraude ||--o{ evalfraude : "dispara"
+bloqsaldo }o--o| reten : "se aplica como"
+oretiro }o--o| reten : "reserva con"
+
+note top of ctabill
+  <b>Reglas duras</b>
+  - UNIQUE (usuario_id, moneda, tipo) para tipo='USUARIO'.
+  - UNIQUE (grupo_id, moneda) para tipo='GRUPO'.
+  - CHECK: (tipo='USUARIO' AND usuario_id IS NOT NULL)
+        OR (tipo='GRUPO'   AND grupo_id  IS NOT NULL)
+        OR (tipo LIKE 'PLATAFORMA%' AND usuario_id IS NULL
+            AND grupo_id IS NULL)
+  - CHECK: saldo_disponible >= 0 salvo permite_saldo_negativo.
+  - saldo_total = saldo_disponible + saldo_retenido.
+  - Las columnas de saldo son cache: un job de verificacion
+    recalcula desde movimiento_billetera y alerta si difiere
+    en un solo centavo.
+  usuario_id y grupo_id referencian a los modulos 1 y 2;
+  cuenta_contable_id al modulo 3.
+end note
+
+note bottom of movbill
+  <b>Partida doble interna</b>
+  Trigger AFTER por transaccion:
+    SUM(monto WHERE sentido='DEBITO')
+  = SUM(monto WHERE sentido='CREDITO')
+  Un aporte de Bs 500 no es "restar 500": es
+  DEBITO 500 a la billetera del participante y
+  CREDITO 500 a la billetera del grupo, en la
+  misma transaccion. El dinero nunca desaparece
+  ni aparece; siempre cambia de cuenta.
+  REVOKE UPDATE, DELETE ON movimiento_billetera.
+end note
+
+note bottom of txbill
+  <b>Cadena de integridad</b>
+  hash_registro = SHA256(secuencia || tipo || monto_total ||
+    origen_tipo || origen_id || ocurrida_en || hash_anterior).
+  Enlaza con evento_dominio y bitacora_evento (M9).
+  origen_tipo/origen_id son polimorficas: obligacion_aporte.id
+  (M3), entrega_fondo.id (M4), devengo_comision.id (M11),
+  cobertura_incumplimiento.id (M8).
+end note
+
+note bottom of concust
+  <b>Encaje 100%</b>
+  ratio_cobertura = saldo_custodia / saldo_dinero_electronico.
+  cumple_encaje = ratio_cobertura >= 1.0000.
+  El dinero de los usuarios NO es patrimonio de la
+  plataforma: es un pasivo exigible respaldado peso por peso.
+  El cierre_diario de M3 no puede marcarse cuadrado si existe
+  una conciliacion_custodia DESCUADRADA de esa fecha.
+end note
+
+note bottom of limite
+  Los limites son datos, no codigo: cambiar el techo de
+  retiro mensual de un nivel de debida diligencia es un
+  UPDATE con nueva vigencia, no un despliegue.
+  base_normativa guarda la referencia al articulo que lo
+  obliga, para poder justificar cada techo ante el regulador.
+end note
+
+note bottom of bloqsaldo
+  Una orden de autoridad se materializa como retencion_saldo
+  (no como borrado ni como saldo negativo): el dinero sigue
+  siendo del titular, pero deja de estar disponible.
+  Se conserva el oficio y su hash para poder demostrar que
+  el bloqueo tuvo respaldo legal.
+end note
+
+@enduml

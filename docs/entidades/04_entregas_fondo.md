@@ -86,9 +86,16 @@ Siete tipos, todos con un caso real detrás:
 - `REPOSICION_FONDO_GARANTIA`: si el fondo cubrió un aporte suyo hace tres meses,
   ahora que cobra lo devuelve.
 - `RETENCION_IMPUESTO` y `COSTO_TRANSFERENCIA`: los descuentos que no decide nadie.
+- `COMISION_PLATAFORMA`: la comisión del servicio (M11). Es la única deducción que
+  representa un ingreso de la empresa, y por eso es la que más rigor exige:
+  `referenciaOrigenId` apunta al `cargo_comision`, que apunta al concepto y a la
+  versión exacta del tarifario que la calculó. La pantalla puede decir *"Bs 18 —
+  comisión por cobro de turno, 0,3 % de la bolsa"* y el usuario puede verificarlo
+  contra el tarifario publicado.
 
-  No hay deducción por comisión del organizador: administrar no se cobra (RN-18),
-  así que **la bolsa nunca se descuenta para pagarle a quien la administra**.
+  **Sigue sin haber deducción por comisión del organizador**: administrar no se
+  cobra (RN-18). La bolsa se descuenta para pagar el servicio de la plataforma,
+  nunca para pagarle a quien administra el grupo.
 
 `referenciaOrigenId` apunta al hecho concreto que justifica cada descuento. Eso es
 lo que permite que la pantalla diga "Bs 500 — tu aporte del período 7" en vez de

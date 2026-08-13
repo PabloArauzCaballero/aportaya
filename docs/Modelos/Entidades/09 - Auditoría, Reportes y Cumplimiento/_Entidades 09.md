@@ -25,11 +25,11 @@ Las **19 tablas** de este módulo. Justificación de negocio en [[09_auditoria_r
 | [[indicador_kpi]] | 11 | 0 | 0 |
 | [[regla_cumplimiento]] | 10 | 0 | 1 |
 | [[alerta_cumplimiento]] | 15 | 5 | 0 |
-| [[reporte_operacion_sospechosa]] | 10 | 2 | 1 |
+| [[reporte_operacion_sospechosa]] | 10 | 2 | 2 |
 | [[lista_restrictiva_externa]] | 5 | 0 | 1 |
 | [[coincidencia_lista]] | 8 | 3 | 0 |
 | [[umbral_operativo]] | 6 | 0 | 0 |
 | [[solicitud_datos_personales]] | 10 | 2 | 1 |
 | [[proceso_anonimizacion]] | 8 | 2 | 0 |
-| [[ticket_soporte]] | 13 | 2 | 0 |
-| [[incidente_operativo]] | 13 | 0 | 0 |
+| [[ticket_soporte]] | 13 | 2 | 1 |
+| [[incidente_operativo]] | 13 | 0 | 3 |

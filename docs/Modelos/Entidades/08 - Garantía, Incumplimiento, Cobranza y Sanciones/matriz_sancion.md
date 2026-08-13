@@ -22,7 +22,7 @@ append_only: false
 | --- | --- | --- | :-: | --- |
 | `id` | UUID | PK | no | PK |
 | `politica_id` | UUID | FK IDX | no | FK, IDX |
-| `tipo_incumplimiento` | VARCHAR(40) | UQ | no | UQ+severidad+num_reincidencia |
+| `tipo_incumplimiento` | VARCHAR(40) | UQ | no | UQ+severidad+numero_reincidencia |
 | `severidad` | VARCHAR(10) | — | no | CK |
 | `numero_reincidencia` | SMALLINT | — | no | — |
 | `tipo_sancion` | VARCHAR(35) | — | no | CK |

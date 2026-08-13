@@ -1,0 +1,281 @@
+{
+  "descripcion": "Política de cobro — tarifario v1: 0,3 % de la bolsa con piso Bs 10 y techo Bs 50, a cargo del beneficiario del turno, deducido de la entrega.",
+  "entorno": "minimo",
+  "nota": "Cambiar la política es cargar un tarifario v2, simularlo y publicarlo con preaviso (CU-34). Cero código.",
+  "bloques": [
+    {
+      "tabla": "catalogo_hecho_generador",
+      "conflicto": [
+        "codigo"
+      ],
+      "comentario": "Hechos del sistema sobre los que se puede cobrar",
+      "filas": [
+        {
+          "codigo": "ENTREGA_FONDO_ACREDITADA",
+          "descripcion": "El beneficiario del turno cobró la bolsa",
+          "entidad_evento": "entrega_fondo",
+          "campo_monto_base": "monto_bolsa_bruto",
+          "unidad_conteo": "ENTREGA",
+          "modulo_origen": "04",
+          "activo": true
+        },
+        {
+          "codigo": "APORTE_ACREDITADO",
+          "descripcion": "Un aporte fue acreditado y conciliado",
+          "entidad_evento": "pago",
+          "campo_monto_base": "monto",
+          "unidad_conteo": "PAGO",
+          "modulo_origen": "03",
+          "activo": true
+        },
+        {
+          "codigo": "RECARGA_ACREDITADA",
+          "descripcion": "El usuario cargó saldo en su billetera",
+          "entidad_evento": "orden_recarga",
+          "campo_monto_base": "monto_bruto",
+          "unidad_conteo": "RECARGA",
+          "modulo_origen": "10",
+          "activo": true
+        },
+        {
+          "codigo": "RETIRO_EJECUTADO",
+          "descripcion": "El usuario retiró saldo de su billetera",
+          "entidad_evento": "orden_retiro",
+          "campo_monto_base": "monto_solicitado",
+          "unidad_conteo": "RETIRO",
+          "modulo_origen": "10",
+          "activo": true
+        },
+        {
+          "codigo": "TRANSFERENCIA_EJECUTADA",
+          "descripcion": "Transferencia entre billeteras",
+          "entidad_evento": "transferencia_p2p",
+          "campo_monto_base": "monto",
+          "unidad_conteo": "TRANSFERENCIA",
+          "modulo_origen": "10",
+          "activo": true
+        },
+        {
+          "codigo": "CICLO_INICIADO",
+          "descripcion": "Arrancó un ciclo del grupo",
+          "entidad_evento": "periodo",
+          "campo_monto_base": null,
+          "unidad_conteo": "CICLO",
+          "modulo_origen": "02",
+          "activo": true
+        },
+        {
+          "codigo": "PARTICIPANTE_INSCRITO",
+          "descripcion": "Un participante tomó un cupo",
+          "entidad_evento": "participante",
+          "campo_monto_base": null,
+          "unidad_conteo": "PARTICIPANTE",
+          "modulo_origen": "02",
+          "activo": true
+        }
+      ]
+    },
+    {
+      "tabla": "tarifario",
+      "conflicto": [
+        "codigo",
+        "version"
+      ],
+      "filas": [
+        {
+          "codigo": "GENERAL",
+          "version": 1,
+          "nombre": "Tarifario general v1",
+          "estado": "VIGENTE",
+          "moneda_base": "BOB",
+          "vigente_desde": {
+            "$sql": "now()"
+          },
+          "dias_preaviso": 30,
+          "publicado_en": {
+            "$sql": "now()"
+          },
+          "url_publicacion": "https://pasanaku.bo/legal/tarifario-v1.pdf",
+          "hash_documento": {
+            "$sql": "repeat('0', 64)"
+          }
+        }
+      ]
+    },
+    {
+      "tabla": "concepto_tarifa",
+      "conflicto": [
+        "tarifario_id",
+        "codigo"
+      ],
+      "comentario": "El único concepto que cobra al arrancar",
+      "filas": [
+        {
+          "tarifario_id": {
+            "$ref": "tarifario",
+            "codigo": "GENERAL",
+            "version": 1
+          },
+          "hecho_generador_id": {
+            "$ref": "catalogo_hecho_generador",
+            "codigo": "ENTREGA_FONDO_ACREDITADA"
+          },
+          "politica_redondeo_id": {
+            "$ref": "politica_redondeo",
+            "codigo": "BOB_COMISION"
+          },
+          "cuenta_ingreso_id": {
+            "$ref": "cuenta_contable",
+            "codigo": "4.1.01"
+          },
+          "codigo": "COM_ENTREGA",
+          "nombre_comercial": "Comisión por cobro de turno",
+          "descripcion_usuario": "Se descuenta de la bolsa cuando cobrás tu turno. Incluye impuestos.",
+          "metodo_calculo": "PORCENTUAL",
+          "base_calculo": "MONTO_BOLSA_BRUTO",
+          "valor_porcentual": 0.3,
+          "monto_minimo": 10.0,
+          "monto_maximo": 50.0,
+          "sujeto_obligado": "BENEFICIARIO_DEL_TURNO",
+          "forma_cobro": "DEDUCCION_DE_ENTREGA",
+          "momento_cobro": "AL_LIQUIDAR_ENTREGA",
+          "gravado_iva": true,
+          "gravado_it": true,
+          "precio_incluye_impuesto": true,
+          "orden_aplicacion": 1,
+          "activo": true
+        }
+      ]
+    },
+    {
+      "tabla": "concepto_tarifa",
+      "conflicto": [
+        "tarifario_id",
+        "codigo"
+      ],
+      "comentario": "Lo gratuito también se declara: el tarifario publicado muestra lo que no se cobra",
+      "filas": [
+        {
+          "tarifario_id": {
+            "$ref": "tarifario",
+            "codigo": "GENERAL",
+            "version": 1
+          },
+          "hecho_generador_id": {
+            "$ref": "catalogo_hecho_generador",
+            "codigo": "APORTE_ACREDITADO"
+          },
+          "codigo": "COM_APORTE",
+          "nombre_comercial": "Aporte al grupo",
+          "descripcion_usuario": "Aportar a tu pasanaku no tiene costo.",
+          "metodo_calculo": "GRATUITO",
+          "base_calculo": "SIN_BASE",
+          "sujeto_obligado": "PAGADOR_DE_LA_OPERACION",
+          "forma_cobro": "DEBITO_DE_BILLETERA",
+          "momento_cobro": "AL_DEVENGAR",
+          "gravado_iva": false,
+          "gravado_it": false,
+          "precio_incluye_impuesto": true,
+          "orden_aplicacion": 10,
+          "activo": true
+        },
+        {
+          "tarifario_id": {
+            "$ref": "tarifario",
+            "codigo": "GENERAL",
+            "version": 1
+          },
+          "hecho_generador_id": {
+            "$ref": "catalogo_hecho_generador",
+            "codigo": "RECARGA_ACREDITADA"
+          },
+          "codigo": "COM_RECARGA",
+          "nombre_comercial": "Carga de saldo",
+          "descripcion_usuario": "Cargar saldo no tiene costo.",
+          "metodo_calculo": "GRATUITO",
+          "base_calculo": "SIN_BASE",
+          "sujeto_obligado": "PAGADOR_DE_LA_OPERACION",
+          "forma_cobro": "DEBITO_DE_BILLETERA",
+          "momento_cobro": "AL_DEVENGAR",
+          "gravado_iva": false,
+          "gravado_it": false,
+          "precio_incluye_impuesto": true,
+          "orden_aplicacion": 11,
+          "activo": true
+        },
+        {
+          "tarifario_id": {
+            "$ref": "tarifario",
+            "codigo": "GENERAL",
+            "version": 1
+          },
+          "hecho_generador_id": {
+            "$ref": "catalogo_hecho_generador",
+            "codigo": "RETIRO_EJECUTADO"
+          },
+          "codigo": "COM_RETIRO",
+          "nombre_comercial": "Retiro de saldo",
+          "descripcion_usuario": "Retirar tu saldo no tiene costo.",
+          "metodo_calculo": "GRATUITO",
+          "base_calculo": "SIN_BASE",
+          "sujeto_obligado": "PAGADOR_DE_LA_OPERACION",
+          "forma_cobro": "DEBITO_DE_BILLETERA",
+          "momento_cobro": "AL_DEVENGAR",
+          "gravado_iva": false,
+          "gravado_it": false,
+          "precio_incluye_impuesto": true,
+          "orden_aplicacion": 12,
+          "activo": true
+        },
+        {
+          "tarifario_id": {
+            "$ref": "tarifario",
+            "codigo": "GENERAL",
+            "version": 1
+          },
+          "hecho_generador_id": {
+            "$ref": "catalogo_hecho_generador",
+            "codigo": "TRANSFERENCIA_EJECUTADA"
+          },
+          "codigo": "COM_TRANSF",
+          "nombre_comercial": "Transferencia",
+          "descripcion_usuario": "Enviar saldo a otra persona no tiene costo.",
+          "metodo_calculo": "GRATUITO",
+          "base_calculo": "SIN_BASE",
+          "sujeto_obligado": "PAGADOR_DE_LA_OPERACION",
+          "forma_cobro": "DEBITO_DE_BILLETERA",
+          "momento_cobro": "AL_DEVENGAR",
+          "gravado_iva": false,
+          "gravado_it": false,
+          "precio_incluye_impuesto": true,
+          "orden_aplicacion": 13,
+          "activo": true
+        },
+        {
+          "tarifario_id": {
+            "$ref": "tarifario",
+            "codigo": "GENERAL",
+            "version": 1
+          },
+          "hecho_generador_id": {
+            "$ref": "catalogo_hecho_generador",
+            "codigo": "PARTICIPANTE_INSCRITO"
+          },
+          "codigo": "COM_INSCRIP",
+          "nombre_comercial": "Inscripción al grupo",
+          "descripcion_usuario": "Entrar a un grupo no tiene costo.",
+          "metodo_calculo": "GRATUITO",
+          "base_calculo": "SIN_BASE",
+          "sujeto_obligado": "PAGADOR_DE_LA_OPERACION",
+          "forma_cobro": "DEBITO_DE_BILLETERA",
+          "momento_cobro": "AL_DEVENGAR",
+          "gravado_iva": false,
+          "gravado_it": false,
+          "precio_incluye_impuesto": true,
+          "orden_aplicacion": 14,
+          "activo": true
+        }
+      ]
+    }
+  ]
+}

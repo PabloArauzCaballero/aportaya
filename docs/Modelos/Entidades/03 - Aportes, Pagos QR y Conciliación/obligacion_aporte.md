@@ -9,7 +9,7 @@ estereotipo: Raíz de agregado
 clave_primaria: [id]
 columnas: 22
 fk_salientes: 7
-fk_entrantes: 5
+fk_entrantes: 7
 append_only: false
 ---
 
@@ -30,7 +30,7 @@ append_only: false
 | `obligacion_origen_id` | UUID | FK | sí | FK, NULL |
 | `plan_regularizacion_id` | UUID | FK | sí | FK, NULL |
 | `tipo` | VARCHAR(30) | — | no | CK |
-| `monto_esperado` | DECIMAL(14,2) <<CK: > 0>> | — | no | — |
+| `monto_esperado` | DECIMAL(14,2) | — | no | CK: > 0 |
 | `moneda` | CHAR(3) | — | no | — |
 | `monto_pagado` | DECIMAL(14,2) | — | no | — |
 | `monto_recargo` | DECIMAL(14,2) | — | no | — |
@@ -60,15 +60,17 @@ append_only: false
 
 | Entidad | Columna | Módulo | Relación |
 | --- | --- | :-: | --- |
+| [[cargo_comision]] | `obligacion_id` | ↗ 11 | [[cargo_comision.obligacion_id → obligacion_aporte]] |
 | [[cobertura_incumplimiento]] | `obligacion_id` | ↗ 08 | [[cobertura_incumplimiento.obligacion_id → obligacion_aporte]] |
 | [[obligacion_aporte]] | `obligacion_origen_id` | 03 | [[obligacion_aporte.obligacion_origen_id → obligacion_aporte]] |
 | [[orden_cobro]] | `obligacion_id` | 03 | [[orden_cobro.obligacion_id → obligacion_aporte]] |
 | [[pago]] | `obligacion_id` | 03 | [[pago.obligacion_id → obligacion_aporte]] |
 | [[registro_incumplimiento]] | `obligacion_id` | ↗ 08 | [[registro_incumplimiento.obligacion_id → obligacion_aporte]] |
+| [[transferencia_p2p]] | `obligacion_id` | ↗ 10 | [[transferencia_p2p.obligacion_id → obligacion_aporte]] |
 
 ## Entidades vecinas
 
-[[cobertura_incumplimiento]] · [[cupo]] · [[grupo]] · [[obligacion_aporte]] · [[orden_cobro]] · [[pago]] · [[participante]] · [[periodo]] · [[plan_regularizacion]] · [[politica_mora]] · [[registro_incumplimiento]]
+[[cargo_comision]] · [[cobertura_incumplimiento]] · [[cupo]] · [[grupo]] · [[obligacion_aporte]] · [[orden_cobro]] · [[pago]] · [[participante]] · [[periodo]] · [[plan_regularizacion]] · [[politica_mora]] · [[registro_incumplimiento]] · [[transferencia_p2p]]
 
 ## Notas del modelo
 

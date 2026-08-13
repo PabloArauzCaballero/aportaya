@@ -2,12 +2,12 @@
 tags:
   - moc
   - indice
-entidades: 174
+entidades: 274
 ---
 
 # Índice de entidades
 
-Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son claves foráneas salientes y entrantes.
+Las **274 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son claves foráneas salientes y entrantes.
 
 [[Index|← Índice general]] · [[_Relaciones|Relaciones →]]
 
@@ -17,22 +17,22 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |
-| [[usuario]] | 18 | 0 | 107 | muy conectada |
+| [[usuario]] | 18 | 0 | 195 | muy conectada |
 | [[direccion_usuario]] | 8 | 1 | 0 | — |
 | [[perfil_financiero]] | 8 | 1 | 0 | — |
 | [[credencial_acceso]] | 8 | 1 | 0 | — |
 | [[historial_credencial]] | 4 | 1 | 0 | — |
 | [[politica_token]] | 12 | 0 | 0 | — |
-| [[token_verificacion]] | 31 | 4 | 9 | muy conectada |
+| [[token_verificacion]] | 31 | 4 | 10 | muy conectada |
 | [[intento_validacion_token]] | 7 | 1 | 0 | — |
 | [[factor_mfa]] | 8 | 1 | 0 | — |
-| [[dispositivo]] | 11 | 1 | 2 | — |
-| [[sesion]] | 11 | 2 | 0 | — |
+| [[dispositivo]] | 11 | 1 | 4 | — |
+| [[sesion]] | 11 | 2 | 1 | — |
 | [[intento_autenticacion]] | 10 | 1 | 0 | — |
 | [[bloqueo_cuenta]] | 7 | 2 | 0 | — |
 | [[restriccion_usuario]] | 10 | 2 | 0 | — |
 | [[documento_identidad]] | 13 | 1 | 1 | — |
-| [[verificacion_kyc]] | 14 | 3 | 1 | — |
+| [[verificacion_kyc]] | 14 | 3 | 2 | — |
 | [[referencia_personal]] | 8 | 1 | 0 | — |
 | [[rol]] | 5 | 0 | 2 | — |
 | [[permiso]] | 6 | 0 | 1 | — |
@@ -49,12 +49,12 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |
-| [[grupo]] | 27 | 1 | 38 | muy conectada |
+| [[grupo]] | 27 | 1 | 45 | muy conectada |
 | [[configuracion_grupo]] | 10 | 3 | 0 | — |
 | [[reglamento_grupo]] | 10 | 2 | 1 | — |
 | [[aceptacion_reglamento]] | 7 | 3 | 0 | — |
 | [[historial_estado_grupo]] | 7 | 2 | 0 | — |
-| [[participante]] | 13 | 3 | 24 | muy conectada |
+| [[participante]] | 13 | 3 | 25 | muy conectada |
 | [[cupo]] | 8 | 2 | 6 | muy conectada |
 | [[traspaso_cupo]] | 10 | 4 | 0 | — |
 | [[solicitud_retiro]] | 7 | 1 | 0 | — |
@@ -69,7 +69,7 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 | [[criterio_emparejamiento]] | 8 | 0 | 1 | — |
 | [[propuesta_grupo]] | 10 | 2 | 1 | — |
 | [[propuesta_postulacion]] | 4 | 2 | 0 | — |
-| [[acuerdo]] | 14 | 2 | 7 | muy conectada |
+| [[acuerdo]] | 14 | 2 | 8 | muy conectada |
 | [[voto_participante]] | 7 | 2 | 0 | — |
 
 ## 03 — Aportes, Pagos QR y Conciliación
@@ -79,27 +79,28 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |
 | [[politica_mora]] | 10 | 1 | 2 | — |
-| [[obligacion_aporte]] | 22 | 7 | 5 | muy conectada |
+| [[obligacion_aporte]] | 22 | 7 | 7 | muy conectada |
 | [[plan_regularizacion]] | 7 | 2 | 1 | — |
-| [[proveedor_pago]] | 12 | 0 | 4 | — |
+| [[proveedor_pago]] | 12 | 0 | 8 | muy conectada |
 | [[orden_cobro]] | 11 | 2 | 4 | — |
 | [[qr_cobro]] | 9 | 1 | 0 | — |
 | [[enlace_pago_rapido]] | 6 | 2 | 0 | — |
 | [[intento_pago]] | 10 | 1 | 1 | — |
-| [[pago]] | 18 | 3 | 8 | muy conectada |
+| [[pago]] | 19 | 4 | 9 | muy conectada |
 | [[comprobante_manual]] | 9 | 3 | 0 | — |
 | [[constancia_pago]] | 7 | 1 | 0 | — |
 | [[reembolso]] | 10 | 3 | 0 | — |
 | [[disputa_pago]] | 10 | 1 | 0 | — |
 | [[extracto_bancario]] | 10 | 2 | 1 | — |
-| [[movimiento_bancario]] | 9 | 1 | 1 | — |
+| [[movimiento_bancario]] | 9 | 1 | 2 | — |
 | [[conciliacion]] | 8 | 3 | 1 | — |
 | [[excepcion_conciliacion]] | 10 | 2 | 0 | — |
 | [[webhook_pasarela]] | 13 | 2 | 0 | — |
-| [[cuenta_contable]] | 8 | 2 | 2 | — |
-| [[asiento_contable]] | 10 | 3 | 5 | append-only, muy conectada |
+| [[tipo_cambio]] | 7 | 0 | 0 | — |
+| [[cuenta_contable]] | 8 | 2 | 5 | — |
+| [[asiento_contable]] | 10 | 3 | 8 | append-only, muy conectada |
 | [[movimiento_contable]] | 6 | 2 | 0 | append-only |
-| [[cierre_diario]] | 10 | 1 | 0 | — |
+| [[cierre_diario]] | 10 | 1 | 1 | — |
 
 ## 04 — Entregas de Fondo
 
@@ -108,7 +109,7 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |
 | [[entrega_fondo]] | 23 | 8 | 8 | muy conectada |
-| [[deduccion_entrega]] | 9 | 1 | 0 | — |
+| [[deduccion_entrega]] | 9 | 1 | 1 | — |
 | [[regla_entrega]] | 8 | 0 | 1 | — |
 | [[validacion_pre_entrega]] | 10 | 3 | 0 | — |
 | [[cuenta_bancaria_beneficiario]] | 15 | 1 | 2 | — |
@@ -165,7 +166,7 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 
 ## 07 — Organizador y Automatización
 
-> Administrar es un rol, no un negocio: sin comisión y sin custodia · [[07_organizador_automatizacion|ficha de negocio]] · [[_Entidades 07|índice del módulo]]
+> Administrar es un rol, no un negocio: el organizador no cobra ni custodia · [[07_organizador_automatizacion|ficha de negocio]] · [[_Entidades 07|índice del módulo]]
 
 | Tabla | Columnas | Sal. | Ent. | Notas |
 | --- | --: | --: | --: | --- |
@@ -201,7 +202,7 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 | [[score_riesgo_incumplimiento]] | 8 | 2 | 0 | — |
 | [[alerta_temprana]] | 8 | 2 | 0 | — |
 | [[estrategia_cobranza]] | 12 | 0 | 1 | — |
-| [[gestion_cobranza]] | 12 | 3 | 2 | — |
+| [[gestion_cobranza]] | 12 | 3 | 3 | — |
 | [[accion_cobranza]] | 11 | 3 | 0 | — |
 | [[promesa_pago]] | 10 | 2 | 0 | — |
 | [[acuerdo_quita]] | 10 | 3 | 0 | — |
@@ -239,18 +240,138 @@ Las **174 tablas** del modelo, agrupadas por módulo. «Sal.» y «Ent.» son cl
 | [[indicador_kpi]] | 11 | 0 | 0 | — |
 | [[regla_cumplimiento]] | 10 | 0 | 1 | — |
 | [[alerta_cumplimiento]] | 15 | 5 | 0 | — |
-| [[reporte_operacion_sospechosa]] | 10 | 2 | 1 | — |
+| [[reporte_operacion_sospechosa]] | 10 | 2 | 2 | — |
 | [[lista_restrictiva_externa]] | 5 | 0 | 1 | — |
 | [[coincidencia_lista]] | 8 | 3 | 0 | — |
 | [[umbral_operativo]] | 6 | 0 | 0 | — |
 | [[solicitud_datos_personales]] | 10 | 2 | 1 | — |
 | [[proceso_anonimizacion]] | 8 | 2 | 0 | — |
-| [[ticket_soporte]] | 13 | 2 | 0 | — |
-| [[incidente_operativo]] | 13 | 0 | 0 | — |
+| [[ticket_soporte]] | 13 | 2 | 1 | — |
+| [[incidente_operativo]] | 13 | 0 | 3 | — |
+
+## 10 — Billetera, Custodia y Dinero Electrónico
+
+> El saldo no se guarda: se deriva, y todos los días cuadra contra el banco · [[10_billetera_custodia|ficha de negocio]] · [[_Entidades 10|índice del módulo]]
+
+| Tabla | Columnas | Sal. | Ent. | Notas |
+| --- | --: | --: | --: | --- |
+| [[politica_billetera]] | 11 | 1 | 1 | — |
+| [[cuenta_billetera]] | 17 | 4 | 14 | muy conectada |
+| [[saldo_diario_billetera]] | 9 | 1 | 0 | append-only |
+| [[transaccion_billetera]] | 20 | 5 | 14 | append-only, muy conectada |
+| [[movimiento_billetera]] | 10 | 2 | 0 | append-only |
+| [[retencion_saldo]] | 12 | 3 | 2 | — |
+| [[reverso_transaccion]] | 10 | 3 | 0 | — |
+| [[instrumento_fondeo]] | 16 | 1 | 2 | — |
+| [[punto_atencion]] | 12 | 1 | 2 | — |
+| [[arqueo_punto_atencion]] | 13 | 2 | 0 | — |
+| [[orden_recarga]] | 17 | 6 | 0 | — |
+| [[orden_retiro]] | 19 | 6 | 1 | — |
+| [[transferencia_p2p]] | 11 | 5 | 0 | — |
+| [[cuenta_custodia]] | 13 | 0 | 2 | — |
+| [[movimiento_custodia]] | 11 | 2 | 0 | append-only |
+| [[conciliacion_custodia]] | 13 | 3 | 1 | — |
+| [[descuadre_custodia]] | 12 | 3 | 0 | — |
+| [[limite_operativo_billetera]] | 11 | 0 | 1 | — |
+| [[consumo_limite]] | 8 | 2 | 0 | — |
+| [[regla_antifraude]] | 10 | 1 | 0 | — |
+| [[evaluacion_antifraude]] | 11 | 3 | 0 | — |
+| [[bloqueo_saldo]] | 15 | 3 | 1 | — |
+| [[estado_cuenta_billetera]] | 13 | 1 | 0 | — |
+| [[certificado_saldo]] | 10 | 2 | 0 | — |
+| [[solicitud_cierre_billetera]] | 10 | 3 | 0 | — |
+
+## 11 — Tarifas, Comisiones, Impuestos y Facturación
+
+> La política de cobro es dato, no código: se cambia con un seeder · [[11_tarifas_comisiones|ficha de negocio]] · [[_Entidades 11|índice del módulo]]
+
+| Tabla | Columnas | Sal. | Ent. | Notas |
+| --- | --: | --: | --: | --- |
+| [[catalogo_hecho_generador]] | 8 | 0 | 1 | — |
+| [[tarifario]] | 15 | 2 | 9 | muy conectada |
+| [[politica_redondeo]] | 6 | 0 | 1 | — |
+| [[concepto_tarifa]] | 22 | 4 | 4 | muy conectada |
+| [[regla_tarifa]] | 12 | 1 | 0 | — |
+| [[segmento_comercial]] | 6 | 0 | 2 | — |
+| [[asignacion_tarifario]] | 11 | 5 | 0 | — |
+| [[tarifa_congelada_grupo]] | 8 | 3 | 0 | — |
+| [[simulacion_tarifa]] | 8 | 2 | 0 | — |
+| [[cambio_tarifario]] | 12 | 3 | 0 | — |
+| [[cotizacion_comision]] | 15 | 2 | 1 | — |
+| [[devengo_comision]] | 20 | 7 | 6 | append-only, muy conectada |
+| [[cargo_comision]] | 12 | 4 | 0 | — |
+| [[exencion_comision]] | 14 | 5 | 0 | — |
+| [[campana_promocional]] | 11 | 1 | 1 | — |
+| [[aplicacion_promocion]] | 5 | 2 | 0 | — |
+| [[devolucion_comision]] | 12 | 4 | 2 | — |
+| [[cuenta_por_cobrar_comision]] | 10 | 3 | 0 | — |
+| [[impuesto]] | 9 | 1 | 1 | — |
+| [[calculo_impuesto]] | 8 | 2 | 0 | — |
+| [[datos_facturacion]] | 9 | 1 | 1 | — |
+| [[lote_envio_sin]] | 8 | 0 | 1 | — |
+| [[evento_significativo_sin]] | 14 | 1 | 1 | — |
+| [[factura_electronica]] | 26 | 5 | 1 | — |
+| [[nota_credito_debito]] | 9 | 2 | 0 | — |
+| [[liquidacion_ingresos]] | 17 | 2 | 1 | — |
+| [[costo_proveedor_operacion]] | 12 | 3 | 0 | — |
+
+## 12 — Cumplimiento Regulatorio y Consumidor Financiero
+
+> Que una inspección se responda con consultas, no armando carpetas · [[12_cumplimiento_asfi|ficha de negocio]] · [[_Entidades 12|índice del módulo]]
+
+| Tabla | Columnas | Sal. | Ent. | Notas |
+| --- | --: | --: | --: | --- |
+| [[matriz_riesgo_lft]] | 10 | 1 | 2 | — |
+| [[factor_riesgo_evaluado]] | 8 | 2 | 0 | — |
+| [[calificacion_riesgo_cliente]] | 13 | 3 | 2 | — |
+| [[debida_diligencia]] | 14 | 5 | 0 | — |
+| [[perfil_transaccional]] | 12 | 1 | 1 | — |
+| [[desvio_perfil]] | 12 | 3 | 0 | — |
+| [[declaracion_pep]] | 12 | 2 | 0 | — |
+| [[beneficiario_final]] | 8 | 1 | 0 | — |
+| [[declaracion_origen_fondos]] | 12 | 3 | 1 | — |
+| [[revision_periodica_kyc]] | 8 | 3 | 0 | — |
+| [[expediente_cliente]] | 9 | 2 | 0 | — |
+| [[regla_monitoreo_lft]] | 14 | 1 | 1 | — |
+| [[alerta_monitoreo_lft]] | 14 | 6 | 1 | — |
+| [[caso_investigacion_lft]] | 15 | 4 | 1 | — |
+| [[umbral_reporte_uif]] | 13 | 0 | 1 | — |
+| [[registro_operacion_relevante]] | 25 | 6 | 1 | append-only |
+| [[catalogo_reporte_regulatorio]] | 10 | 0 | 1 | — |
+| [[reporte_regulatorio]] | 15 | 4 | 2 | — |
+| [[envio_regulatorio]] | 10 | 2 | 1 | — |
+| [[observacion_regulatoria]] | 13 | 2 | 0 | — |
+| [[requerimiento_autoridad]] | 14 | 3 | 0 | — |
+| [[contrato_adhesion]] | 13 | 1 | 1 | — |
+| [[aceptacion_contrato]] | 9 | 4 | 0 | — |
+| [[documento_publicado]] | 9 | 1 | 0 | — |
+| [[punto_reclamo]] | 7 | 1 | 1 | — |
+| [[reclamo_cliente]] | 25 | 5 | 2 | — |
+| [[instancia_reclamo]] | 9 | 1 | 0 | — |
+| [[evento_riesgo_operativo]] | 18 | 2 | 2 | append-only |
+| [[control_interno]] | 10 | 1 | 1 | — |
+| [[prueba_control]] | 9 | 2 | 0 | — |
+| [[hallazgo_auditoria]] | 10 | 1 | 1 | — |
+| [[plan_accion_riesgo]] | 10 | 3 | 0 | — |
+| [[evaluacion_riesgo_producto]] | 10 | 1 | 0 | — |
+| [[oficial_cumplimiento]] | 8 | 1 | 0 | — |
+| [[capacitacion_cumplimiento]] | 10 | 1 | 0 | — |
+| [[licencia_regulatoria]] | 14 | 1 | 1 | — |
+| [[entorno_prueba_regulado]] | 11 | 1 | 0 | — |
+| [[comite_gobierno]] | 6 | 0 | 1 | — |
+| [[acta_comite]] | 11 | 2 | 3 | append-only |
+| [[politica_interna]] | 13 | 2 | 1 | — |
+| [[designacion_regulatoria]] | 10 | 2 | 0 | — |
+| [[activo_informacion]] | 14 | 3 | 1 | — |
+| [[incidente_seguridad]] | 18 | 4 | 0 | — |
+| [[plan_continuidad]] | 10 | 2 | 1 | — |
+| [[prueba_continuidad]] | 11 | 3 | 0 | — |
+| [[contrato_tercero]] | 18 | 1 | 2 | — |
+| [[evaluacion_tercero]] | 9 | 2 | 0 | — |
 
 ## Tablas append-only
 
 No admiten `UPDATE` ni `DELETE`; se corrigen con el movimiento inverso:
 
-[[abono_recuperacion]] · [[asiento_contable]] · [[bitacora_evento]] · [[evento_dominio]] · [[evento_reputacion]] · [[historial_estado_incumplimiento]] · [[movimiento_contable]] · [[movimiento_fondo]] · [[registro_acceso_datos]] · [[registro_incumplimiento]] · [[registro_sellado]]
+[[abono_recuperacion]] · [[acta_comite]] · [[asiento_contable]] · [[bitacora_evento]] · [[devengo_comision]] · [[evento_dominio]] · [[evento_reputacion]] · [[evento_riesgo_operativo]] · [[historial_estado_incumplimiento]] · [[movimiento_billetera]] · [[movimiento_contable]] · [[movimiento_custodia]] · [[movimiento_fondo]] · [[registro_acceso_datos]] · [[registro_incumplimiento]] · [[registro_operacion_relevante]] · [[registro_sellado]] · [[saldo_diario_billetera]] · [[transaccion_billetera]]
 

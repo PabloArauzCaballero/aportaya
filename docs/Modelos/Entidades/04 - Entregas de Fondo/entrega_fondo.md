@@ -30,7 +30,7 @@ append_only: false
 | `cuenta_destino_id` | UUID | FK | sí | FK, NULL |
 | `monto_bolsa_bruto` | DECIMAL(14,2) | — | no | — |
 | `total_deducciones` | DECIMAL(14,2) | — | no | — |
-| `monto_neto_a_entregar` | DECIMAL(14,2) <<CK: >= 0>> | — | no | — |
+| `monto_neto_a_entregar` | DECIMAL(14,2) | — | no | CK: >= 0 |
 | `monto_efectivamente_entregado` | DECIMAL(14,2) | — | no | — |
 | `moneda` | CHAR(3) | — | no | — |
 | `estado` | VARCHAR(35) | IDX | no | CK, IDX |

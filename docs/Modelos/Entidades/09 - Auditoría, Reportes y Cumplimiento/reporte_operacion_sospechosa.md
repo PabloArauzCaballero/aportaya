@@ -8,7 +8,7 @@ modulo: "09 — Auditoría, Reportes y Cumplimiento"
 clave_primaria: [id]
 columnas: 10
 fk_salientes: 2
-fk_entrantes: 1
+fk_entrantes: 2
 append_only: false
 ---
 
@@ -43,10 +43,11 @@ append_only: false
 | Entidad | Columna | Módulo | Relación |
 | --- | --- | :-: | --- |
 | [[alerta_cumplimiento]] | `reporte_sospechoso_id` | 09 | [[alerta_cumplimiento.reporte_sospechoso_id → reporte_operacion_sospechosa]] |
+| [[caso_investigacion_lft]] | `reporte_operacion_sospechosa_id` | ↗ 12 | [[caso_investigacion_lft.reporte_operacion_sospechosa_id → reporte_operacion_sospechosa]] |
 
 ## Entidades vecinas
 
-[[alerta_cumplimiento]] · [[usuario]]
+[[alerta_cumplimiento]] · [[caso_investigacion_lft]] · [[usuario]]
 
 ## Ver también
 

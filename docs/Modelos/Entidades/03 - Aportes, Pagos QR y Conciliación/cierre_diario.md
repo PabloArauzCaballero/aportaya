@@ -8,7 +8,7 @@ modulo: "03 — Aportes, Pagos QR y Conciliación"
 clave_primaria: [id]
 columnas: 10
 fk_salientes: 1
-fk_entrantes: 0
+fk_entrantes: 1
 append_only: false
 ---
 
@@ -37,9 +37,15 @@ append_only: false
 | --- | --- | :-: | :-: | --- |
 | `cerrado_por` | [[usuario]] | ↗ 01 | no | [[cierre_diario.cerrado_por → usuario]] |
 
+## Referenciada por
+
+| Entidad | Columna | Módulo | Relación |
+| --- | --- | :-: | --- |
+| [[conciliacion_custodia]] | `cierre_diario_id` | ↗ 10 | [[conciliacion_custodia.cierre_diario_id → cierre_diario]] |
+
 ## Entidades vecinas
 
-[[usuario]]
+[[conciliacion_custodia]] · [[usuario]]
 
 ## Ver también
 

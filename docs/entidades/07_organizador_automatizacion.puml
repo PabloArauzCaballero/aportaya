@@ -39,6 +39,8 @@ legend top right
   y <b>no percibe comision por administrar</b>. Participa como
   cualquier otro miembro: aporta y cobra su turno igual que
   todos. Su rol solo agrega funciones administrativas.
+  La comision del <b>servicio</b> (M11) es de la plataforma, con
+  tarifario publicado: ninguna tabla de M11 apunta a organizador.
 endlegend
 
 ' ============================================================
@@ -295,13 +297,18 @@ Organizador --> NivelOrganizador
 note right of Organizador
   <b>RN-18 - La administracion no se cobra</b>
   No existe esquema de comision, devengo ni
-  liquidacion: el modelo no tiene forma de
-  representar un ingreso del organizador por
-  administrar. La ausencia de la estructura es
+  liquidacion a favor del organizador: el modelo
+  no tiene forma de representar un ingreso suyo
+  por administrar. La ausencia de la estructura es
   la garantia mas fuerte de que no se puede
   cobrar, mucho mas que un permiso o una bandera.
   El organizador aporta y cobra su turno como
   cualquier participante (M2/M3/M4).
+  <b>Distinto es la comision de la plataforma</b>
+  (M11): es de la empresa que presta el servicio,
+  con tarifario publicado y factura, y no reparte
+  nada al organizador. Ninguna tabla de M11 tiene
+  FK hacia organizador.
 end note
 
 note bottom of OrganizadorDigital
@@ -350,8 +357,9 @@ legend top right
   <b>Notacion</b>
   * PK    # FK    <<UQ>> unico    <<IDX>> indexado
   <<CK>> CHECK    <<NULL>> admite nulos
-  No existen tablas de comision: el organizador no percibe
-  contraprestacion por administrar (RN-18).
+  No existen tablas de comision del organizador: no percibe
+  contraprestacion por administrar (RN-18). La comision del
+  servicio pertenece a la plataforma y vive en el modulo 11.
 endlegend
 
 entity "organizador" as org {
@@ -535,11 +543,15 @@ tarea ||--o{ ejec : "se ejecuta en"
 
 note top of org
   <b>RN-18 como ausencia de esquema</b>
-  No existen tablas esquema_comision,
-  devengo_comision, liquidacion_comision ni
+  No existen esquema_comision_organizador,
+  liquidacion_comision_organizador ni
   pago_comision: lo que hace imposible el cobro
   es que no haya donde representarlo, no una
   validacion que alguien pueda desactivar.
+  devengo_comision (M11) existe, pero su
+  usuario_obligado_id es quien PAGA la comision
+  del servicio, nunca quien la cobra: el unico
+  beneficiario posible es la plataforma.
 end note
 
 note bottom of org

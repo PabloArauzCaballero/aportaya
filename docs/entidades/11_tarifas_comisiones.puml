@@ -1,0 +1,1142 @@
+@startuml 11_tarifas_comisiones_clases
+' ============================================================
+'  MODULO 11: Tarifas, Comisiones, Impuestos y Facturacion
+'  Diagrama de CLASES  (modelo detallado)
+'  Cubre: RF-23 (comision de plataforma), RN-25 (tarifario
+'         publicado y versionado), RN-26 (precio congelado por
+'         grupo), RN-18 (el organizador sigue sin cobrar)
+'  Principio rector: la politica de cobro es DATO, no codigo.
+'  Quien cobra, sobre que hecho, cuanto, a quien se le cobra,
+'  como se cobra y cuando, son filas de tablas con vigencia.
+'  Cambiar la politica comercial es un seeder nuevo, no un
+'  despliegue: se crea un tarifario version N+1, se simula,
+'  se publica con preaviso y entra a regir. El tarifario
+'  anterior no se borra jamas, porque hay que poder explicar
+'  cuanto se cobro en cada operacion historica.
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 11 - Tarifas, Comisiones, Impuestos y Facturacion (clases)
+
+legend top right
+  <b>Cadena del ingreso</b>
+  HechoGenerador --> ConceptoTarifa (+ ReglaTarifa)
+   --> Cotizacion --> Devengo --> Cargo --> Factura
+   --> Liquidacion de ingresos
+  Ningun paso se saltea. Se puede exonerar, devolver o
+  reversar, pero nunca borrar: el ingreso se explica
+  hacia atras, operacion por operacion.
+endlegend
+
+' ============================================================
+package "Motor de tarifas (parametrizable)" {
+
+  enum BaseCalculo {
+    MONTO_BOLSA_BRUTO
+    MONTO_NETO_ENTREGA
+    MONTO_APORTE
+    MONTO_RECARGA
+    MONTO_RETIRO
+    MONTO_TRANSFERENCIA
+    MONTO_FIJO_POR_CICLO
+    MONTO_FIJO_POR_PARTICIPANTE
+    SIN_BASE
+  }
+
+  enum MetodoCalculo {
+    GRATUITO
+    FIJO
+    PORCENTUAL
+    MIXTO
+    ESCALONADO_POR_TRAMO
+    ESCALONADO_ACUMULATIVO
+  }
+
+  enum SujetoObligado {
+    BENEFICIARIO_DEL_TURNO
+    PAGADOR_DE_LA_OPERACION
+    PRORRATEO_ENTRE_PARTICIPANTES
+    ORGANIZADOR
+    PLATAFORMA_ASUME
+  }
+
+  enum FormaCobro {
+    DEDUCCION_DE_ENTREGA
+    DEBITO_DE_BILLETERA
+    OBLIGACION_DE_APORTE
+    COBRO_EXTERNO
+    COMPENSACION
+  }
+
+  enum MomentoCobro {
+    AL_DEVENGAR
+    AL_LIQUIDAR_ENTREGA
+    AL_CIERRE_DE_CICLO
+    DIFERIDO_MENSUAL
+  }
+
+  class CatalogoHechoGenerador <<Pol>> {
+    - id: UUID
+    - codigo: String <<ENTREGA_FONDO_ACREDITADA, APORTE_ACREDITADO, ...>>
+    - descripcion: String
+    - entidadEvento: String <<tabla que lo emite>>
+    - campoMontoBase: String
+    - unidadConteo: String
+    - activo: Boolean
+    --
+    + emiteDesde(evento): Boolean
+  }
+
+  class Tarifario <<AR>> {
+    - id: UUID
+    - codigo: String
+    - version: Integer
+    - nombre: String
+    - estado: String <<BORRADOR | EN_PREAVISO | VIGENTE | SUSTITUIDO | ARCHIVADO>>
+    - monedaBase: String
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    - diasPreaviso: Integer
+    - publicadoEn: DateTime
+    - urlPublicacion: String
+    - hashDocumento: String
+    - tarifarioAnteriorId: UUID
+    --
+    + publicar(fechaVigencia)
+    + sustituirPor(nuevo)
+    + conceptoPara(hecho): ConceptoTarifa
+    + esVigenteEn(fecha): Boolean
+  }
+
+  class ConceptoTarifa {
+    - id: UUID
+    - tarifarioId: UUID
+    - hechoGeneradorId: UUID
+    - codigo: String
+    - nombreComercial: String <<lo que ve el usuario>>
+    - descripcionUsuario: String
+    - metodoCalculo: MetodoCalculo
+    - baseCalculo: BaseCalculo
+    - valorPorcentual: Decimal
+    - valorFijo: Decimal
+    - montoMinimo: Decimal <<piso>>
+    - montoMaximo: Decimal <<techo>>
+    - sujetoObligado: SujetoObligado
+    - formaCobro: FormaCobro
+    - momentoCobro: MomentoCobro
+    - gravadoIva: Boolean
+    - gravadoIt: Boolean
+    - precioIncluyeImpuesto: Boolean
+    - cuentaIngresoId: UUID <<M3>>
+    - politicaRedondeoId: UUID
+    - ordenAplicacion: Integer
+    - activo: Boolean
+    --
+    + calcular(contexto): ResultadoTarifa
+    + aplicaA(contexto): Boolean
+  }
+
+  class ReglaTarifa {
+    - id: UUID
+    - conceptoTarifaId: UUID
+    - orden: Integer
+    - condicion: Json <<monto desde/hasta, tamanio grupo, canal, segmento, nivel KYC, antiguedad>>
+    - valorPorcentual: Decimal
+    - valorFijo: Decimal
+    - montoMinimo: Decimal
+    - montoMaximo: Decimal
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    --
+    + coincide(contexto): Boolean
+    + evaluar(base): Decimal
+  }
+
+  class PoliticaRedondeo <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - moneda: String
+    - unidadMinima: Decimal <<0.10 para Bs>>
+    - modo: String <<ARRIBA | ABAJO | MAS_CERCANO | BANCARIO>>
+    --
+    + aplicar(monto): Decimal
+  }
+
+  class SegmentoComercial {
+    - id: UUID
+    - codigo: String
+    - descripcion: String
+    - criterio: Json
+    - prioridad: Integer
+    - activo: Boolean
+    --
+    + contiene(usuario, grupo): Boolean
+  }
+
+  class AsignacionTarifario {
+    - id: UUID
+    - tarifarioId: UUID
+    - ambito: String <<GLOBAL | SEGMENTO | GRUPO | USUARIO>>
+    - segmentoId: UUID
+    - grupoId: UUID
+    - usuarioId: UUID
+    - prioridad: Integer
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    - motivo: String
+    --
+    + resolver(contexto): Tarifario {static}
+  }
+
+  class TarifaCongeladaGrupo <<VO>> {
+    - id: UUID
+    - grupoId: UUID
+    - tarifarioId: UUID
+    - snapshotConceptos: Json
+    - hashSnapshot: String
+    - acuerdoId: UUID <<M2: los participantes lo aceptaron>>
+    - congeladaEn: DateTime
+    - vigenteHastaCicloNro: Integer
+    --
+    + verificarIntegridad(): Boolean
+  }
+
+  class SimulacionTarifa {
+    - id: UUID
+    - tarifarioId: UUID
+    - escenario: Json
+    - resultado: Json
+    - deltaIngresoEstimado: Decimal
+    - usuariosImpactados: Integer
+    - ejecutadaPor: UUID
+    --
+    + comparar(otroTarifario): Diferencias
+  }
+
+  class CambioTarifario {
+    - id: UUID
+    - tarifarioAnteriorId: UUID
+    - tarifarioNuevoId: UUID
+    - tipoCambio: String <<INCREMENTO | REDUCCION | NUEVO_CONCEPTO | ELIMINACION>>
+    - requierePreaviso: Boolean
+    - diasPreaviso: Integer
+    - fechaAviso: DateTime
+    - canalAviso: String
+    - usuariosNotificados: Integer
+    - permiteRescisionSinCosto: Boolean
+    - aprobadoPor: UUID
+    --
+    + notificar()
+    + puedeEntrarEnVigencia(): Boolean
+  }
+
+  Tarifario "1" *-- "1..*" ConceptoTarifa
+  ConceptoTarifa "1" o-- "0..*" ReglaTarifa
+  ConceptoTarifa "1" o-- "0..1" PoliticaRedondeo
+  Tarifario "1" o-- "0..*" AsignacionTarifario
+  Tarifario "1" o-- "0..*" SimulacionTarifa
+  CatalogoHechoGenerador "1" o-- "0..*" ConceptoTarifa
+  SegmentoComercial "1" o-- "0..*" AsignacionTarifario
+}
+
+' ============================================================
+package "Devengo y cobro" {
+
+  enum EstadoDevengo {
+    DEVENGADO
+    COBRADO_PARCIAL
+    COBRADO
+    EXONERADO
+    DEVUELTO
+    INCOBRABLE
+    REVERSADO
+  }
+
+  class CotizacionComision <<VO>> {
+    - id: UUID
+    - conceptoTarifaId: UUID
+    - tarifarioId: UUID
+    - referenciaTipo: String
+    - referenciaId: UUID
+    - montoBase: Decimal
+    - montoComision: Decimal
+    - montoImpuesto: Decimal
+    - montoTotal: Decimal
+    - desglose: Json
+    - validaHasta: DateTime
+    - mostradaAlUsuarioEn: DateTime
+    - aceptadaEn: DateTime
+    --
+    + esVigente(): Boolean
+  }
+
+  class DevengoComision <<AR>> {
+    - id: UUID
+    - conceptoTarifaId: UUID
+    - tarifarioId: UUID
+    - cotizacionId: UUID
+    - grupoId: UUID
+    - participanteId: UUID
+    - usuarioObligadoId: UUID
+    - referenciaTipo: String <<ENTREGA_FONDO | PAGO | ORDEN_RETIRO | CICLO>>
+    - referenciaId: UUID
+    - montoBase: Decimal
+    - montoComision: Decimal
+    - montoDescuento: Decimal
+    - montoImpuesto: Decimal
+    - montoTotal: Decimal
+    - moneda: String
+    - estado: EstadoDevengo
+    - fechaDevengo: DateTime
+    - periodoContable: String
+    - asientoContableId: UUID <<M3>>
+    - claveIdempotencia: String
+    --
+    + cobrar(forma): CargoComision
+    + exonerar(motivo, autorizadoPor)
+    + devolver(motivo): DevolucionComision
+    + reversar(motivo)
+  }
+
+  class CargoComision {
+    - id: UUID
+    - devengoId: UUID
+    - formaCobro: FormaCobro
+    - deduccionEntregaId: UUID <<M4>>
+    - transaccionId: UUID <<M10>>
+    - obligacionId: UUID <<M3>>
+    - montoCobrado: Decimal
+    - estado: String
+    - intentos: Integer
+    - ultimoError: String
+    - cobradoEn: DateTime
+    --
+    + ejecutar(): Resultado
+    + reintentar()
+  }
+
+  class ExencionComision <<Pol>> {
+    - id: UUID
+    - alcance: String <<USUARIO | GRUPO | CONCEPTO | SEGMENTO>>
+    - usuarioId: UUID
+    - grupoId: UUID
+    - conceptoTarifaId: UUID
+    - motivo: String <<PROMOCION | CORTESIA | RECLAMO | CONVENIO | POLITICA_SOCIAL>>
+    - porcentajeExencion: Decimal
+    - montoTope: Decimal
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    - autorizadaPor: UUID
+    --
+    + aplicaA(devengo): Boolean
+  }
+
+  class CampanaPromocional {
+    - id: UUID
+    - codigo: String
+    - nombre: String
+    - tipo: String <<PRIMER_CICLO_GRATIS | DESCUENTO_PORCENTUAL | TOPE_REBAJADO | REFERIDOS>>
+    - presupuestoMaximo: Decimal
+    - presupuestoConsumido: Decimal
+    - condiciones: Json
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    - estado: String
+    --
+    + tienePresupuesto(): Boolean
+  }
+
+  class AplicacionPromocion <<VO>> {
+    - id: UUID
+    - campanaId: UUID
+    - devengoId: UUID
+    - montoDescontado: Decimal
+    - aplicadaEn: DateTime
+  }
+
+  class DevolucionComision {
+    - id: UUID
+    - devengoId: UUID
+    - motivo: String <<ENTREGA_ANULADA | ERROR_DE_TARIFA | RECLAMO_PROCEDENTE | FALLA_DE_SERVICIO>>
+    - montoDevuelto: Decimal
+    - forma: String <<ABONO_BILLETERA | NOTA_CREDITO | COMPENSACION>>
+    - transaccionId: UUID <<M10>>
+    - reclamoId: UUID <<M12>>
+    - autorizadaPor: UUID
+    - estado: String
+    --
+    + ejecutar()
+  }
+
+  class CuentaPorCobrarComision {
+    - id: UUID
+    - devengoId: UUID
+    - usuarioId: UUID
+    - monto: Decimal
+    - saldo: Decimal
+    - diasVencido: Integer
+    - gestionCobranzaId: UUID <<M8>>
+    - estado: String
+    --
+    + abonar(monto)
+    + castigar(motivo)
+  }
+
+  DevengoComision "1" o-- "0..*" CargoComision
+  DevengoComision "1" o-- "0..1" DevolucionComision
+  DevengoComision "1" o-- "0..1" CuentaPorCobrarComision
+  DevengoComision "1" o-- "0..*" AplicacionPromocion
+  CampanaPromocional "1" o-- "0..*" AplicacionPromocion
+  CotizacionComision "1" o-- "0..1" DevengoComision
+}
+
+' ============================================================
+package "Impuestos y facturacion electronica" {
+
+  class Impuesto <<Pol>> {
+    - id: UUID
+    - codigo: String <<IVA | IT | RC_IVA>>
+    - nombre: String
+    - alicuota: Decimal
+    - tipoCalculo: String <<SOBRE_PRECIO | INCLUIDO_EN_PRECIO>>
+    - baseLegal: String
+    - cuentaContableId: UUID <<M3>>
+    - vigenteDesde: Date
+    - vigenteHasta: Date
+    --
+    + calcular(base): Decimal
+  }
+
+  class CalculoImpuesto <<VO>> {
+    - id: UUID
+    - devengoId: UUID
+    - impuestoId: UUID
+    - baseImponible: Decimal
+    - alicuotaAplicada: Decimal
+    - montoImpuesto: Decimal
+    - incluidoEnPrecio: Boolean
+    - periodoFiscal: String
+  }
+
+  class DatosFacturacion {
+    - id: UUID
+    - usuarioId: UUID
+    - tipoDocumento: String <<NIT | CI | CEX>>
+    - numeroDocumento: String
+    - razonSocial: String
+    - emailEnvio: String
+    - esPredeterminado: Boolean
+    - verificado: Boolean
+    --
+    + validarFormato(): Boolean
+  }
+
+  class FacturaElectronica <<AR>> {
+    - id: UUID
+    - devengoId: UUID
+    - usuarioId: UUID
+    - datosFacturacionId: UUID
+    - nitEmisor: String
+    - sucursal: Integer
+    - puntoVenta: Integer
+    - numeroFactura: Long
+    - cuf: String <<codigo unico de factura>>
+    - cufd: String
+    - codigoControl: String
+    - fechaEmision: DateTime
+    - montoTotal: Decimal
+    - montoIva: Decimal
+    - montoNoSujeto: Decimal
+    - moneda: String
+    - estadoFiscal: String <<PENDIENTE | VALIDADA | RECHAZADA | ANULADA | EMITIDA_OFFLINE>>
+    - urlPdf: String
+    - urlXml: String
+    - hashDocumento: String
+    - qrVerificacion: String
+    - leyenda: String
+    --
+    + emitir(): Resultado
+    + anular(motivo)
+    + reenviar()
+  }
+
+  class LoteEnvioSin {
+    - id: UUID
+    - tipoEnvio: String
+    - cantidadDocumentos: Integer
+    - fechaEnvio: DateTime
+    - codigoRecepcion: String
+    - estado: String
+    - respuesta: Json
+    - reintentos: Integer
+    --
+    + enviar()
+    + verificarEstado()
+  }
+
+  class NotaCreditoDebito {
+    - id: UUID
+    - facturaId: UUID
+    - tipo: String <<CREDITO | DEBITO>>
+    - motivo: String
+    - monto: Decimal
+    - cuf: String
+    - fechaEmision: DateTime
+    - estadoFiscal: String
+    - devolucionComisionId: UUID
+  }
+
+  Impuesto "1" o-- "0..*" CalculoImpuesto
+  DevengoComision "1" o-- "0..*" CalculoImpuesto
+  DevengoComision "1" o-- "0..1" FacturaElectronica
+  FacturaElectronica "1" o-- "0..*" NotaCreditoDebito
+  LoteEnvioSin "1" o-- "0..*" FacturaElectronica
+  DatosFacturacion "1" o-- "0..*" FacturaElectronica
+}
+
+' ============================================================
+package "Resultado del negocio" {
+
+  class LiquidacionIngresos <<AR>> {
+    - id: UUID
+    - periodo: String <<YYYY-MM>>
+    - fechaInicio: Date
+    - fechaFin: Date
+    - totalDevengado: Decimal
+    - totalCobrado: Decimal
+    - totalExonerado: Decimal
+    - totalDevuelto: Decimal
+    - totalIncobrable: Decimal
+    - totalImpuestos: Decimal
+    - totalCostoProveedores: Decimal
+    - ingresoNeto: Decimal
+    - cantidadOperaciones: Integer
+    - estado: String
+    - asientoContableId: UUID <<M3>>
+    - cerradaPor: UUID
+    --
+    + cerrar()
+    + reabrir(motivo, autorizadoPor)
+  }
+
+  class CostoProveedorOperacion <<VO>> {
+    - id: UUID
+    - proveedorId: UUID <<M3>>
+    - transaccionId: UUID <<M10>>
+    - tipoOperacion: String
+    - montoOperacion: Decimal
+    - costoFijo: Decimal
+    - costoPorcentual: Decimal
+    - costoTotal: Decimal
+    - periodo: String
+    - conciliadoConFactura: Boolean
+    --
+    + margen(devengo): Decimal
+  }
+
+  LiquidacionIngresos "1" o-- "0..*" CostoProveedorOperacion
+}
+
+note top of Tarifario
+  <b>Por que un tarifario versionado y no columnas de precio</b>
+  Hay que poder responder: "en marzo de 2027, cuando cobre mi
+  turno, cuanto me cobraron y por que". Si el precio vive en
+  una columna que se actualiza, esa pregunta no tiene respuesta.
+  Con tarifario versionado, cada devengo apunta a la version
+  exacta que rigio, y el tarifario viejo queda intacto.
+end note
+
+note bottom of ConceptoTarifa
+  <b>Aca vive toda la politica comercial</b>
+  Cambiar "de comision por entrega" a "comision por aporte"
+  es cambiar hecho_generador_id y base_calculo. Cambiar quien
+  paga es cambiar sujeto_obligado. Cambiar como se cobra es
+  cambiar forma_cobro. Ninguna de las tres toca el codigo:
+  el motor lee estas columnas y actua en consecuencia.
+end note
+
+note bottom of TarifaCongeladaGrupo
+  <b>El precio no cambia a mitad del juego</b>
+  Al crear el grupo se congela el tarifario vigente y se
+  guarda su snapshot con hash. Un aumento posterior aplica a
+  grupos nuevos, no a los que ya arrancaron. Sin esta tabla,
+  subir la comision reescribiria el costo de ciclos ya
+  aceptados por los participantes, que es la forma mas rapida
+  de perder la confianza y de ganarse un reclamo con razon.
+end note
+
+@enduml
+
+
+@startuml 11_tarifas_comisiones_relacional
+' ============================================================
+'  MODULO 11: Tarifas, Comisiones, Impuestos y Facturacion
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 11 - Tarifas, Comisiones, Impuestos y Facturacion (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> CHECK    <<NULL>> admite nulos
+  devengo_comision es append-only: se corrige con
+  devolucion o reverso, nunca con UPDATE del monto.
+  Toda la politica de cobro es data: catalogo_hecho_generador,
+  tarifario, concepto_tarifa y regla_tarifa se cargan por
+  seeder y se versionan; el motor no tiene reglas cableadas.
+endlegend
+
+entity "catalogo_hecho_generador" as hecho {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(40) <<UQ>>
+  descripcion : VARCHAR(200)
+  entidad_evento : VARCHAR(40)
+  campo_monto_base : VARCHAR(40) <<NULL>>
+  unidad_conteo : VARCHAR(20)
+  modulo_origen : CHAR(2)
+  activo : BOOLEAN
+}
+
+entity "tarifario" as tarif {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(30) <<UQ+version>>
+  version : SMALLINT
+  nombre : VARCHAR(120)
+  estado : VARCHAR(15) <<CK, IDX>>
+  moneda_base : CHAR(3)
+  vigente_desde : TIMESTAMPTZ <<IDX>>
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+  dias_preaviso : SMALLINT
+  publicado_en : TIMESTAMPTZ <<NULL>>
+  url_publicacion : VARCHAR(255) <<NULL>>
+  hash_documento : VARCHAR(64) <<NULL>>
+  # tarifario_anterior_id : UUID <<FK, NULL>>
+  # aprobado_por : UUID <<FK, NULL>>
+  acta_aprobacion : VARCHAR(80) <<NULL>>
+}
+
+entity "politica_redondeo" as redondeo {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(30) <<UQ>>
+  moneda : CHAR(3)
+  unidad_minima : DECIMAL(6,4)
+  modo : VARCHAR(15) <<CK>>
+  aplica_a : VARCHAR(20) <<CK>>
+}
+
+entity "concepto_tarifa" as concepto {
+  * id : UUID <<PK>>
+  --
+  # tarifario_id : UUID <<FK, IDX>>
+  # hecho_generador_id : UUID <<FK, IDX>>
+  # politica_redondeo_id : UUID <<FK, NULL>>
+  # cuenta_ingreso_id : UUID <<FK, NULL, M3>>
+  codigo : VARCHAR(40) <<UQ+tarifario_id>>
+  nombre_comercial : VARCHAR(80)
+  descripcion_usuario : VARCHAR(300)
+  metodo_calculo : VARCHAR(25) <<CK>>
+  base_calculo : VARCHAR(35) <<CK>>
+  valor_porcentual : DECIMAL(7,4) <<NULL>>
+  valor_fijo : DECIMAL(12,2) <<NULL>>
+  monto_minimo : DECIMAL(12,2) <<NULL>>
+  monto_maximo : DECIMAL(12,2) <<NULL>>
+  sujeto_obligado : VARCHAR(35) <<CK>>
+  forma_cobro : VARCHAR(30) <<CK>>
+  momento_cobro : VARCHAR(25) <<CK>>
+  gravado_iva : BOOLEAN
+  gravado_it : BOOLEAN
+  precio_incluye_impuesto : BOOLEAN
+  orden_aplicacion : SMALLINT
+  activo : BOOLEAN <<IDX>>
+}
+
+entity "regla_tarifa" as reglatar {
+  * id : UUID <<PK>>
+  --
+  # concepto_tarifa_id : UUID <<FK, IDX>>
+  orden : SMALLINT
+  condicion : JSONB
+  monto_base_desde : DECIMAL(14,2) <<NULL>>
+  monto_base_hasta : DECIMAL(14,2) <<NULL>>
+  valor_porcentual : DECIMAL(7,4) <<NULL>>
+  valor_fijo : DECIMAL(12,2) <<NULL>>
+  monto_minimo : DECIMAL(12,2) <<NULL>>
+  monto_maximo : DECIMAL(12,2) <<NULL>>
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+}
+
+entity "segmento_comercial" as segmento {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(30) <<UQ>>
+  descripcion : VARCHAR(200)
+  criterio : JSONB
+  prioridad : SMALLINT
+  activo : BOOLEAN
+}
+
+entity "asignacion_tarifario" as asigtar {
+  * id : UUID <<PK>>
+  --
+  # tarifario_id : UUID <<FK, IDX>>
+  # segmento_id : UUID <<FK, NULL>>
+  # grupo_id : UUID <<FK, NULL, M2>>
+  # usuario_id : UUID <<FK, NULL, M1>>
+  # autorizado_por : UUID <<FK, NULL>>
+  ambito : VARCHAR(15) <<CK, IDX>>
+  prioridad : SMALLINT
+  motivo : VARCHAR(200) <<NULL>>
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+}
+
+entity "tarifa_congelada_grupo" as congelada {
+  * id : UUID <<PK>>
+  --
+  # grupo_id : UUID <<FK, UQ, M2>>
+  # tarifario_id : UUID <<FK>>
+  # acuerdo_id : UUID <<FK, NULL, M2>>
+  snapshot_conceptos : JSONB
+  hash_snapshot : VARCHAR(64)
+  congelada_en : TIMESTAMPTZ
+  vigente_hasta_ciclo_nro : SMALLINT <<NULL>>
+}
+
+entity "simulacion_tarifa" as simul {
+  * id : UUID <<PK>>
+  --
+  # tarifario_id : UUID <<FK, IDX>>
+  # ejecutada_por : UUID <<FK>>
+  escenario : JSONB
+  resultado : JSONB
+  delta_ingreso_estimado : DECIMAL(16,2)
+  usuarios_impactados : INTEGER
+  ejecutada_en : TIMESTAMPTZ
+}
+
+entity "cambio_tarifario" as cambiotar {
+  * id : UUID <<PK>>
+  --
+  # tarifario_anterior_id : UUID <<FK>>
+  # tarifario_nuevo_id : UUID <<FK, UQ>>
+  # aprobado_por : UUID <<FK>>
+  tipo_cambio : VARCHAR(20) <<CK>>
+  requiere_preaviso : BOOLEAN
+  dias_preaviso : SMALLINT
+  fecha_aviso : TIMESTAMPTZ <<NULL>>
+  canal_aviso : VARCHAR(40) <<NULL>>
+  usuarios_notificados : INTEGER
+  permite_rescision_sin_costo : BOOLEAN
+  publicado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "cotizacion_comision" as cotiz {
+  * id : UUID <<PK>>
+  --
+  # concepto_tarifa_id : UUID <<FK, IDX>>
+  # tarifario_id : UUID <<FK>>
+  referencia_tipo : VARCHAR(30) <<CK>>
+  referencia_id : UUID <<IDX, polimorfica>>
+  monto_base : DECIMAL(14,2)
+  monto_comision : DECIMAL(12,2)
+  monto_impuesto : DECIMAL(12,2)
+  monto_total : DECIMAL(12,2)
+  moneda : CHAR(3)
+  desglose : JSONB
+  valida_hasta : TIMESTAMPTZ
+  mostrada_al_usuario_en : TIMESTAMPTZ <<NULL>>
+  aceptada_en : TIMESTAMPTZ <<NULL>>
+  clave_idempotencia : VARCHAR(100) <<UQ>>
+}
+
+entity "devengo_comision" as devengo {
+  * id : UUID <<PK>>
+  --
+  # concepto_tarifa_id : UUID <<FK, IDX>>
+  # tarifario_id : UUID <<FK, IDX>>
+  # cotizacion_id : UUID <<FK, NULL, UQ>>
+  # grupo_id : UUID <<FK, NULL, IDX, M2>>
+  # participante_id : UUID <<FK, NULL, M2>>
+  # usuario_obligado_id : UUID <<FK, IDX, M1>>
+  # asiento_contable_id : UUID <<FK, NULL, M3>>
+  referencia_tipo : VARCHAR(30) <<CK>>
+  referencia_id : UUID <<IDX, polimorfica>>
+  monto_base : DECIMAL(14,2)
+  monto_comision : DECIMAL(12,2) <<CK: >= 0>>
+  monto_descuento : DECIMAL(12,2)
+  monto_impuesto : DECIMAL(12,2)
+  monto_total : DECIMAL(12,2)
+  moneda : CHAR(3)
+  estado : VARCHAR(20) <<CK, IDX>>
+  fecha_devengo : TIMESTAMPTZ <<IDX>>
+  periodo_contable : CHAR(7) <<IDX>>
+  clave_idempotencia : VARCHAR(100) <<UQ>>
+}
+
+entity "cargo_comision" as cargo {
+  * id : UUID <<PK>>
+  --
+  # devengo_id : UUID <<FK, IDX>>
+  # deduccion_entrega_id : UUID <<FK, NULL, UQ, M4>>
+  # transaccion_id : UUID <<FK, NULL, M10>>
+  # obligacion_id : UUID <<FK, NULL, M3>>
+  forma_cobro : VARCHAR(30) <<CK>>
+  monto_cobrado : DECIMAL(12,2)
+  moneda : CHAR(3)
+  estado : VARCHAR(15) <<CK, IDX>>
+  intentos : SMALLINT
+  ultimo_error : VARCHAR(300) <<NULL>>
+  cobrado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "exencion_comision" as exencion {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, NULL, M1>>
+  # grupo_id : UUID <<FK, NULL, M2>>
+  # concepto_tarifa_id : UUID <<FK, NULL>>
+  # segmento_id : UUID <<FK, NULL>>
+  # autorizada_por : UUID <<FK>>
+  alcance : VARCHAR(15) <<CK, IDX>>
+  motivo : VARCHAR(25) <<CK>>
+  justificacion : VARCHAR(300)
+  porcentaje_exencion : DECIMAL(5,2) <<CK: 0-100>>
+  monto_tope : DECIMAL(12,2) <<NULL>>
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+  activa : BOOLEAN <<IDX>>
+}
+
+entity "campana_promocional" as campana {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(30) <<UQ>>
+  nombre : VARCHAR(120)
+  tipo : VARCHAR(30) <<CK>>
+  presupuesto_maximo : DECIMAL(16,2) <<NULL>>
+  presupuesto_consumido : DECIMAL(16,2)
+  condiciones : JSONB
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ
+  estado : VARCHAR(15) <<CK, IDX>>
+  # aprobada_por : UUID <<FK>>
+}
+
+entity "aplicacion_promocion" as aplipromo {
+  * id : UUID <<PK>>
+  --
+  # campana_id : UUID <<FK, IDX>>
+  # devengo_id : UUID <<FK, IDX>>
+  monto_descontado : DECIMAL(12,2)
+  aplicada_en : TIMESTAMPTZ
+}
+
+entity "devolucion_comision" as devol {
+  * id : UUID <<PK>>
+  --
+  # devengo_id : UUID <<FK, IDX>>
+  # transaccion_id : UUID <<FK, NULL, M10>>
+  # reclamo_id : UUID <<FK, NULL, M12>>
+  # autorizada_por : UUID <<FK>>
+  motivo : VARCHAR(30) <<CK>>
+  detalle : VARCHAR(300)
+  monto_devuelto : DECIMAL(12,2) <<CK: > 0>>
+  forma : VARCHAR(25) <<CK>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  solicitada_en : TIMESTAMPTZ
+  ejecutada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "cuenta_por_cobrar_comision" as cxc {
+  * id : UUID <<PK>>
+  --
+  # devengo_id : UUID <<FK, UQ>>
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # gestion_cobranza_id : UUID <<FK, NULL, M8>>
+  monto : DECIMAL(12,2)
+  saldo : DECIMAL(12,2)
+  dias_vencido : SMALLINT <<IDX>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  vence_en : DATE
+  castigada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "impuesto" as impuesto {
+  * id : UUID <<PK>>
+  --
+  # cuenta_contable_id : UUID <<FK, NULL, M3>>
+  codigo : VARCHAR(15) <<UQ+vigente_desde>>
+  nombre : VARCHAR(80)
+  alicuota : DECIMAL(6,4)
+  tipo_calculo : VARCHAR(20) <<CK>>
+  base_legal : VARCHAR(120)
+  vigente_desde : DATE
+  vigente_hasta : DATE <<NULL>>
+}
+
+entity "calculo_impuesto" as calcimp {
+  * id : UUID <<PK>>
+  --
+  # devengo_id : UUID <<FK, IDX>>
+  # impuesto_id : UUID <<FK>>
+  base_imponible : DECIMAL(14,2)
+  alicuota_aplicada : DECIMAL(6,4)
+  monto_impuesto : DECIMAL(12,2)
+  incluido_en_precio : BOOLEAN
+  periodo_fiscal : CHAR(7) <<IDX>>
+}
+
+entity "datos_facturacion" as datosfact {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX, M1>>
+  tipo_documento : VARCHAR(5) <<CK>>
+  numero_documento : VARCHAR(20) <<UQ+usuario_id>>
+  razon_social : VARCHAR(150)
+  email_envio : VARCHAR(120)
+  es_predeterminado : BOOLEAN
+  verificado : BOOLEAN
+  actualizado_en : TIMESTAMPTZ
+}
+
+entity "lote_envio_sin" as lote {
+  * id : UUID <<PK>>
+  --
+  tipo_envio : VARCHAR(25) <<CK>>
+  cantidad_documentos : INTEGER
+  fecha_envio : TIMESTAMPTZ <<IDX>>
+  codigo_recepcion : VARCHAR(60) <<UQ, NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  respuesta : JSONB <<NULL>>
+  reintentos : SMALLINT
+}
+
+entity "evento_significativo_sin" as evtsin {
+  * id : UUID <<PK>>
+  --
+  # registrado_por : UUID <<FK, NULL>>
+  codigo_evento : VARCHAR(10) <<CK, IDX>>
+  descripcion : VARCHAR(200)
+  sucursal : SMALLINT
+  punto_venta : SMALLINT
+  cufd_evento : VARCHAR(120)
+  fecha_inicio : TIMESTAMPTZ <<IDX>>
+  fecha_fin : TIMESTAMPTZ <<NULL>>
+  cantidad_documentos_offline : INTEGER
+  plazo_registro : TIMESTAMPTZ <<IDX>>
+  registrado_en_sin : TIMESTAMPTZ <<NULL>>
+  codigo_recepcion_evento : VARCHAR(60) <<UQ, NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+}
+
+entity "factura_electronica" as factura {
+  * id : UUID <<PK>>
+  --
+  # devengo_id : UUID <<FK, NULL, IDX>>
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # datos_facturacion_id : UUID <<FK>>
+  # lote_envio_sin_id : UUID <<FK, NULL>>
+  # evento_significativo_id : UUID <<FK, NULL>>
+  nit_emisor : VARCHAR(20)
+  sucursal : SMALLINT
+  punto_venta : SMALLINT
+  numero_factura : BIGINT <<UQ+sucursal+punto_venta>>
+  cuf : VARCHAR(80) <<UQ>>
+  cufd : VARCHAR(120)
+  codigo_control : VARCHAR(20) <<NULL>>
+  fecha_emision : TIMESTAMPTZ <<IDX>>
+  monto_total : DECIMAL(14,2)
+  monto_iva : DECIMAL(12,2)
+  monto_no_sujeto : DECIMAL(12,2)
+  moneda : CHAR(3)
+  estado_fiscal : VARCHAR(20) <<CK, IDX>>
+  url_pdf : VARCHAR(255) <<NULL>>
+  url_xml : VARCHAR(255) <<NULL>>
+  hash_documento : VARCHAR(64)
+  qr_verificacion : VARCHAR(255) <<NULL>>
+  leyenda : VARCHAR(200) <<NULL>>
+  anulada_en : TIMESTAMPTZ <<NULL>>
+  motivo_anulacion : VARCHAR(200) <<NULL>>
+}
+
+entity "nota_credito_debito" as notacd {
+  * id : UUID <<PK>>
+  --
+  # factura_id : UUID <<FK, IDX>>
+  # devolucion_comision_id : UUID <<FK, NULL>>
+  tipo : VARCHAR(8) <<CK>>
+  motivo : VARCHAR(200)
+  monto : DECIMAL(12,2)
+  cuf : VARCHAR(80) <<UQ>>
+  fecha_emision : TIMESTAMPTZ
+  estado_fiscal : VARCHAR(20) <<CK>>
+}
+
+entity "liquidacion_ingresos" as liqing {
+  * id : UUID <<PK>>
+  --
+  periodo : CHAR(7) <<UQ>>
+  fecha_inicio : DATE
+  fecha_fin : DATE
+  total_devengado : DECIMAL(16,2)
+  total_cobrado : DECIMAL(16,2)
+  total_exonerado : DECIMAL(16,2)
+  total_devuelto : DECIMAL(16,2)
+  total_incobrable : DECIMAL(16,2)
+  total_impuestos : DECIMAL(16,2)
+  total_costo_proveedores : DECIMAL(16,2)
+  ingreso_neto : DECIMAL(16,2) <<GENERATED>>
+  cantidad_operaciones : INTEGER
+  estado : VARCHAR(15) <<CK, IDX>>
+  # asiento_contable_id : UUID <<FK, NULL, M3>>
+  # cerrada_por : UUID <<FK, NULL>>
+  cerrada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "costo_proveedor_operacion" as costoprov {
+  * id : UUID <<PK>>
+  --
+  # proveedor_id : UUID <<FK, IDX, M3>>
+  # transaccion_id : UUID <<FK, NULL, M10>>
+  # liquidacion_ingresos_id : UUID <<FK, NULL>>
+  tipo_operacion : VARCHAR(25) <<CK>>
+  monto_operacion : DECIMAL(14,2)
+  costo_fijo : DECIMAL(10,2)
+  costo_porcentual : DECIMAL(10,2)
+  costo_total : DECIMAL(10,2)
+  moneda : CHAR(3)
+  periodo : CHAR(7) <<IDX>>
+  conciliado_con_factura : BOOLEAN
+}
+
+hecho ||--o{ concepto : "genera"
+tarif ||--|{ concepto : "contiene"
+tarif ||--o{ asigtar : "se asigna con"
+tarif ||--o{ simul : "se simula en"
+tarif ||--o{ congelada : "se congela en"
+tarif |o--o{ tarif : "sustituye a"
+tarif ||--o| cambiotar : "se cambia con"
+concepto ||--o{ reglatar : "escalona con"
+concepto ||--o{ cotiz : "cotiza"
+concepto ||--o{ devengo : "devenga"
+concepto ||--o{ exencion : "se exonera con"
+redondeo ||--o{ concepto : "redondea"
+segmento ||--o{ asigtar : "segmenta"
+cotiz ||--o| devengo : "se confirma como"
+devengo ||--o{ cargo : "se cobra con"
+devengo ||--o{ calcimp : "tributa"
+devengo ||--o| factura : "se factura en"
+devengo ||--o| devol : "se devuelve con"
+devengo ||--o| cxc : "queda por cobrar en"
+devengo ||--o{ aplipromo : "se descuenta con"
+campana ||--o{ aplipromo : "financia"
+impuesto ||--o{ calcimp : "define"
+datosfact ||--o{ factura : "identifica"
+lote ||--o{ factura : "envia"
+evtsin ||--o{ factura : "ampara offline"
+factura ||--o{ notacd : "corrige con"
+devol ||--o| notacd : "respalda con"
+liqing ||--o{ costoprov : "consolida"
+
+note top of tarif
+  <b>Regla dura</b>
+  Solo un tarifario en estado VIGENTE por
+  (codigo, ambito) en una fecha dada:
+  EXCLUDE USING gist (codigo WITH =,
+    tstzrange(vigente_desde, vigente_hasta) WITH &&)
+  WHERE (estado = 'VIGENTE').
+  Un tarifario VIGENTE es inmutable: para cambiar
+  un precio se crea la version siguiente. Los
+  tarifarios sustituidos nunca se borran.
+end note
+
+note bottom of concepto
+  <b>La politica de cobro completa, en columnas</b>
+  hecho_generador_id -> sobre que evento se cobra
+  base_calculo       -> sobre que monto
+  metodo_calculo     -> como se calcula
+  sujeto_obligado    -> quien lo paga
+  forma_cobro        -> por que via se cobra
+  momento_cobro      -> cuando
+  Cambiar cualquiera de estos seis es un UPDATE
+  sobre la version nueva del tarifario. El motor
+  de cobro no tiene ninguna de estas decisiones
+  escrita en el codigo.
+  CHECK: metodo_calculo='PORCENTUAL' exige
+  valor_porcentual NOT NULL; 'FIJO' exige
+  valor_fijo NOT NULL; 'ESCALONADO_*' exige al
+  menos una regla_tarifa.
+end note
+
+note bottom of devengo
+  <b>Append-only</b>
+  UNIQUE (clave_idempotencia) y UNIQUE
+  (referencia_tipo, referencia_id, concepto_tarifa_id):
+  la misma entrega no puede devengar dos veces la
+  misma comision. El monto no se corrige con UPDATE:
+  se emite devolucion_comision o se reversa.
+  referencia_id es polimorfica: entrega_fondo.id (M4),
+  pago.id (M3), orden_retiro.id (M10), periodo.id (M2).
+end note
+
+note bottom of cargo
+  Tres vias de cobro y una sola verdad contable:
+  - DEDUCCION_DE_ENTREGA -> deduccion_entrega (M4)
+  - DEBITO_DE_BILLETERA  -> transaccion_billetera (M10)
+  - OBLIGACION_DE_APORTE -> obligacion_aporte (M3)
+  UNIQUE (deduccion_entrega_id): una deduccion
+  respalda un solo cargo. Si el cobro falla tres
+  veces, el devengo pasa a cuenta_por_cobrar_comision.
+end note
+
+note bottom of factura
+  Facturacion electronica boliviana: cuf, cufd,
+  codigo de control, sucursal y punto de venta.
+  UNIQUE (sucursal, punto_venta, numero_factura) y
+  UNIQUE (cuf). Emision offline permitida con
+  estado EMITIDA_OFFLINE y envio posterior por lote.
+  Una factura no se edita ni se borra: se anula y
+  se emite nota de credito.
+end note
+
+@enduml

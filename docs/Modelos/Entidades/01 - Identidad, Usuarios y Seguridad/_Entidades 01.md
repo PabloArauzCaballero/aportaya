@@ -14,22 +14,22 @@ Las **25 tablas** de este módulo. Justificación de negocio en [[01_identidad_u
 
 | Tabla | Columnas | FK sal. | FK ent. |
 | --- | --: | --: | --: |
-| [[usuario]] | 18 | 0 | 107 |
+| [[usuario]] | 18 | 0 | 195 |
 | [[direccion_usuario]] | 8 | 1 | 0 |
 | [[perfil_financiero]] | 8 | 1 | 0 |
 | [[credencial_acceso]] | 8 | 1 | 0 |
 | [[historial_credencial]] | 4 | 1 | 0 |
 | [[politica_token]] | 12 | 0 | 0 |
-| [[token_verificacion]] | 31 | 4 | 9 |
+| [[token_verificacion]] | 31 | 4 | 10 |
 | [[intento_validacion_token]] | 7 | 1 | 0 |
 | [[factor_mfa]] | 8 | 1 | 0 |
-| [[dispositivo]] | 11 | 1 | 2 |
-| [[sesion]] | 11 | 2 | 0 |
+| [[dispositivo]] | 11 | 1 | 4 |
+| [[sesion]] | 11 | 2 | 1 |
 | [[intento_autenticacion]] | 10 | 1 | 0 |
 | [[bloqueo_cuenta]] | 7 | 2 | 0 |
 | [[restriccion_usuario]] | 10 | 2 | 0 |
 | [[documento_identidad]] | 13 | 1 | 1 |
-| [[verificacion_kyc]] | 14 | 3 | 1 |
+| [[verificacion_kyc]] | 14 | 3 | 2 |
 | [[referencia_personal]] | 8 | 1 | 0 |
 | [[rol]] | 5 | 0 | 2 |
 | [[permiso]] | 6 | 0 | 1 |

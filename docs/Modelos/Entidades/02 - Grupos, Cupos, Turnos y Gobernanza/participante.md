@@ -9,7 +9,7 @@ estereotipo: Raíz de agregado
 clave_primaria: [id]
 columnas: 13
 fk_salientes: 3
-fk_entrantes: 24
+fk_entrantes: 25
 append_only: false
 ---
 
@@ -53,6 +53,7 @@ append_only: false
 | [[cupo]] | `participante_id` | 02 | [[cupo.participante_id → participante]] |
 | [[descargo_participante]] | `participante_id` | ↗ 08 | [[descargo_participante.participante_id → participante]] |
 | [[deuda_participante]] | `participante_id` | ↗ 08 | [[deuda_participante.participante_id → participante]] |
+| [[devengo_comision]] | `participante_id` | ↗ 11 | [[devengo_comision.participante_id → participante]] |
 | [[devolucion_fondo]] | `participante_id` | ↗ 08 | [[devolucion_fondo.participante_id → participante]] |
 | [[entrega_fondo]] | `beneficiario_participante_id` | ↗ 04 | [[entrega_fondo.beneficiario_participante_id → participante]] |
 | [[evento_reputacion]] | `participante_id` | ↗ 06 | [[evento_reputacion.participante_id → participante]] |
@@ -74,7 +75,7 @@ append_only: false
 
 ## Entidades vecinas
 
-[[aceptacion_reglamento]] · [[aval_participante]] · [[cuenta_contable]] · [[cupo]] · [[descargo_participante]] · [[deuda_participante]] · [[devolucion_fondo]] · [[entrega_fondo]] · [[evento_reputacion]] · [[grupo]] · [[liquidacion_participante]] · [[obligacion_aporte]] · [[participante]] · [[plan_regularizacion]] · [[reemplazo_participante]] · [[registro_incumplimiento]] · [[resena_participante]] · [[sancion]] · [[solicitud_permuta]] · [[solicitud_retiro]] · [[traspaso_cupo]] · [[usuario]] · [[voto_participante]]
+[[aceptacion_reglamento]] · [[aval_participante]] · [[cuenta_contable]] · [[cupo]] · [[descargo_participante]] · [[deuda_participante]] · [[devengo_comision]] · [[devolucion_fondo]] · [[entrega_fondo]] · [[evento_reputacion]] · [[grupo]] · [[liquidacion_participante]] · [[obligacion_aporte]] · [[participante]] · [[plan_regularizacion]] · [[reemplazo_participante]] · [[registro_incumplimiento]] · [[resena_participante]] · [[sancion]] · [[solicitud_permuta]] · [[solicitud_retiro]] · [[traspaso_cupo]] · [[usuario]] · [[voto_participante]]
 
 ## Notas del modelo
 

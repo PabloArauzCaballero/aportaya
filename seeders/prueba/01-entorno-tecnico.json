@@ -1,0 +1,118 @@
+{
+  "descripcion": "Entorno técnico local: tipo de cambio, cuentas de sistema y cuenta de custodia.",
+  "entorno": "prueba",
+  "bloques": [
+    {
+      "tabla": "tipo_cambio",
+      "conflicto": [],
+      "comentario": "Sin tipo de cambio, fn_fx_a_usd() falla y no hay evaluación de umbrales",
+      "filas": [
+        {
+          "moneda_origen": "BOB",
+          "moneda_destino": "USD",
+          "fecha": {
+            "$sql": "current_date"
+          },
+          "tipo_cambio": 0.143678,
+          "fuente": "MANUAL",
+          "cargado_en": {
+            "$sql": "now()"
+          }
+        }
+      ]
+    },
+    {
+      "tabla": "cuenta_billetera",
+      "conflicto": [
+        "numero_cuenta"
+      ],
+      "comentario": "Cuentas técnicas: contrapartida de todo movimiento de dinero",
+      "filas": [
+        {
+          "numero_cuenta": "SYS-INGRESOS",
+          "tipo": "PLATAFORMA_INGRESOS",
+          "moneda": "BOB",
+          "estado": "ACTIVA",
+          "nivel_debida_diligencia": "REFORZADA",
+          "fecha_apertura": {
+            "$sql": "now()"
+          },
+          "cuenta_contable_id": {
+            "$ref": "cuenta_contable",
+            "codigo": "4.1.01"
+          }
+        },
+        {
+          "numero_cuenta": "SYS-IMPUESTOS",
+          "tipo": "PLATAFORMA_IMPUESTOS_POR_PAGAR",
+          "moneda": "BOB",
+          "estado": "ACTIVA",
+          "nivel_debida_diligencia": "REFORZADA",
+          "fecha_apertura": {
+            "$sql": "now()"
+          },
+          "cuenta_contable_id": {
+            "$ref": "cuenta_contable",
+            "codigo": "2.2.01"
+          }
+        },
+        {
+          "numero_cuenta": "SYS-CUSTODIA",
+          "tipo": "PUENTE_CUSTODIA",
+          "moneda": "BOB",
+          "estado": "ACTIVA",
+          "nivel_debida_diligencia": "REFORZADA",
+          "fecha_apertura": {
+            "$sql": "now()"
+          },
+          "cuenta_contable_id": {
+            "$ref": "cuenta_contable",
+            "codigo": "1.1.01"
+          }
+        },
+        {
+          "numero_cuenta": "SYS-SUSPENSO",
+          "tipo": "SUSPENSO_NO_IDENTIFICADO",
+          "moneda": "BOB",
+          "estado": "ACTIVA",
+          "nivel_debida_diligencia": "REFORZADA",
+          "fecha_apertura": {
+            "$sql": "now()"
+          },
+          "cuenta_contable_id": {
+            "$ref": "cuenta_contable",
+            "codigo": "2.1.04"
+          }
+        }
+      ]
+    },
+    {
+      "tabla": "cuenta_custodia",
+      "conflicto": [],
+      "filas": [
+        {
+          "tipo": "FIDEICOMISO",
+          "entidad_financiera": "BANCO DEMO S.A.",
+          "numero_cuenta_cifrado": "cifrado-demo",
+          "numero_enmascarado": "****4321",
+          "moneda": "BOB",
+          "saldo_segun_banco": 0,
+          "saldo_segun_libro": 0,
+          "fecha_saldo": {
+            "$sql": "now()"
+          },
+          "contrato_referencia": "FID-DEMO-001",
+          "es_principal": true,
+          "estado": "ACTIVA",
+          "abierta_en": {
+            "$sql": "current_date"
+          }
+        }
+      ]
+    },
+    {
+      "sql": "UPDATE contrato_adhesion SET estado = 'VIGENTE' WHERE estado = 'BORRADOR';",
+      "comentario": "Solo en desarrollo: los contratos de adhesión reales se registran ante ASFI antes de pasar a VIGENTE"
+    }
+  ]
+}

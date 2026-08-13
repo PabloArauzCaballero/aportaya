@@ -8,7 +8,7 @@ modulo: "09 — Auditoría, Reportes y Cumplimiento"
 clave_primaria: [id]
 columnas: 13
 fk_salientes: 0
-fk_entrantes: 0
+fk_entrantes: 3
 append_only: false
 ---
 
@@ -33,6 +33,18 @@ append_only: false
 | `resuelto_en` | TIMESTAMPTZ | — | sí | NULL |
 | `causa_raiz` | TEXT | — | sí | NULL |
 | `acciones_correctivas` | TEXT | — | sí | NULL |
+
+## Referenciada por
+
+| Entidad | Columna | Módulo | Relación |
+| --- | --- | :-: | --- |
+| [[descuadre_custodia]] | `incidente_operativo_id` | ↗ 10 | [[descuadre_custodia.incidente_operativo_id → incidente_operativo]] |
+| [[evento_riesgo_operativo]] | `incidente_operativo_id` | ↗ 12 | [[evento_riesgo_operativo.incidente_operativo_id → incidente_operativo]] |
+| [[incidente_seguridad]] | `incidente_operativo_id` | ↗ 12 | [[incidente_seguridad.incidente_operativo_id → incidente_operativo]] |
+
+## Entidades vecinas
+
+[[descuadre_custodia]] · [[evento_riesgo_operativo]] · [[incidente_seguridad]]
 
 ## Ver también
 

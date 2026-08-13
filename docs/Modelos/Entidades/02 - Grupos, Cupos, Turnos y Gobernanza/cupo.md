@@ -25,7 +25,7 @@ append_only: false
 | `numero` | SMALLINT | UQ | no | UQ+grupo_id |
 | `participante_id` | UUID | FK | sí | FK, NULL |
 | `estado` | VARCHAR(30) | — | no | CK |
-| `fraccion` | DECIMAL(3,2) <<CK: > 0 AND <= 1>> | — | no | — |
+| `fraccion` | DECIMAL(3,2) | — | no | CK: > 0 AND <= 1 |
 | `asignado_en` | TIMESTAMPTZ | — | sí | NULL |
 | `liberado_en` | TIMESTAMPTZ | — | sí | NULL |
 

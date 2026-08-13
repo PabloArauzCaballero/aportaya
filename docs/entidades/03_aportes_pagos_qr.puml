@@ -66,8 +66,17 @@ package "Obligacion de Aporte" {
     RECARGO_MORA
     APORTE_FONDO_GARANTIA
     REPOSICION_COBERTURA
+    COMISION_PLATAFORMA
     AJUSTE_MANUAL
   }
+
+  note top of TipoObligacion
+    COMISION_PLATAFORMA solo se usa cuando el concepto
+    tarifario define sujeto_obligado = PRORRATEO_ENTRE_
+    PARTICIPANTES (M11): la comision se cobra como una
+    obligacion mas en vez de deducirse de la entrega.
+    Nunca representa un ingreso del organizador (RN-18).
+  end note
 
   class ObligacionAporte <<AR>> {
     - id: UUID
@@ -264,6 +273,7 @@ package "Ejecucion del Pago" {
     - id: UUID
     - obligacionId: UUID
     - intentoPagoId: UUID
+    - proveedorId: UUID
     - monto: Decimal
     - moneda: String
     - montoComisionProveedor: Decimal
@@ -441,6 +451,24 @@ package "Conciliacion" {
 ' ============================================================
 package "Contabilidad de doble partida" {
 
+  class TipoCambio <<VO>> {
+    - id: UUID
+    - monedaOrigen: String <<ISO-4217>>
+    - monedaDestino: String <<ISO-4217>>
+    - fecha: Date
+    - tipoCambio: Decimal
+    - fuente: String <<BCB | PROVEEDOR | MANUAL>>
+    - cargadoEn: DateTime
+    --
+    + convertir(monto): Decimal {static}
+  }
+
+  note bottom of TipoCambio
+    Los umbrales de reporte estan expresados en dolares y las
+    operaciones ocurren en bolivianos: sin el tipo de cambio del
+    dia guardado, el calculo del umbral no es reproducible.
+  end note
+
   class CuentaContable {
     - id: UUID
     - codigo: String <<ej. 1.1.01 Caja grupo>>
@@ -461,7 +489,7 @@ package "Contabilidad de doble partida" {
     - numero: Long <<correlativo>>
     - fecha: DateTime
     - glosa: String
-    - origenTipo: String <<PAGO | ENTREGA | COBERTURA | AJUSTE>>
+    - origenTipo: String <<PAGO | ENTREGA | COBERTURA | COMISION | BILLETERA | AJUSTE>>
     - origenId: UUID
     - grupoId: UUID
     - estado: String <<BORRADOR | CONFIRMADO | REVERSADO>>
@@ -744,6 +772,7 @@ entity "pago" as pago {
   --
   # obligacion_id : UUID <<FK, IDX>>
   # intento_pago_id : UUID <<FK, NULL, UQ>>
+  # proveedor_id : UUID <<FK, NULL, IDX>>
   monto : DECIMAL(14,2) <<CK: > 0>>
   moneda : CHAR(3)
   monto_comision_proveedor : DECIMAL(10,2)
@@ -752,7 +781,7 @@ entity "pago" as pago {
   estado : VARCHAR(15) <<CK, IDX>>
   fecha_hora_pago : TIMESTAMPTZ <<IDX>>
   fecha_hora_acreditacion : TIMESTAMPTZ <<NULL>>
-  referencia_proveedor : VARCHAR(80) <<UQ+proveedor>>
+  referencia_proveedor : VARCHAR(80) <<UQ+proveedor_id>>
   pagador_nombre : VARCHAR(120) <<NULL>>
   pagador_documento : VARCHAR(30) <<NULL>>
   cuenta_origen_enmascarada : VARCHAR(40) <<NULL>>
@@ -883,6 +912,17 @@ entity "webhook_pasarela" as webh {
   # pago_id : UUID <<FK, NULL>>
 }
 
+entity "tipo_cambio" as tcambio {
+  * id : UUID <<PK>>
+  --
+  moneda_origen : CHAR(3) <<UQ+moneda_destino+fecha>>
+  moneda_destino : CHAR(3)
+  fecha : DATE <<IDX>>
+  tipo_cambio : DECIMAL(12,6) <<CK: > 0>>
+  fuente : VARCHAR(15) <<CK>>
+  cargado_en : TIMESTAMPTZ
+}
+
 entity "cuenta_contable" as cta {
   * id : UUID <<PK>>
   --
@@ -956,6 +996,13 @@ extracto ||--o{ movban : "contiene"
 webh }o--o| pago : "genera"
 asiento ||--|{ movcta : "detalla"
 cta ||--o{ movcta : "afecta"
+
+note bottom of tcambio
+  UNIQUE (moneda_origen, moneda_destino, fecha).
+  Lo consume fn_fx_a_usd() del motor de umbrales de la UIF
+  (M12): el tipo de cambio aplicado se copia al registro de
+  la operacion para que el calculo sea reproducible.
+end note
 
 note top of pago
   <b>Reglas duras</b>

@@ -8,7 +8,7 @@ modulo: "03 — Aportes, Pagos QR y Conciliación"
 clave_primaria: [id]
 columnas: 9
 fk_salientes: 1
-fk_entrantes: 1
+fk_entrantes: 2
 append_only: false
 ---
 
@@ -41,10 +41,11 @@ append_only: false
 | Entidad | Columna | Módulo | Relación |
 | --- | --- | :-: | --- |
 | [[conciliacion]] | `movimiento_bancario_id` | 03 | [[conciliacion.movimiento_bancario_id → movimiento_bancario]] |
+| [[movimiento_custodia]] | `movimiento_bancario_id` | ↗ 10 | [[movimiento_custodia.movimiento_bancario_id → movimiento_bancario]] |
 
 ## Entidades vecinas
 
-[[conciliacion]] · [[extracto_bancario]]
+[[conciliacion]] · [[extracto_bancario]] · [[movimiento_custodia]]
 
 ## Ver también
 

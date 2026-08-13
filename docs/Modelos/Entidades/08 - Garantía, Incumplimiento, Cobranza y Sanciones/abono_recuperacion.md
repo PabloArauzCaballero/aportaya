@@ -26,7 +26,7 @@ append_only: true
 | `pago_id` | UUID | FK | sí | FK, NULL, M3 |
 | `entrega_id` | UUID | FK | sí | FK, NULL, M4 |
 | `movimiento_fondo_id` | UUID | FK | sí | FK, NULL |
-| `monto` | DECIMAL(14,2) <<CK: > 0>> | — | no | — |
+| `monto` | DECIMAL(14,2) | — | no | CK: > 0 |
 | `origen` | VARCHAR(30) | — | no | CK |
 | `aplicado_a_capital` | DECIMAL(14,2) | — | no | — |
 | `aplicado_a_recargos` | DECIMAL(14,2) | — | no | — |

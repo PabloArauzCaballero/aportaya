@@ -1,0 +1,99 @@
+{
+  "descripcion": "Políticas operativas: billetera, redondeo, mora y cobertura del fondo de garantía.",
+  "entorno": "minimo",
+  "revisar_con": "área de riesgos",
+  "bloques": [
+    {
+      "tabla": "politica_billetera",
+      "conflicto": [
+        "codigo"
+      ],
+      "filas": [
+        {
+          "codigo": "GENERAL_BOB",
+          "moneda": "BOB",
+          "dias_inactividad_para_limitar": 365,
+          "permite_transferencia_p2p": true,
+          "requiere_mfa_desde": 500.0,
+          "ventana_enfriamiento_retiro_horas": 24,
+          "dias_vigencia_retencion": 30,
+          "permite_saldo_negativo": false,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        }
+      ]
+    },
+    {
+      "tabla": "politica_redondeo",
+      "conflicto": [
+        "codigo"
+      ],
+      "comentario": "Bolivia: el circulante mínimo práctico es Bs 0,10",
+      "filas": [
+        {
+          "codigo": "BOB_COMISION",
+          "moneda": "BOB",
+          "unidad_minima": 0.1,
+          "modo": "MAS_CERCANO",
+          "aplica_a": "COMISION"
+        },
+        {
+          "codigo": "BOB_IMPUESTO",
+          "moneda": "BOB",
+          "unidad_minima": 0.01,
+          "modo": "MAS_CERCANO",
+          "aplica_a": "IMPUESTO"
+        },
+        {
+          "codigo": "BOB_TOTAL",
+          "moneda": "BOB",
+          "unidad_minima": 0.1,
+          "modo": "MAS_CERCANO",
+          "aplica_a": "TOTAL"
+        }
+      ]
+    },
+    {
+      "tabla": "politica_mora",
+      "solo_si_vacia": true,
+      "conflicto": "ninguno",
+      "comentario": "Política global por defecto (grupo_id nulo). Un recargo sin tope vuelve impagable la deuda.",
+      "filas": [
+        {
+          "dias_gracia": 3,
+          "tipo_recargo": "PORCENTUAL",
+          "valor_recargo": 2.0,
+          "tope_recargo": 100.0,
+          "dias_para_mora_grave": 15,
+          "dias_para_incumplimiento": 30,
+          "aplica_automatico": true,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        }
+      ]
+    },
+    {
+      "tabla": "politica_cobertura",
+      "solo_si_vacia": true,
+      "conflicto": "ninguno",
+      "filas": [
+        {
+          "porcentaje_constitucion": 5.0,
+          "dias_mora_para_activar": 5,
+          "porcentaje_maximo_cobertura_por_aporte": 100.0,
+          "tope_cobertura_por_participante": 3000.0,
+          "tope_cobertura_por_periodo": 10000.0,
+          "max_coberturas_por_participante": 3,
+          "requiere_aprobacion_manual_desde": 2000.0,
+          "plazo_recuperacion_dias": 90,
+          "tasa_recargo_recuperacion": 1.5,
+          "vigente_desde": {
+            "$sql": "now()"
+          }
+        }
+      ]
+    }
+  ]
+}

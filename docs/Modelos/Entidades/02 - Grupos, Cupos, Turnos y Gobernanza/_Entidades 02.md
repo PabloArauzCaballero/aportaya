@@ -14,12 +14,12 @@ Las **22 tablas** de este módulo. Justificación de negocio en [[02_grupos_turn
 
 | Tabla | Columnas | FK sal. | FK ent. |
 | --- | --: | --: | --: |
-| [[grupo]] | 27 | 1 | 38 |
+| [[grupo]] | 27 | 1 | 45 |
 | [[configuracion_grupo]] | 10 | 3 | 0 |
 | [[reglamento_grupo]] | 10 | 2 | 1 |
 | [[aceptacion_reglamento]] | 7 | 3 | 0 |
 | [[historial_estado_grupo]] | 7 | 2 | 0 |
-| [[participante]] | 13 | 3 | 24 |
+| [[participante]] | 13 | 3 | 25 |
 | [[cupo]] | 8 | 2 | 6 |
 | [[traspaso_cupo]] | 10 | 4 | 0 |
 | [[solicitud_retiro]] | 7 | 1 | 0 |
@@ -34,5 +34,5 @@ Las **22 tablas** de este módulo. Justificación de negocio en [[02_grupos_turn
 | [[criterio_emparejamiento]] | 8 | 0 | 1 |
 | [[propuesta_grupo]] | 10 | 2 | 1 |
 | [[propuesta_postulacion]] | 4 | 2 | 0 |
-| [[acuerdo]] | 14 | 2 | 7 |
+| [[acuerdo]] | 14 | 2 | 8 |
 | [[voto_participante]] | 7 | 2 | 0 |

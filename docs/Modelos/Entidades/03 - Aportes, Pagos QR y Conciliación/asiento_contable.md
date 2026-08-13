@@ -9,7 +9,7 @@ modulo: "03 — Aportes, Pagos QR y Conciliación"
 clave_primaria: [id]
 columnas: 10
 fk_salientes: 3
-fk_entrantes: 5
+fk_entrantes: 8
 append_only: true
 ---
 
@@ -47,12 +47,15 @@ append_only: true
 | [[asiento_contable]] | `asiento_reversa_id` | 03 | [[asiento_contable.asiento_reversa_id → asiento_contable]] |
 | [[castigo_deuda]] | `asiento_contable_id` | ↗ 08 | [[castigo_deuda.asiento_contable_id → asiento_contable]] |
 | [[cobertura_incumplimiento]] | `asiento_contable_id` | ↗ 08 | [[cobertura_incumplimiento.asiento_contable_id → asiento_contable]] |
+| [[devengo_comision]] | `asiento_contable_id` | ↗ 11 | [[devengo_comision.asiento_contable_id → asiento_contable]] |
+| [[liquidacion_ingresos]] | `asiento_contable_id` | ↗ 11 | [[liquidacion_ingresos.asiento_contable_id → asiento_contable]] |
 | [[movimiento_contable]] | `asiento_id` | 03 | [[movimiento_contable.asiento_id → asiento_contable]] |
 | [[movimiento_fondo]] | `asiento_contable_id` | ↗ 08 | [[movimiento_fondo.asiento_contable_id → asiento_contable]] |
+| [[transaccion_billetera]] | `asiento_contable_id` | ↗ 10 | [[transaccion_billetera.asiento_contable_id → asiento_contable]] |
 
 ## Entidades vecinas
 
-[[asiento_contable]] · [[castigo_deuda]] · [[cobertura_incumplimiento]] · [[grupo]] · [[movimiento_contable]] · [[movimiento_fondo]] · [[usuario]]
+[[asiento_contable]] · [[castigo_deuda]] · [[cobertura_incumplimiento]] · [[devengo_comision]] · [[grupo]] · [[liquidacion_ingresos]] · [[movimiento_contable]] · [[movimiento_fondo]] · [[transaccion_billetera]] · [[usuario]]
 
 ## Notas del modelo
 

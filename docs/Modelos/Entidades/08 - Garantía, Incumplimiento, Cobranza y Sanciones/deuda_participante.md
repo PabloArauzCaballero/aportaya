@@ -31,7 +31,7 @@ append_only: false
 | `capital_original` | DECIMAL(14,2) | — | no | — |
 | `recargos_acumulados` | DECIMAL(14,2) | — | no | — |
 | `total_abonado` | DECIMAL(14,2) | — | no | — |
-| `saldo_actual` | DECIMAL(14,2) <<CK: >= 0, IDX>> | — | no | — |
+| `saldo_actual` | DECIMAL(14,2) | IDX | no | CK: >= 0, IDX |
 | `moneda` | CHAR(3) | — | no | — |
 | `estado` | VARCHAR(20) | IDX | no | CK, IDX |
 | `es_subrogada` | BOOLEAN | — | no | — |

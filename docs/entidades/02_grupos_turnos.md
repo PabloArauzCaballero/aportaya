@@ -34,7 +34,10 @@ campos que más importan y por qué:
 - `esAutogestionado` + `organizadorId` distinguen los dos modelos de negocio de la
   plataforma: el grupo que administra una persona habilitada (M7) y el que
   administra el sistema solo (organizador digital). En ninguno de los dos casos
-  hay comisión: administrar no se cobra (RN-18).
+  el organizador cobra comisión: administrar no se cobra (RN-18). La comisión que
+  sí existe es la de la plataforma por el servicio (M11), que se congela por grupo
+  al constituirlo (`tarifa_congelada_grupo`) para que el precio no cambie a mitad
+  del juego.
 - `requiereKYCMinimo` y `reputacionMinima` son **filtros de entrada**. Un grupo de
   Bs 200 entre amigos no pide nada; uno de USD 500 entre desconocidos exige
   documento verificado y buen historial. Sin estos campos, todos los grupos

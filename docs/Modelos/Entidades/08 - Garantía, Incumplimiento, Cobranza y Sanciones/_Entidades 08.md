@@ -27,7 +27,7 @@ Las **33 tablas** de este módulo. Justificación de negocio en [[08_garantia_in
 | [[score_riesgo_incumplimiento]] | 8 | 2 | 0 |
 | [[alerta_temprana]] | 8 | 2 | 0 |
 | [[estrategia_cobranza]] | 12 | 0 | 1 |
-| [[gestion_cobranza]] | 12 | 3 | 2 |
+| [[gestion_cobranza]] | 12 | 3 | 3 |
 | [[accion_cobranza]] | 11 | 3 | 0 |
 | [[promesa_pago]] | 10 | 2 | 0 |
 | [[acuerdo_quita]] | 10 | 3 | 0 |

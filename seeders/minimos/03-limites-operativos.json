@@ -1,0 +1,534 @@
+{
+  "descripcion": "Límites operativos por nivel de debida diligencia.",
+  "entorno": "minimo",
+  "estado": "PROVISIONAL",
+  "advertencia": "Los importes son una referencia de trabajo derivada de fuentes secundarias sobre dinero electrónico en Bolivia (orden de USD 350 por transacción y USD 700 de saldo por titular, tope por operación de 2,5 salarios mínimos, acumulado de cinco días de USD 5.000). El área legal debe verificarlos y completar base_normativa con la cita exacta antes de producción. Cambiar un límite NO es un despliegue: se cierra la vigencia de la fila y se inserta la nueva (R-LIM-03).",
+  "bloques": [
+    {
+      "tabla": "limite_operativo_billetera",
+      "conflicto": [],
+      "filas": [
+        {
+          "concepto": "SALDO_MAXIMO",
+          "nivel_debida_diligencia": "SIMPLIFICADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 2000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "SALDO_MAXIMO",
+          "nivel_debida_diligencia": "ESTANDAR",
+          "ventana": "OPERACION",
+          "monto_maximo": 5000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "SALDO_MAXIMO",
+          "nivel_debida_diligencia": "AMPLIADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 20000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "SALDO_MAXIMO",
+          "nivel_debida_diligencia": "REFORZADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 50000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RECARGA",
+          "nivel_debida_diligencia": "SIMPLIFICADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 1000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RECARGA",
+          "nivel_debida_diligencia": "SIMPLIFICADA",
+          "ventana": "MES",
+          "monto_maximo": 6000,
+          "cantidad_maxima": 20,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RETIRO",
+          "nivel_debida_diligencia": "SIMPLIFICADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 1000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RETIRO",
+          "nivel_debida_diligencia": "SIMPLIFICADA",
+          "ventana": "DIA",
+          "monto_maximo": 2000,
+          "cantidad_maxima": 3,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RETIRO",
+          "nivel_debida_diligencia": "SIMPLIFICADA",
+          "ventana": "MES",
+          "monto_maximo": 6000,
+          "cantidad_maxima": 20,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "TRANSFERENCIA",
+          "nivel_debida_diligencia": "SIMPLIFICADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 1000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "TRANSFERENCIA",
+          "nivel_debida_diligencia": "SIMPLIFICADA",
+          "ventana": "MES",
+          "monto_maximo": 6000,
+          "cantidad_maxima": 30,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "APORTE",
+          "nivel_debida_diligencia": "SIMPLIFICADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 1000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "APORTE",
+          "nivel_debida_diligencia": "SIMPLIFICADA",
+          "ventana": "MES",
+          "monto_maximo": 6000,
+          "cantidad_maxima": 30,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RECARGA",
+          "nivel_debida_diligencia": "ESTANDAR",
+          "ventana": "OPERACION",
+          "monto_maximo": 2500,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RECARGA",
+          "nivel_debida_diligencia": "ESTANDAR",
+          "ventana": "MES",
+          "monto_maximo": 25000,
+          "cantidad_maxima": 60,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RETIRO",
+          "nivel_debida_diligencia": "ESTANDAR",
+          "ventana": "OPERACION",
+          "monto_maximo": 2500,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RETIRO",
+          "nivel_debida_diligencia": "ESTANDAR",
+          "ventana": "DIA",
+          "monto_maximo": 7000,
+          "cantidad_maxima": 5,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RETIRO",
+          "nivel_debida_diligencia": "ESTANDAR",
+          "ventana": "MES",
+          "monto_maximo": 25000,
+          "cantidad_maxima": 60,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "TRANSFERENCIA",
+          "nivel_debida_diligencia": "ESTANDAR",
+          "ventana": "OPERACION",
+          "monto_maximo": 2500,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "TRANSFERENCIA",
+          "nivel_debida_diligencia": "ESTANDAR",
+          "ventana": "MES",
+          "monto_maximo": 25000,
+          "cantidad_maxima": 90,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "APORTE",
+          "nivel_debida_diligencia": "ESTANDAR",
+          "ventana": "OPERACION",
+          "monto_maximo": 2500,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "APORTE",
+          "nivel_debida_diligencia": "ESTANDAR",
+          "ventana": "MES",
+          "monto_maximo": 25000,
+          "cantidad_maxima": 90,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RECARGA",
+          "nivel_debida_diligencia": "AMPLIADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 7000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RECARGA",
+          "nivel_debida_diligencia": "AMPLIADA",
+          "ventana": "MES",
+          "monto_maximo": 80000,
+          "cantidad_maxima": 200,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RETIRO",
+          "nivel_debida_diligencia": "AMPLIADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 7000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RETIRO",
+          "nivel_debida_diligencia": "AMPLIADA",
+          "ventana": "DIA",
+          "monto_maximo": 20000,
+          "cantidad_maxima": 10,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RETIRO",
+          "nivel_debida_diligencia": "AMPLIADA",
+          "ventana": "MES",
+          "monto_maximo": 80000,
+          "cantidad_maxima": 200,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "TRANSFERENCIA",
+          "nivel_debida_diligencia": "AMPLIADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 7000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "TRANSFERENCIA",
+          "nivel_debida_diligencia": "AMPLIADA",
+          "ventana": "MES",
+          "monto_maximo": 80000,
+          "cantidad_maxima": 300,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "APORTE",
+          "nivel_debida_diligencia": "AMPLIADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 7000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "APORTE",
+          "nivel_debida_diligencia": "AMPLIADA",
+          "ventana": "MES",
+          "monto_maximo": 80000,
+          "cantidad_maxima": 300,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RECARGA",
+          "nivel_debida_diligencia": "REFORZADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 7000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RECARGA",
+          "nivel_debida_diligencia": "REFORZADA",
+          "ventana": "MES",
+          "monto_maximo": 150000,
+          "cantidad_maxima": 300,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RETIRO",
+          "nivel_debida_diligencia": "REFORZADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 7000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RETIRO",
+          "nivel_debida_diligencia": "REFORZADA",
+          "ventana": "DIA",
+          "monto_maximo": 35000,
+          "cantidad_maxima": 10,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "RETIRO",
+          "nivel_debida_diligencia": "REFORZADA",
+          "ventana": "MES",
+          "monto_maximo": 150000,
+          "cantidad_maxima": 300,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "TRANSFERENCIA",
+          "nivel_debida_diligencia": "REFORZADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 7000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "TRANSFERENCIA",
+          "nivel_debida_diligencia": "REFORZADA",
+          "ventana": "MES",
+          "monto_maximo": 150000,
+          "cantidad_maxima": 500,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "APORTE",
+          "nivel_debida_diligencia": "REFORZADA",
+          "ventana": "OPERACION",
+          "monto_maximo": 7000,
+          "cantidad_maxima": null,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        },
+        {
+          "concepto": "APORTE",
+          "nivel_debida_diligencia": "REFORZADA",
+          "ventana": "MES",
+          "monto_maximo": 150000,
+          "cantidad_maxima": 500,
+          "moneda": "BOB",
+          "base_normativa": "PROVISIONAL — confirmar con legal contra el reglamento vigente del BCB y la RNSF",
+          "vigente_desde": {
+            "$sql": "current_date"
+          },
+          "activo": true
+        }
+      ]
+    }
+  ]
+}

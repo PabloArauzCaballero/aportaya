@@ -1,7 +1,14 @@
 # Pasanaku — Modelo de datos
 
-Sistema web destinado a la creación, administración y seguimiento de grupos de
-pasanaku. Esta rama contiene el **modelo de datos completo** del sistema.
+Sistema destinado a la creación, administración y seguimiento de grupos de
+pasanaku, **operado como una billetera móvil**: los participantes tienen saldo,
+aportan y cobran desde la app, y la plataforma cobra una comisión pequeña por cada
+juego. Esta rama contiene el **modelo de datos completo** del sistema.
+
+Ese salto —de herramienta de organización a proveedor de servicios de pago— es lo
+que explica los tres módulos finales: custodia del dinero con encaje verificable
+(M10), motor de tarifas parametrizable con facturación (M11) y el aparato de
+cumplimiento que un supervisor financiero espera encontrar implementado (M12).
 
 La carpeta [`docs/`](docs/Index.md) es además una **bóveda de Obsidian**: ábrala con
 `Abrir carpeta como bóveda` y empiece por `Index.md` para recorrer el modelo como
@@ -19,8 +26,52 @@ Para cada módulo hay dos archivos en [`docs/entidades/`](docs/entidades/README.
   elimina, y qué papel cumple en el sistema.
 
 Cubre el Documento de Requerimientos v2.0 (pago QR, WhatsApp, transparencia,
-reputación) **más** el Parche A (organizador digital automatizado, organizador
-humano sin comisión y fondo de garantía).
+reputación), el Parche A (organizador digital automatizado, organizador humano sin
+comisión y fondo de garantía) y el **Parche B: billetera móvil con custodia,
+comisión de plataforma y cumplimiento regulatorio** (módulos 10 a 12).
+
+## De la bóveda al código
+
+La carpeta `docs/` no es solo documentación: es la **especificación ejecutable**
+del sistema, en cuatro capas encadenadas.
+
+| Capa | Dónde | Responde |
+| --- | --- | --- |
+| Norma | [`docs/Cumplimiento.md`](docs/Cumplimiento.md) | qué obliga ASFI, UIF, BCB, el SIN y las ISO |
+| Caso de uso | [`docs/CasosDeUso/`](docs/CasosDeUso/_CasosDeUso.md) | cómo se ejecuta cada flujo, paso a paso |
+| Restricción | [`docs/Restricciones.md`](docs/Restricciones.md) | qué impide, en la base, que se viole |
+| Modelo | [`docs/Modelos/`](docs/Modelos/Entidades/_Entidades.md) | dónde vive cada dato |
+| Esquema | [`sql/`](sql/README.md) | el DDL ejecutable, generado desde las tres capas anteriores |
+
+```bash
+python3 scripts/generar_boveda.py   # notas del modelo (Obsidian) desde los .puml
+python3 scripts/generar_ddl.py      # esquema SQL completo desde los .puml + el catálogo
+psql -d pasanaku -v ON_ERROR_STOP=1 -f sql/aplicar.sql
+psql -d pasanaku -v ON_ERROR_STOP=1 -f sql/60_semillas/sembrar.sql
+psql -d pasanaku -f sql/50_verificacion/prueba_humo.sql   # 65 comprobaciones
+```
+
+El esquema son **274 tablas en un archivo cada una**, con las claves foráneas y los
+índices en pasadas aparte —el orden que necesita la introspección de un ORM— más el
+sellado de las tablas append-only y el catálogo de restricciones. Verificado sobre
+PostgreSQL 16: aplica sin errores y la prueba de humo confirma que las restricciones
+rechazan lo que deben rechazar.
+
+Las **skills del proyecto** en [`.claude/skills/`](.claude/skills/) describen cómo
+se trabaja sobre esta bóveda: `boveda-modelo` (tocar el modelo), `caso-de-uso`
+(especificar un flujo), `restriccion` (agregar una regla dura), `norma-nueva`
+(incorporar una norma) e `implementar-desde-boveda` (programar a partir de todo lo
+anterior).
+
+## Cumplimiento normativo
+
+El contraste requisito por requisito contra ASFI (Reglamento ETF Res. 540/2025,
+protección del consumidor financiero, riesgo operativo, seguridad de la
+información), UIF (instructivo vigente y sus umbrales de billetera móvil), BCB
+(RD 079/2022), facturación electrónica del SIN e ISO/IEC 27001, 22301, 31000 y
+19011 está en [`docs/Cumplimiento.md`](docs/Cumplimiento.md), con el estado de cada
+requisito y las brechas abiertas —incluida la principal: **este producto requiere
+autorización de ASFI antes de operar con dinero real**.
 
 ## Módulos incluidos
 
@@ -35,6 +86,9 @@ humano sin comisión y fondo de garantía).
 | Organizador y Automatización | [`.puml`](docs/entidades/07_organizador_automatizacion.puml) | [`.md`](docs/entidades/07_organizador_automatizacion.md) | RF-20, RN-18, RN-22 |
 | Garantía, Incumplimiento, Cobranza y Sanciones | [`.puml`](docs/entidades/08_garantia_incumplimiento.puml) | [`.md`](docs/entidades/08_garantia_incumplimiento.md) | RF-21, RN-21 |
 | Auditoría, Reportes y Cumplimiento | [`.puml`](docs/entidades/09_auditoria_reportes.puml) | [`.md`](docs/entidades/09_auditoria_reportes.md) | RN-17 |
+| Billetera, Custodia y Dinero Electrónico | [`.puml`](docs/entidades/10_billetera_custodia.puml) | [`.md`](docs/entidades/10_billetera_custodia.md) | RF-22, RN-23, RN-24 |
+| Tarifas, Comisiones, Impuestos y Facturación | [`.puml`](docs/entidades/11_tarifas_comisiones.puml) | [`.md`](docs/entidades/11_tarifas_comisiones.md) | RF-23, RN-25, RN-26 |
+| Cumplimiento Regulatorio y Consumidor Financiero | [`.puml`](docs/entidades/12_cumplimiento_asfi.puml) | [`.md`](docs/entidades/12_cumplimiento_asfi.md) | RN-27 a RN-30 |
 
 ## Decisiones de diseño que atraviesan todo el modelo
 
@@ -74,10 +128,34 @@ aguanta producción con dinero de terceros:
 9. **Entrega como liquidación, no como transferencia (M4).** Bolsa bruta,
    deducciones línea a línea (deuda propia, reposición de cobertura) y neto
    contra cuenta bancaria verificada con periodo de enfriamiento.
-10. **El organizador no cobra ni custodia (M7).** No existe comisión: el
-    organizador es un participante más, con funciones administrativas y
-    responsabilidad de desempeño, pero sin ingreso por administrar y sin ser
-    cuenta de paso del dinero del grupo (RN-18).
+10. **El organizador no cobra ni custodia (M7).** El organizador es un
+    participante más, con funciones administrativas y responsabilidad de
+    desempeño, pero sin ingreso por administrar y sin ser cuenta de paso del
+    dinero del grupo (RN-18). Ninguna tabla de comisiones (M11) tiene una clave
+    foránea hacia `organizador`: **quien cobra es la plataforma por el servicio,
+    con tarifario público, no la persona que administra.**
+11. **El saldo no se guarda, se deriva (M10).** No existe
+    `UPDATE cuenta SET saldo = saldo - 500`. Hay un libro *append-only*
+    (`transaccion_billetera` + `movimiento_billetera`) con partida doble interna:
+    todo movimiento tiene contrapartida, y la columna de saldo es apenas una caché
+    que un job verifica contra el libro.
+12. **Encaje 100 % verificado todos los días (M10).** `conciliacion_custodia`
+    compara la suma de todos los saldos de billetera contra el saldo real de la
+    cuenta de custodia. Si el ratio de cobertura baja de 1, el sistema entra en
+    modo restringido solo y el descuadre escala como incidente y como evento de
+    riesgo operativo. El dinero de los usuarios es un pasivo exigible, no
+    patrimonio de la empresa.
+13. **La política de cobro es dato, no código (M11).** Sobre qué hecho se cobra,
+    sobre qué monto, con qué fórmula, a cargo de quién, por qué vía y cuándo son
+    seis columnas de `concepto_tarifa`. Cambiar la política comercial es cargar un
+    tarifario nuevo, simularlo y publicarlo con preaviso; no es un despliegue. Y
+    el precio se congela por grupo (`tarifa_congelada_grupo`): **no cambia a mitad
+    del juego**.
+14. **Cumplir es dejar fila (M12).** Matriz de riesgo, calificación del cliente,
+    debida diligencia, tipologías de monitoreo parametrizables, casos de
+    investigación, calendario de reportes con constancia de envío, reclamos con
+    plazo guardado y base de pérdidas operativas. Todo control que no deja fila no
+    existe para un supervisor.
 
 ## Cómo se relacionan los módulos entre sí
 
@@ -102,6 +180,19 @@ diagrama. Mapa general de dependencias:
 
 5. Notificaciones consume eventos de 2, 3, 4, 7 y 8 (cobranza)
 3 / 4 / 7 / 8 ──► 9. Auditoría, Reportes y Cumplimiento (transversal)
+
+                    ── capa de dinero real (Parche B) ──
+
+10. Billetera y Custodia ◄── aporta/cobra ──► 2, 3, 4 y 8
+        │  saldo, retenciones, encaje 100%
+        │                      ▲
+        ▼                      │ cobro por débito o deducción
+11. Tarifas y Comisiones ──────┘──► 4 (deducción de la bolsa) y 3 (mayor)
+        │  devengo, factura, ingreso
+        ▼
+12. Cumplimiento Regulatorio ◄── vigila ── 10 (saldo y operaciones)
+        │  límites por nivel, monitoreo, reportes, reclamos
+        └──► 10 (bloqueo de saldo) · 9 (auditoría) · 11 (devolución por reclamo)
 ```
 
 Puntos de integración concretos más usados:
@@ -114,6 +205,13 @@ Puntos de integración concretos más usados:
   expulsiones, permutas, cambio de reglamento y disolución.
 - `evento_dominio` (M9) es el canal por el que M5, M6 y el cumplimiento se
   enteran de lo que pasa, sin acoplar los módulos entre sí.
+- `cuenta_billetera` (M10) da titularidad al dinero: hay una cuenta del **grupo**
+  —no del organizador— y el aporte es una transferencia interna instantánea.
+- `devengo_comision` (M11) se cobra por tres vías intercambiables por
+  configuración: deducción de la entrega (M4), débito de billetera (M10) u
+  obligación de aporte (M3).
+- `calificacion_riesgo_cliente` (M12) gobierna los `limite_operativo_billetera`
+  (M10): subir de nivel de verificación es lo que habilita operar más.
 
 ## Convenciones usadas
 

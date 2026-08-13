@@ -1,0 +1,1820 @@
+@startuml 12_cumplimiento_asfi_clases
+' ============================================================
+'  MODULO 12: Cumplimiento Regulatorio, PLD/FT, Consumidor
+'             Financiero y Riesgo Operativo
+'  Diagrama de CLASES  (modelo detallado)
+'  Cubre: RN-27 (debida diligencia por riesgo), RN-28 (monitoreo
+'         y reporte de operaciones), RN-29 (atencion de reclamos
+'         con plazos), RN-30 (registro de perdidas operativas)
+'  Principio rector: cumplir no es tener politicas escritas en
+'  un PDF. Es poder DEMOSTRAR, con datos, que cada control se
+'  ejecuto, cuando, sobre quien, con que resultado y quien lo
+'  reviso. Todo control que no deja fila no existe para un
+'  supervisor.
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 12 - Cumplimiento, PLD/FT, Consumidor Financiero y Riesgo Operativo (clases)
+
+legend top right
+  <b>Los cuatro circuitos del modulo</b>
+  1) Conocer:   MatrizRiesgo -> Calificacion -> DebidaDiligencia
+  2) Vigilar:   ReglaMonitoreo -> Alerta -> Caso -> ROS
+  3) Reportar:  CatalogoReporte -> Reporte -> Envio -> Acuse
+  4) Responder: Reclamo -> Instancia -> Resolucion
+  Transversal: riesgo operativo, controles y hallazgos.
+endlegend
+
+' ============================================================
+package "Conocimiento del cliente (debida diligencia)" {
+
+  enum NivelRiesgoCliente {
+    BAJO
+    MEDIO
+    ALTO
+  }
+
+  enum TipoDebidaDiligencia {
+    SIMPLIFICADA
+    ESTANDAR
+    AMPLIADA
+    REFORZADA
+    CONTINUA
+  }
+
+  class MatrizRiesgoLft <<Pol>> {
+    - id: UUID
+    - version: Integer
+    - dimension: String <<CLIENTE | PRODUCTO | CANAL | ZONA_GEOGRAFICA>>
+    - factor: String
+    - ponderacion: Decimal
+    - escala: Json
+    - vigenteDesde: Date
+    - aprobadaPor: UUID
+    --
+    + puntuar(usuario): Decimal
+  }
+
+  class FactorRiesgoEvaluado <<VO>> {
+    - id: UUID
+    - usuarioId: UUID
+    - matrizRiesgoId: UUID
+    - dimension: String
+    - factor: String
+    - valorObservado: String
+    - puntaje: Decimal
+    - evaluadoEn: DateTime
+  }
+
+  class CalificacionRiesgoCliente <<AR>> {
+    - id: UUID
+    - usuarioId: UUID
+    - matrizRiesgoId: UUID
+    - nivel: NivelRiesgoCliente
+    - puntajeTotal: Decimal
+    - nivelDdRequerido: TipoDebidaDiligencia
+    - periodicidadRevisionMeses: Integer
+    - vigenteDesde: DateTime
+    - proximaRevision: Date
+    - esAutomatica: Boolean
+    - motivoCambio: String
+    --
+    + recalcular(): NivelRiesgoCliente
+    + exigeRevision(): Boolean
+  }
+
+  class DebidaDiligencia <<AR>> {
+    - id: UUID
+    - usuarioId: UUID
+    - tipo: TipoDebidaDiligencia
+    - verificacionKycId: UUID <<M1>>
+    - documentosRequeridos: Json
+    - documentosRecibidos: Json
+    - estado: String <<PENDIENTE | EN_PROCESO | COMPLETA | OBSERVADA | RECHAZADA | VENCIDA>>
+    - aprobadaPor: UUID
+    - segundaRevisionPor: UUID
+    - iniciadaEn: DateTime
+    - completadaEn: DateTime
+    - venceEn: DateTime
+    --
+    + faltantes(): List
+    + aprobar(revisor)
+    + observar(motivo)
+  }
+
+  class PerfilTransaccional {
+    - id: UUID
+    - usuarioId: UUID
+    - tipo: String <<DECLARADO | OBSERVADO>>
+    - montoMensualEstimado: Decimal
+    - cantidadOperacionesEstimada: Integer
+    - actividadEconomica: String
+    - codigoCiiu: String
+    - origenFondosDeclarado: String
+    - moneda: String
+    - vigenteDesde: DateTime
+    - fuente: String
+    --
+    + comparar(observado): DesvioPerfil
+  }
+
+  class DesvioPerfil {
+    - id: UUID
+    - usuarioId: UUID
+    - perfilTransaccionalId: UUID
+    - periodo: String
+    - montoObservado: Decimal
+    - montoEsperado: Decimal
+    - desvioPorcentual: Decimal
+    - severidad: String
+    - estado: String
+    - justificacion: String
+    --
+    + generaAlerta(): Boolean
+  }
+
+  class DeclaracionPep {
+    - id: UUID
+    - usuarioId: UUID
+    - esPep: Boolean
+    - tipoPep: String <<NACIONAL | EXTRANJERO | ORG_INTERNACIONAL | FAMILIAR | ALLEGADO>>
+    - cargo: String
+    - institucion: String
+    - pais: String
+    - desde: Date
+    - hasta: Date
+    - verificadaPor: UUID
+    --
+    + vigente(): Boolean
+  }
+
+  class BeneficiarioFinal {
+    - id: UUID
+    - usuarioId: UUID
+    - nombre: String
+    - documento: String
+    - porcentajeParticipacion: Decimal
+    - tipoControl: String
+    - verificado: Boolean
+  }
+
+  class DeclaracionOrigenFondos {
+    - id: UUID
+    - usuarioId: UUID
+    - transaccionId: UUID <<M10>>
+    - monto: Decimal
+    - origen: String <<SALARIO | NEGOCIO | VENTA_BIEN | HERENCIA | PRESTAMO | REMESA | OTRO>>
+    - descripcion: String
+    - documentoRespaldoUrl: String
+    - hashDocumento: String
+    - estado: String
+    - verificadaPor: UUID
+    --
+    + requiereRespaldo(): Boolean
+  }
+
+  class RevisionPeriodicaKyc {
+    - id: UUID
+    - usuarioId: UUID
+    - calificacionRiesgoId: UUID
+    - fechaProgramada: Date
+    - fechaEjecutada: Date
+    - resultado: String
+    - estado: String
+    --
+    + estaVencida(): Boolean
+  }
+
+  class ExpedienteCliente {
+    - id: UUID
+    - usuarioId: UUID
+    - completitudPorcentaje: Decimal
+    - documentos: Json
+    - ubicacionFisica: String
+    - retencionHasta: Date <<no menor a 10 anios desde el ultimo asiento contable>>
+    - estado: String
+    --
+    + faltantes(): List
+    + puedeDepurarse(): Boolean
+  }
+
+  MatrizRiesgoLft "1" o-- "0..*" FactorRiesgoEvaluado
+  MatrizRiesgoLft "1" o-- "0..*" CalificacionRiesgoCliente
+  CalificacionRiesgoCliente "1" o-- "0..*" RevisionPeriodicaKyc
+  CalificacionRiesgoCliente "1" o-- "0..*" DebidaDiligencia
+  PerfilTransaccional "1" o-- "0..*" DesvioPerfil
+}
+
+' ============================================================
+package "Monitoreo y reporte de operaciones" {
+
+  class ReglaMonitoreoLft <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - tipologia: String
+    - descripcion: String
+    - expresion: Json <<declarativa>>
+    - ventanaEvaluacion: String
+    - umbralMonto: Decimal
+    - umbralCantidad: Integer
+    - severidad: String
+    - accionAutomatica: String
+    - fuenteNormativa: String
+    - activa: Boolean
+    - vigenteDesde: DateTime
+    --
+    + evaluar(contexto): Boolean
+  }
+
+  class AlertaMonitoreoLft {
+    - id: UUID
+    - reglaMonitoreoId: UUID
+    - usuarioId: UUID
+    - cuentaBilleteraId: UUID <<M10>>
+    - transaccionId: UUID <<M10>>
+    - montoInvolucrado: Decimal
+    - detalle: Json
+    - severidad: String
+    - estado: String <<ABIERTA | EN_ANALISIS | DESCARTADA | ESCALADA>>
+    - asignadaA: UUID
+    - casoId: UUID
+    - detectadaEn: DateTime
+    - cerradaEn: DateTime
+    - conclusion: String
+    --
+    + escalar(): CasoInvestigacionLft
+    + descartar(motivo)
+  }
+
+  class CasoInvestigacionLft <<AR>> {
+    - id: UUID
+    - codigo: String
+    - usuarioId: UUID
+    - analistaId: UUID
+    - origen: String <<ALERTA | REQUERIMIENTO | DENUNCIA | REVISION_PERIODICA>>
+    - estado: String
+    - prioridad: String
+    - resumen: String
+    - hallazgos: String
+    - decision: String <<DESCARTAR | MONITOREO_REFORZADO | REPORTAR | TERMINAR_RELACION>>
+    - reporteOperacionSospechosaId: UUID <<M9>>
+    - abiertoEn: DateTime
+    - plazoLimite: DateTime
+    - cerradoEn: DateTime
+    - revisadoPor: UUID
+    --
+    + agregarAlerta(alerta)
+    + decidir(decision, justificacion)
+    + vencido(): Boolean
+  }
+
+  class UmbralReporteUif <<Pol>> {
+    - id: UUID
+    - formulario: String <<PCC-01 | ROG-01 | ROG-02 | ROG-03 | ROG-04>>
+    - inciso: String <<a, b, c ... del articulo>>
+    - conceptoOperacion: String <<EFECTIVO | CAMBIO_MONEDA | GIRO | REMESA | CARGA_BILLETERA | RETIRO_BILLETERA | TRANSFERENCIA_BILLETERA | ELECTRONICA | ACTIVO_VIRTUAL>>
+    - esAcumulado: Boolean
+    - umbralUsd: Decimal
+    - ventanaDiasCalendario: Integer
+    - exigeDeclaracionOrigenDestino: Boolean
+    - baseNormativa: String <<articulo del instructivo UIF>>
+    - vigenteDesde: Date
+    - vigenteHasta: Date
+    --
+    + evalua(operacion, acumulado): Boolean
+  }
+
+  class RegistroOperacionRelevante <<VO>> {
+    - id: UUID
+    - usuarioId: UUID
+    - transaccionId: UUID <<M10>>
+    - umbralReporteId: UUID
+    - formulario: String
+    - esAcumulada: Boolean
+    - operacionInicioVentanaId: UUID <<reinicio tras superar umbral>>
+    - ventanaDesde: Date
+    - ventanaHasta: Date
+    - monto: Decimal
+    - montoAcumuladoVentana: Decimal
+    - montoEquivalenteUsd: Decimal
+    - tipoCambioAplicado: Decimal
+    - umbralAplicadoUsd: Decimal
+    - declaracionOrigenFondosId: UUID
+    - origenDeclarado: String
+    - destinoDeclarado: String
+    - exento: Boolean
+    - motivoExencion: String
+    - periodoRemision: String <<YYYY-MM, se remite hasta el 15 del mes siguiente>>
+    - reporteRegulatorioId: UUID
+    - fechaOperacion: DateTime
+    --
+    + cierraVentana(): Boolean
+  }
+
+  UmbralReporteUif "1" o-- "0..*" RegistroOperacionRelevante
+
+  ReglaMonitoreoLft "1" o-- "0..*" AlertaMonitoreoLft
+  CasoInvestigacionLft "1" o-- "0..*" AlertaMonitoreoLft
+}
+
+' ============================================================
+package "Reportes al regulador" {
+
+  class CatalogoReporteRegulatorio <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - organismo: String <<ASFI | UIF | SIN | BCB>>
+    - nombre: String
+    - periodicidad: String <<DIARIA | SEMANAL | MENSUAL | TRIMESTRAL | ANUAL | EVENTUAL>>
+    - formato: String
+    - plazoDias: Integer
+    - baseNormativa: String
+    - obligatorio: Boolean
+    - activo: Boolean
+    --
+    + proximoVencimiento(fecha): Date
+  }
+
+  class ReporteRegulatorio <<AR>> {
+    - id: UUID
+    - catalogoReporteId: UUID
+    - periodo: String
+    - fechaCorte: Date
+    - estado: String <<PENDIENTE | GENERADO | REVISADO | APROBADO | ENVIADO | OBSERVADO | RECHAZADO>>
+    - cantidadRegistros: Integer
+    - montoTotal: Decimal
+    - urlArchivo: String
+    - hashArchivo: String
+    - generadoPor: UUID
+    - revisadoPor: UUID
+    - aprobadoPor: UUID
+    --
+    + generar()
+    + aprobar(revisor)
+    + estaVencido(): Boolean
+  }
+
+  class EnvioRegulatorio {
+    - id: UUID
+    - reporteRegulatorioId: UUID
+    - organismo: String
+    - canal: String
+    - fechaEnvio: DateTime
+    - numeroConstancia: String
+    - estado: String
+    - respuesta: Json
+    - reintentos: Integer
+    --
+    + enviar()
+    + registrarAcuse(constancia)
+  }
+
+  class ObservacionRegulatoria {
+    - id: UUID
+    - envioRegulatorioId: UUID
+    - organismo: String
+    - tipo: String <<OBSERVACION | INSTRUCCION | MULTA | REQUERIMIENTO>>
+    - numeroDocumento: String
+    - descripcion: String
+    - montoMulta: Decimal
+    - plazoRespuesta: Date
+    - estado: String
+    - respuesta: String
+    --
+    + responder(texto, evidencia)
+    + venceEn(): Integer
+  }
+
+  class RequerimientoAutoridad <<AR>> {
+    - id: UUID
+    - autoridad: String <<FISCALIA | UIF | ASFI | JUZGADO | SIN | POLICIA>>
+    - numeroOficio: String
+    - fechaRecepcion: DateTime
+    - plazoRespuesta: DateTime
+    - usuarioAfectadoId: UUID
+    - alcance: String
+    - documentoUrl: String
+    - hashDocumento: String
+    - estado: String
+    - respuestaUrl: String
+    - bloqueoSaldoId: UUID <<M10>>
+    - respondidoPor: UUID
+    --
+    + responder(documento)
+    + generarBloqueo(): BloqueoSaldo
+  }
+
+  CatalogoReporteRegulatorio "1" o-- "0..*" ReporteRegulatorio
+  ReporteRegulatorio "1" o-- "0..*" EnvioRegulatorio
+  EnvioRegulatorio "1" o-- "0..*" ObservacionRegulatoria
+}
+
+' ============================================================
+package "Consumidor financiero" {
+
+  class ContratoAdhesion <<AR>> {
+    - id: UUID
+    - codigo: String
+    - version: Integer
+    - tipo: String <<BILLETERA | GRUPO_PASANAKU | TARIFAS | TRATAMIENTO_DATOS>>
+    - estado: String
+    - urlDocumento: String
+    - hashDocumento: String
+    - registradoAnteRegulador: Boolean
+    - numeroRegistro: String
+    - fechaRegistro: Date
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    --
+    + publicar()
+    + sustituirPor(nuevo)
+  }
+
+  class AceptacionContrato <<VO>> {
+    - id: UUID
+    - contratoAdhesionId: UUID
+    - usuarioId: UUID
+    - versionAceptada: Integer
+    - ip: String
+    - dispositivoId: UUID <<M1>>
+    - tokenFirmaId: UUID <<M1>>
+    - hashEvidencia: String
+    - aceptadoEn: DateTime
+    --
+    + verificarEvidencia(): Boolean
+  }
+
+  class DocumentoPublicado {
+    - id: UUID
+    - tipo: String <<TARIFARIO | CONTRATO | POLITICA_PRIVACIDAD | CANAL_RECLAMOS | HORARIOS>>
+    - referenciaTipo: String
+    - referenciaId: UUID
+    - urlPublica: String
+    - hashDocumento: String
+    - vigenteDesde: DateTime
+    - vigenteHasta: DateTime
+    --
+    + estaVigente(): Boolean
+  }
+
+  class PuntoReclamo {
+    - id: UUID
+    - codigo: String
+    - tipo: String <<APP | WEB | TELEFONO | PRESENCIAL | CORREO>>
+    - descripcion: String
+    - horario: String
+    - responsableId: UUID
+    - activo: Boolean
+  }
+
+  class ReclamoCliente <<AR>> {
+    - id: UUID
+    - codigo: String
+    - usuarioId: UUID
+    - puntoReclamoId: UUID
+    - categoria: String <<COMISION | OPERACION_NO_RECONOCIDA | SALDO | SERVICIO | DATOS_PERSONALES | GRUPO>>
+    - producto: String
+    - montoReclamado: Decimal
+    - descripcion: String
+    - estado: String <<INGRESADO | EN_ANALISIS | RESPONDIDO | CERRADO | ELEVADO>>
+    - fechaIngreso: DateTime
+    - plazoRespuesta: DateTime
+    - fechaRespuesta: DateTime
+    - resultado: String <<FAVORABLE | DESFAVORABLE | PARCIAL | DESISTIDO>>
+    - respuesta: String
+    - responsableId: UUID
+    - ticketSoporteId: UUID <<M9>>
+    - devolucionComisionId: UUID <<M11>>
+    --
+    + responder(texto)
+    + elevar(instancia)
+    + estaVencido(): Boolean
+  }
+
+  class InstanciaReclamo {
+    - id: UUID
+    - reclamoId: UUID
+    - instancia: String <<ENTIDAD | DEFENSORIA | REGULADOR | ARBITRAJE | JUDICIAL>>
+    - fechaElevacion: DateTime
+    - numeroExpediente: String
+    - estado: String
+    - resolucion: String
+    - fechaResolucion: DateTime
+    - montoResarcido: Decimal
+  }
+
+  ContratoAdhesion "1" o-- "0..*" AceptacionContrato
+  PuntoReclamo "1" o-- "0..*" ReclamoCliente
+  ReclamoCliente "1" o-- "0..*" InstanciaReclamo
+}
+
+' ============================================================
+package "Riesgo operativo y control interno" {
+
+  class EventoRiesgoOperativo <<AR>> {
+    - id: UUID
+    - codigo: String
+    - categoriaEvento: String <<FRAUDE_INTERNO | FRAUDE_EXTERNO | RELACIONES_LABORALES | CLIENTES_PRODUCTOS_PRACTICAS | DANOS_ACTIVOS | FALLAS_SISTEMAS>>
+    - factorRiesgo: String <<PROCESOS_INTERNOS | PERSONAS | TECNOLOGIA_INFORMACION | EVENTOS_EXTERNOS | INFRAESTRUCTURA>>
+    - reportadoCentralRiesgoOperativo: Boolean
+    - lineaNegocio: String
+    - descripcion: String
+    - fechaOcurrencia: DateTime
+    - fechaDeteccion: DateTime
+    - fechaContabilizacion: DateTime
+    - perdidaBruta: Decimal
+    - recuperacion: Decimal
+    - perdidaNeta: Decimal
+    - causaRaiz: String
+    - incidenteOperativoId: UUID <<M9>>
+    - estado: String
+    --
+    + registrarRecuperacion(monto)
+    + cerrar()
+  }
+
+  class ControlInterno <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - proceso: String
+    - descripcion: String
+    - tipo: String <<PREVENTIVO | DETECTIVO | CORRECTIVO>>
+    - frecuencia: String
+    - automatizado: Boolean
+    - riesgoMitigado: String
+    - responsableId: UUID
+    - activo: Boolean
+    --
+    + proximaEjecucion(): Date
+  }
+
+  class PruebaControl {
+    - id: UUID
+    - controlId: UUID
+    - periodo: String
+    - tamanioMuestra: Integer
+    - excepciones: Integer
+    - resultado: String <<EFECTIVO | DEFICIENTE | NO_EFECTIVO>>
+    - evidenciaUrl: String
+    - ejecutadaPor: UUID
+    --
+    + generaHallazgo(): Boolean
+  }
+
+  class HallazgoAuditoria {
+    - id: UUID
+    - codigo: String
+    - origen: String <<AUDITORIA_INTERNA | AUDITORIA_EXTERNA | REGULADOR | AUTOEVALUACION>>
+    - descripcion: String
+    - severidad: String
+    - proceso: String
+    - fechaIdentificacion: Date
+    - plazoRegularizacion: Date
+    - estado: String
+    - responsableId: UUID
+    --
+    + estaVencido(): Boolean
+  }
+
+  class PlanAccionRiesgo {
+    - id: UUID
+    - eventoRiesgoId: UUID
+    - hallazgoId: UUID
+    - descripcion: String
+    - responsableId: UUID
+    - fechaCompromiso: Date
+    - fechaCierre: Date
+    - avancePorcentaje: Decimal
+    - estado: String
+    - evidenciaUrl: String
+    --
+    + actualizar(avance, evidencia)
+  }
+
+  class EvaluacionRiesgoProducto {
+    - id: UUID
+    - producto: String
+    - version: Integer
+    - riesgosIdentificados: Json
+    - nivelRiesgoLft: String
+    - controlesDefinidos: Json
+    - requiereNoObjecion: Boolean
+    - estado: String
+    - aprobadaPor: UUID
+    - fechaAprobacion: Date
+    --
+    + habilitaLanzamiento(): Boolean
+  }
+
+  class OficialCumplimiento {
+    - id: UUID
+    - usuarioId: UUID
+    - tipo: String <<TITULAR | SUPLENTE>>
+    - fechaDesignacion: Date
+    - actaDesignacion: String
+    - comunicadaAlReguladorEn: Date
+    - fechaBaja: Date
+    - activo: Boolean
+  }
+
+  class CapacitacionCumplimiento {
+    - id: UUID
+    - usuarioId: UUID
+    - tema: String
+    - modalidad: String
+    - horas: Decimal
+    - fecha: Date
+    - calificacion: Decimal
+    - aprobada: Boolean
+    - evidenciaUrl: String
+    - periodo: String
+  }
+
+  ControlInterno "1" o-- "0..*" PruebaControl
+  EventoRiesgoOperativo "1" o-- "0..*" PlanAccionRiesgo
+  HallazgoAuditoria "1" o-- "0..*" PlanAccionRiesgo
+}
+
+' ============================================================
+package "Gobierno, licencia, seguridad y continuidad" {
+
+  class LicenciaRegulatoria <<AR>> {
+    - id: UUID
+    - organismo: String <<ASFI | BCB | SIN>>
+    - tipo: String <<CERTIFICADO_ADECUACION | LICENCIA_FUNCIONAMIENTO | AUTORIZACION_ESPECIFICA>>
+    - categoriaActividad: String <<PAGOS_Y_PLATAFORMAS_DE_PAGO | BLOCKCHAIN_PSAV | PLATAFORMAS_FINANCIAMIENTO | TECNOLOGIAS_EMPRESARIALES>>
+    - numeroResolucion: String
+    - estado: String <<EN_TRAMITE | OTORGADA | CONDICIONADA | SUSPENDIDA | REVOCADA>>
+    - fechaSolicitud: Date
+    - fechaOtorgamiento: Date
+    - vigenteHasta: Date
+    - alcanceAutorizado: Json
+    - garantiaSeriedad: Decimal
+    - documentoUrl: String
+    - hashDocumento: String
+    --
+    + habilitaServicio(codigo): Boolean
+    + estaVigente(): Boolean
+  }
+
+  class EntornoPruebaRegulado {
+    - id: UUID
+    - licenciaRegulatoriaId: UUID
+    - servicioEnPrueba: String
+    - alcance: Json
+    - limiteUsuarios: Integer
+    - limiteMontoOperacion: Decimal
+    - garantiaConstituida: Decimal
+    - fechaInicio: Date
+    - fechaFin: Date
+    - estado: String
+    - informesRemitidos: Integer
+    --
+    + dentroDeLimites(operacion): Boolean
+  }
+
+  class PoliticaInterna <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - tipo: String <<MANUAL | POLITICA | PROCEDIMIENTO | METODOLOGIA | PLAN>>
+    - materia: String <<LGI_FT | RIESGO_OPERATIVO | SEGURIDAD_INFORMACION | CONTINUIDAD | CONSUMIDOR | TERCERIZACION>>
+    - version: Integer
+    - estado: String
+    - urlDocumento: String
+    - hashDocumento: String
+    - aprobadaPorDirectorio: Boolean
+    - actaComiteId: UUID
+    - vigenteDesde: Date
+    - proximaRevision: Date
+    --
+    + estaVencida(): Boolean
+  }
+
+  class ComiteGobierno {
+    - id: UUID
+    - tipo: String <<DIRECTORIO | RIESGOS | CUMPLIMIENTO | AUDITORIA | SEGURIDAD_INFORMACION>>
+    - periodicidadMinima: String
+    - composicionRequerida: Json
+    - activo: Boolean
+    --
+    + cumpleQuorum(asistentes): Boolean
+  }
+
+  class ActaComite {
+    - id: UUID
+    - comiteGobiernoId: UUID
+    - numero: String
+    - fecha: Date
+    - asistentes: Json
+    - temasTratados: Json
+    - decisiones: Json
+    - urlDocumento: String
+    - hashDocumento: String
+    --
+    + verificarQuorum(): Boolean
+  }
+
+  class DesignacionRegulatoria {
+    - id: UUID
+    - cargo: String <<OFICIAL_CUMPLIMIENTO | RESPONSABLE_SEGURIDAD_INFORMACION | RESPONSABLE_RIESGOS | AUDITOR_INTERNO | RESPONSABLE_PUNTO_RECLAMO>>
+    - usuarioId: UUID
+    - tipo: String <<TITULAR | SUPLENTE>>
+    - actaComiteId: UUID
+    - fechaDesignacion: Date
+    - comunicadaAlOrganismoEn: Date
+    - organismoComunicado: String
+    - fechaBaja: Date
+    - activo: Boolean
+  }
+
+  class ActivoInformacion {
+    - id: UUID
+    - codigo: String
+    - nombre: String
+    - tipo: String <<BASE_DATOS | APLICACION | SERVICIO | DOCUMENTO | INFRAESTRUCTURA>>
+    - clasificacion: String <<PUBLICA | INTERNA | CONFIDENCIAL | RESERVADA>>
+    - contieneDatosPersonales: Boolean
+    - contieneDatosSensibles: Boolean
+    - propietarioId: UUID
+    - custodioId: UUID
+    - criticidad: String
+    - ubicacion: String
+    - proveedorId: UUID
+    --
+    + exigeCifrado(): Boolean
+  }
+
+  class IncidenteSeguridad <<AR>> {
+    - id: UUID
+    - codigo: String
+    - tipo: String <<ACCESO_NO_AUTORIZADO | FUGA_DE_DATOS | MALWARE | DENEGACION_SERVICIO | PHISHING | FRAUDE_TECNOLOGICO>>
+    - activoInformacionId: UUID
+    - severidad: String
+    - vectorAtaque: String
+    - datosPersonalesAfectados: Boolean
+    - usuariosAfectados: Integer
+    - detectadoEn: DateTime
+    - contenidoEn: DateTime
+    - reportadoAlOrganismoEn: DateTime
+    - notificadoATitularesEn: DateTime
+    - incidenteOperativoId: UUID <<M9>>
+    - eventoRiesgoId: UUID
+    - estado: String
+    --
+    + exigeNotificacion(): Boolean
+    + plazoReporteVencido(): Boolean
+  }
+
+  class PlanContinuidad {
+    - id: UUID
+    - procesoCritico: String
+    - rto: Integer <<minutos>>
+    - rpo: Integer <<minutos>>
+    - estrategia: String
+    - politicaInternaId: UUID
+    - responsableId: UUID
+    - vigenteDesde: Date
+    --
+    + requierePrueba(): Boolean
+  }
+
+  class PruebaContinuidad {
+    - id: UUID
+    - planContinuidadId: UUID
+    - tipo: String <<ESCRITORIO | PARCIAL | TOTAL | CONMUTACION_REAL>>
+    - fecha: Date
+    - rtoObtenido: Integer
+    - rpoObtenido: Integer
+    - resultado: String <<EXITOSA | PARCIAL | FALLIDA>>
+    - hallazgos: String
+    - actaComiteId: UUID
+    - evidenciaUrl: String
+    --
+    + cumpleObjetivo(): Boolean
+  }
+
+  class ContratoTercero <<AR>> {
+    - id: UUID
+    - razonSocial: String
+    - nit: String
+    - servicioContratado: String
+    - esCritico: Boolean
+    - accedeADatosPersonales: Boolean
+    - paisProcesamiento: String
+    - nivelRiesgo: String
+    - evaluacionRiesgoUrl: String
+    - clausulaConfidencialidad: Boolean
+    - clausulaAuditoria: Boolean
+    - clausulaContinuidad: Boolean
+    - acuerdoNivelServicio: Json
+    - comunicadoAlOrganismo: Boolean
+    - vigenteDesde: Date
+    - vigenteHasta: Date
+    - estado: String
+    --
+    + permiteTercerizar(): Boolean
+  }
+
+  class EvaluacionTercero {
+    - id: UUID
+    - contratoTerceroId: UUID
+    - periodo: String
+    - cumplimientoSla: Decimal
+    - incidentesAtribuibles: Integer
+    - resultado: String
+    - accionesRequeridas: String
+    - evaluadoPor: UUID
+  }
+
+  LicenciaRegulatoria "1" o-- "0..*" EntornoPruebaRegulado
+  ComiteGobierno "1" o-- "0..*" ActaComite
+  ActaComite "1" o-- "0..*" DesignacionRegulatoria
+  PoliticaInterna "1" o-- "0..*" PlanContinuidad
+  PlanContinuidad "1" o-- "0..*" PruebaContinuidad
+  ActivoInformacion "1" o-- "0..*" IncidenteSeguridad
+  ContratoTercero "1" o-- "0..*" EvaluacionTercero
+  ContratoTercero "1" o-- "0..*" ActivoInformacion
+  IncidenteSeguridad "1" o-- "0..1" EventoRiesgoOperativo
+}
+
+note bottom of LicenciaRegulatoria
+  <b>Operar sin licencia es el riesgo numero uno</b>
+  El reglamento de empresas de tecnologia financiera
+  exige certificado de adecuacion y luego licencia,
+  con plazo de adecuacion para quien ya opera.
+  alcance_autorizado guarda que servicios estan
+  habilitados: la aplicacion consulta esta tabla
+  antes de permitir un servicio nuevo, en vez de
+  confiar en que alguien recuerde el alcance.
+end note
+
+note bottom of ActaComite
+  Las actas no son burocracia: en una inspeccion son
+  la evidencia de que el comite de riesgos sesiono,
+  con quorum, y de que el directorio aprobo las
+  metodologias. Un manual sin acta de aprobacion se
+  considera inexistente.
+end note
+
+note top of CalificacionRiesgoCliente
+  <b>El riesgo del cliente decide todo lo demas</b>
+  De el dependen: el tipo de debida diligencia exigida,
+  los limites operativos de la billetera (M10), la
+  periodicidad de revision y la sensibilidad del
+  monitoreo. Es la pieza que conecta cumplimiento con
+  producto: subir de nivel de verificacion no es un
+  tramite burocratico, es lo que habilita operar mas.
+end note
+
+note bottom of ReglaMonitoreoLft
+  <b>Tipologias como dato</b>
+  La expresion es declarativa: "N operaciones que
+  suman mas de X en Y dias, todas por debajo del
+  umbral de registro" se escribe como configuracion.
+  Cuando el regulador emite una tipologia nueva, se
+  carga una fila; no se despliega software.
+  fuente_normativa guarda de donde salio la regla.
+end note
+
+note bottom of ReclamoCliente
+  <b>El plazo corre solo</b>
+  plazo_respuesta se calcula al ingresar segun la
+  categoria. Un reclamo vencido es visible en tablero
+  y escala automaticamente. La tasa de reclamos
+  favorables al cliente es el indicador que mira el
+  supervisor: si sube, hay un problema de producto,
+  no de atencion.
+end note
+
+@enduml
+
+
+@startuml 12_cumplimiento_asfi_relacional
+' ============================================================
+'  MODULO 12: Cumplimiento, PLD/FT, Consumidor Financiero
+'             y Riesgo Operativo
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 12 - Cumplimiento, PLD/FT, Consumidor Financiero y Riesgo Operativo (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> CHECK    <<NULL>> admite nulos
+  registro_operacion_relevante y evento_riesgo_operativo
+  son append-only. Los plazos legales se guardan como
+  columna, no se calculan al vuelo: hay que poder probar
+  cual era el plazo el dia que se ingreso el caso.
+endlegend
+
+entity "matriz_riesgo_lft" as matrizlft {
+  * id : UUID <<PK>>
+  --
+  version : SMALLINT <<UQ+dimension+factor>>
+  dimension : VARCHAR(20) <<CK>>
+  factor : VARCHAR(60)
+  ponderacion : DECIMAL(5,2)
+  escala : JSONB
+  base_normativa : VARCHAR(120)
+  vigente_desde : DATE
+  vigente_hasta : DATE <<NULL>>
+  # aprobada_por : UUID <<FK, NULL>>
+}
+
+entity "factor_riesgo_evaluado" as factorlft {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # matriz_riesgo_id : UUID <<FK>>
+  dimension : VARCHAR(20)
+  factor : VARCHAR(60)
+  valor_observado : VARCHAR(120)
+  puntaje : DECIMAL(6,2)
+  evaluado_en : TIMESTAMPTZ
+}
+
+entity "calificacion_riesgo_cliente" as califriesgo {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # matriz_riesgo_id : UUID <<FK, NULL>>
+  # calificado_por : UUID <<FK, NULL>>
+  nivel : VARCHAR(6) <<CK, IDX>>
+  puntaje_total : DECIMAL(6,2)
+  nivel_dd_requerido : VARCHAR(15) <<CK>>
+  periodicidad_revision_meses : SMALLINT
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+  proxima_revision : DATE <<IDX>>
+  es_automatica : BOOLEAN
+  motivo_cambio : VARCHAR(300) <<NULL>>
+}
+
+entity "debida_diligencia" as ddd {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # verificacion_kyc_id : UUID <<FK, NULL, M1>>
+  # calificacion_riesgo_id : UUID <<FK, NULL>>
+  # aprobada_por : UUID <<FK, NULL>>
+  # segunda_revision_por : UUID <<FK, NULL>>
+  tipo : VARCHAR(15) <<CK, IDX>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  documentos_requeridos : JSONB
+  documentos_recibidos : JSONB
+  observaciones : VARCHAR(500) <<NULL>>
+  iniciada_en : TIMESTAMPTZ
+  completada_en : TIMESTAMPTZ <<NULL>>
+  vence_en : TIMESTAMPTZ <<NULL, IDX>>
+}
+
+entity "perfil_transaccional" as perfiltx {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX, M1>>
+  tipo : VARCHAR(10) <<CK>>
+  monto_mensual_estimado : DECIMAL(16,2)
+  cantidad_operaciones_estimada : INTEGER
+  actividad_economica : VARCHAR(120)
+  codigo_ciiu : VARCHAR(10) <<NULL>>
+  origen_fondos_declarado : VARCHAR(200)
+  moneda : CHAR(3)
+  fuente : VARCHAR(30)
+  vigente_desde : TIMESTAMPTZ
+  actualizado_en : TIMESTAMPTZ
+}
+
+entity "desvio_perfil" as desvio {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # perfil_transaccional_id : UUID <<FK>>
+  # alerta_monitoreo_id : UUID <<FK, NULL>>
+  periodo : CHAR(7) <<UQ+usuario_id>>
+  monto_observado : DECIMAL(16,2)
+  monto_esperado : DECIMAL(16,2)
+  desvio_porcentual : DECIMAL(8,2) <<IDX>>
+  severidad : VARCHAR(10) <<CK>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  justificacion : VARCHAR(500) <<NULL>>
+  detectado_en : TIMESTAMPTZ
+}
+
+entity "declaracion_pep" as pep {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # verificada_por : UUID <<FK, NULL>>
+  es_pep : BOOLEAN <<IDX>>
+  tipo_pep : VARCHAR(25) <<CK, NULL>>
+  cargo : VARCHAR(120) <<NULL>>
+  institucion : VARCHAR(120) <<NULL>>
+  pais : CHAR(2) <<NULL>>
+  desde : DATE <<NULL>>
+  hasta : DATE <<NULL>>
+  evidencia_url : VARCHAR(255) <<NULL>>
+  declarada_en : TIMESTAMPTZ
+}
+
+entity "beneficiario_final" as benef {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX, M1>>
+  nombre : VARCHAR(150)
+  documento : VARCHAR(30)
+  porcentaje_participacion : DECIMAL(5,2)
+  tipo_control : VARCHAR(30) <<CK>>
+  verificado : BOOLEAN
+  registrado_en : TIMESTAMPTZ
+}
+
+entity "declaracion_origen_fondos" as origenfondos {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # transaccion_id : UUID <<FK, NULL, M10>>
+  # verificada_por : UUID <<FK, NULL>>
+  monto : DECIMAL(16,2)
+  moneda : CHAR(3)
+  origen : VARCHAR(20) <<CK>>
+  descripcion : VARCHAR(300)
+  documento_respaldo_url : VARCHAR(255) <<NULL>>
+  hash_documento : VARCHAR(64) <<NULL>>
+  estado : VARCHAR(15) <<CK>>
+  declarada_en : TIMESTAMPTZ
+}
+
+entity "revision_periodica_kyc" as revkyc {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # calificacion_riesgo_id : UUID <<FK, NULL>>
+  # ejecutada_por : UUID <<FK, NULL>>
+  fecha_programada : DATE <<IDX>>
+  fecha_ejecutada : DATE <<NULL>>
+  resultado : VARCHAR(30) <<NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+}
+
+entity "expediente_cliente" as expediente {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, UQ, M1>>
+  # responsable_id : UUID <<FK, NULL>>
+  completitud_porcentaje : DECIMAL(5,2)
+  documentos : JSONB
+  ubicacion_fisica : VARCHAR(120) <<NULL>>
+  retencion_hasta : DATE <<IDX>>
+  estado : VARCHAR(15) <<CK>>
+  ultima_actualizacion : TIMESTAMPTZ
+}
+
+entity "regla_monitoreo_lft" as reglalft {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(40) <<UQ>>
+  tipologia : VARCHAR(80)
+  descripcion : VARCHAR(300)
+  expresion : JSONB
+  ventana_evaluacion : VARCHAR(20)
+  umbral_monto : DECIMAL(16,2) <<NULL>>
+  umbral_cantidad : INTEGER <<NULL>>
+  severidad : VARCHAR(10) <<CK>>
+  accion_automatica : VARCHAR(30) <<CK>>
+  fuente_normativa : VARCHAR(120)
+  activa : BOOLEAN <<IDX>>
+  vigente_desde : TIMESTAMPTZ
+  # aprobada_por : UUID <<FK, NULL>>
+}
+
+entity "alerta_monitoreo_lft" as alertalft {
+  * id : UUID <<PK>>
+  --
+  # regla_monitoreo_id : UUID <<FK, IDX>>
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # cuenta_billetera_id : UUID <<FK, NULL, M10>>
+  # transaccion_id : UUID <<FK, NULL, M10>>
+  # caso_id : UUID <<FK, NULL>>
+  # asignada_a : UUID <<FK, NULL>>
+  monto_involucrado : DECIMAL(16,2)
+  detalle : JSONB
+  severidad : VARCHAR(10) <<CK, IDX>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  conclusion : VARCHAR(500) <<NULL>>
+  detectada_en : TIMESTAMPTZ <<IDX>>
+  cerrada_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "caso_investigacion_lft" as casolft {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(20) <<UQ>>
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # analista_id : UUID <<FK>>
+  # revisado_por : UUID <<FK, NULL>>
+  # reporte_operacion_sospechosa_id : UUID <<FK, NULL, M9>>
+  origen : VARCHAR(25) <<CK>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  prioridad : VARCHAR(10) <<CK>>
+  resumen : VARCHAR(500)
+  hallazgos : TEXT <<NULL>>
+  decision : VARCHAR(25) <<CK, NULL>>
+  abierto_en : TIMESTAMPTZ
+  plazo_limite : TIMESTAMPTZ <<IDX>>
+  cerrado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "umbral_reporte_uif" as umbraluif {
+  * id : UUID <<PK>>
+  --
+  formulario : VARCHAR(10) <<CK, UQ+concepto_operacion+es_acumulado+vigente_desde>>
+  inciso : VARCHAR(4)
+  concepto_operacion : VARCHAR(30) <<CK>>
+  es_acumulado : BOOLEAN
+  umbral_usd : DECIMAL(16,2)
+  ventana_dias_calendario : SMALLINT <<NULL>>
+  exige_declaracion_origen_destino : BOOLEAN
+  reinicia_tras_superar : BOOLEAN
+  base_normativa : VARCHAR(160)
+  vigente_desde : DATE
+  vigente_hasta : DATE <<NULL>>
+  activo : BOOLEAN <<IDX>>
+}
+
+entity "registro_operacion_relevante" as opreleva {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # transaccion_id : UUID <<FK, IDX, M10>>
+  # umbral_reporte_id : UUID <<FK, IDX>>
+  # operacion_inicio_ventana_id : UUID <<FK, NULL>>
+  # declaracion_origen_fondos_id : UUID <<FK, NULL>>
+  # reporte_regulatorio_id : UUID <<FK, NULL>>
+  formulario : VARCHAR(10) <<CK, IDX>>
+  concepto_operacion : VARCHAR(30) <<CK>>
+  es_acumulada : BOOLEAN
+  ventana_desde : DATE <<NULL>>
+  ventana_hasta : DATE <<NULL>>
+  monto : DECIMAL(16,2)
+  moneda : CHAR(3)
+  monto_acumulado_ventana : DECIMAL(16,2)
+  tipo_cambio_aplicado : DECIMAL(12,6)
+  monto_equivalente_usd : DECIMAL(16,2) <<IDX>>
+  umbral_aplicado_usd : DECIMAL(16,2)
+  origen_declarado : VARCHAR(300) <<NULL>>
+  destino_declarado : VARCHAR(300) <<NULL>>
+  exento : BOOLEAN
+  motivo_exencion : VARCHAR(120) <<NULL>>
+  periodo_remision : CHAR(7) <<IDX>>
+  fecha_operacion : TIMESTAMPTZ <<IDX>>
+  registrada_en : TIMESTAMPTZ
+}
+
+entity "catalogo_reporte_regulatorio" as catreg {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(30) <<UQ>>
+  organismo : VARCHAR(10) <<CK, IDX>>
+  nombre : VARCHAR(120)
+  periodicidad : VARCHAR(12) <<CK>>
+  formato : VARCHAR(15) <<CK>>
+  plazo_dias : SMALLINT
+  base_normativa : VARCHAR(120)
+  obligatorio : BOOLEAN
+  activo : BOOLEAN
+}
+
+entity "reporte_regulatorio" as repreg {
+  * id : UUID <<PK>>
+  --
+  # catalogo_reporte_id : UUID <<FK, IDX>>
+  # generado_por : UUID <<FK, NULL>>
+  # revisado_por : UUID <<FK, NULL>>
+  # aprobado_por : UUID <<FK, NULL>>
+  periodo : VARCHAR(10) <<UQ+catalogo_reporte_id>>
+  fecha_corte : DATE
+  estado : VARCHAR(15) <<CK, IDX>>
+  cantidad_registros : INTEGER
+  reporte_en_cero : BOOLEAN
+  monto_total : DECIMAL(18,2)
+  url_archivo : VARCHAR(255) <<NULL>>
+  hash_archivo : VARCHAR(64) <<NULL>>
+  fecha_limite : DATE <<IDX>>
+  generado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "envio_regulatorio" as envreg {
+  * id : UUID <<PK>>
+  --
+  # reporte_regulatorio_id : UUID <<FK, IDX>>
+  # enviado_por : UUID <<FK, NULL>>
+  organismo : VARCHAR(10) <<CK>>
+  canal : VARCHAR(20) <<CK>>
+  fecha_envio : TIMESTAMPTZ <<IDX>>
+  numero_constancia : VARCHAR(60) <<UQ, NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  respuesta : JSONB <<NULL>>
+  reintentos : SMALLINT
+}
+
+entity "observacion_regulatoria" as obsreg {
+  * id : UUID <<PK>>
+  --
+  # envio_regulatorio_id : UUID <<FK, NULL>>
+  # responsable_id : UUID <<FK, NULL>>
+  organismo : VARCHAR(10) <<CK>>
+  tipo : VARCHAR(15) <<CK, IDX>>
+  numero_documento : VARCHAR(60) <<UQ>>
+  descripcion : TEXT
+  monto_multa : DECIMAL(16,2) <<NULL>>
+  plazo_respuesta : DATE <<IDX>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  respuesta : TEXT <<NULL>>
+  recibida_en : TIMESTAMPTZ
+  respondida_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "requerimiento_autoridad" as requaut {
+  * id : UUID <<PK>>
+  --
+  # usuario_afectado_id : UUID <<FK, NULL, M1>>
+  # bloqueo_saldo_id : UUID <<FK, NULL, M10>>
+  # respondido_por : UUID <<FK, NULL>>
+  autoridad : VARCHAR(15) <<CK, IDX>>
+  numero_oficio : VARCHAR(60) <<UQ>>
+  fecha_recepcion : TIMESTAMPTZ
+  plazo_respuesta : TIMESTAMPTZ <<IDX>>
+  alcance : VARCHAR(300)
+  documento_url : VARCHAR(255)
+  hash_documento : VARCHAR(64)
+  estado : VARCHAR(15) <<CK, IDX>>
+  respuesta_url : VARCHAR(255) <<NULL>>
+  respondido_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "contrato_adhesion" as contadh {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(30) <<UQ+version>>
+  version : SMALLINT
+  tipo : VARCHAR(25) <<CK, IDX>>
+  estado : VARCHAR(15) <<CK>>
+  url_documento : VARCHAR(255)
+  hash_documento : VARCHAR(64)
+  registrado_ante_regulador : BOOLEAN
+  numero_registro : VARCHAR(60) <<NULL>>
+  fecha_registro : DATE <<NULL>>
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+  # aprobado_por : UUID <<FK, NULL>>
+}
+
+entity "aceptacion_contrato" as aceptcont {
+  * id : UUID <<PK>>
+  --
+  # contrato_adhesion_id : UUID <<FK, IDX>>
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # dispositivo_id : UUID <<FK, NULL, M1>>
+  # token_firma_id : UUID <<FK, NULL, M1>>
+  version_aceptada : SMALLINT
+  ip : INET <<NULL>>
+  hash_evidencia : VARCHAR(64)
+  aceptado_en : TIMESTAMPTZ
+}
+
+entity "documento_publicado" as docpub {
+  * id : UUID <<PK>>
+  --
+  tipo : VARCHAR(25) <<CK, IDX>>
+  referencia_tipo : VARCHAR(30) <<NULL>>
+  referencia_id : UUID <<NULL, polimorfica>>
+  # publicado_por : UUID <<FK, NULL>>
+  url_publica : VARCHAR(255)
+  hash_documento : VARCHAR(64)
+  vigente_desde : TIMESTAMPTZ
+  vigente_hasta : TIMESTAMPTZ <<NULL>>
+}
+
+entity "punto_reclamo" as ptoreclamo {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(20) <<UQ>>
+  tipo : VARCHAR(12) <<CK>>
+  descripcion : VARCHAR(200)
+  horario : VARCHAR(80)
+  # responsable_id : UUID <<FK, NULL>>
+  activo : BOOLEAN
+}
+
+entity "reclamo_cliente" as reclamo {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(20) <<UQ>>
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # punto_reclamo_id : UUID <<FK>>
+  # responsable_id : UUID <<FK, NULL>>
+  # ticket_soporte_id : UUID <<FK, NULL, M9>>
+  # devolucion_comision_id : UUID <<FK, NULL, M11>>
+  categoria : VARCHAR(30) <<CK, IDX>>
+  producto : VARCHAR(30)
+  monto_reclamado : DECIMAL(14,2) <<NULL>>
+  descripcion : TEXT
+  canal_ingreso : VARCHAR(15) <<CK>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  fecha_ingreso : TIMESTAMPTZ <<IDX>>
+  dias_habiles_plazo : SMALLINT
+  plazo_respuesta : TIMESTAMPTZ <<IDX>>
+  plazo_prorrogado_hasta : TIMESTAMPTZ <<NULL>>
+  prorroga_comunicada_al_cliente_en : TIMESTAMPTZ <<NULL>>
+  prorroga_comunicada_al_organismo_en : TIMESTAMPTZ <<NULL>>
+  justificacion_prorroga : VARCHAR(400) <<NULL>>
+  fecha_respuesta : TIMESTAMPTZ <<NULL>>
+  resultado : VARCHAR(15) <<CK, NULL>>
+  respuesta : TEXT <<NULL>>
+  incluido_en_reporte_mensual : CHAR(7) <<NULL, IDX>>
+  conservar_hasta : DATE <<IDX>>
+}
+
+entity "instancia_reclamo" as instrec {
+  * id : UUID <<PK>>
+  --
+  # reclamo_id : UUID <<FK, IDX>>
+  instancia : VARCHAR(15) <<CK>>
+  fecha_elevacion : TIMESTAMPTZ
+  numero_expediente : VARCHAR(60) <<NULL>>
+  estado : VARCHAR(15) <<CK>>
+  resolucion : TEXT <<NULL>>
+  fecha_resolucion : TIMESTAMPTZ <<NULL>>
+  monto_resarcido : DECIMAL(14,2) <<NULL>>
+}
+
+entity "evento_riesgo_operativo" as evriesgo {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(20) <<UQ>>
+  # incidente_operativo_id : UUID <<FK, NULL, M9>>
+  # registrado_por : UUID <<FK>>
+  categoria_evento : VARCHAR(35) <<CK, IDX>>
+  factor_riesgo : VARCHAR(30) <<CK, IDX>>
+  reportado_central_riesgo_operativo : BOOLEAN <<IDX>>
+  linea_negocio : VARCHAR(40)
+  descripcion : TEXT
+  fecha_ocurrencia : TIMESTAMPTZ <<IDX>>
+  fecha_deteccion : TIMESTAMPTZ
+  fecha_contabilizacion : TIMESTAMPTZ <<NULL>>
+  perdida_bruta : DECIMAL(16,2)
+  recuperacion : DECIMAL(16,2)
+  perdida_neta : DECIMAL(16,2) <<GENERATED>>
+  moneda : CHAR(3)
+  causa_raiz : TEXT <<NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+}
+
+entity "control_interno" as control {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(20) <<UQ>>
+  proceso : VARCHAR(60) <<IDX>>
+  descripcion : VARCHAR(300)
+  tipo : VARCHAR(12) <<CK>>
+  frecuencia : VARCHAR(15) <<CK>>
+  automatizado : BOOLEAN
+  riesgo_mitigado : VARCHAR(120)
+  # responsable_id : UUID <<FK, NULL>>
+  activo : BOOLEAN <<IDX>>
+}
+
+entity "prueba_control" as pruebactrl {
+  * id : UUID <<PK>>
+  --
+  # control_id : UUID <<FK, IDX>>
+  # ejecutada_por : UUID <<FK>>
+  periodo : CHAR(7) <<UQ+control_id>>
+  tamanio_muestra : INTEGER
+  excepciones : INTEGER
+  resultado : VARCHAR(12) <<CK, IDX>>
+  evidencia_url : VARCHAR(255) <<NULL>>
+  ejecutada_en : TIMESTAMPTZ
+}
+
+entity "hallazgo_auditoria" as hallazgo {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(20) <<UQ>>
+  # responsable_id : UUID <<FK, NULL>>
+  origen : VARCHAR(25) <<CK, IDX>>
+  descripcion : TEXT
+  severidad : VARCHAR(10) <<CK, IDX>>
+  proceso : VARCHAR(60)
+  fecha_identificacion : DATE
+  plazo_regularizacion : DATE <<IDX>>
+  estado : VARCHAR(15) <<CK, IDX>>
+}
+
+entity "plan_accion_riesgo" as planriesgo {
+  * id : UUID <<PK>>
+  --
+  # evento_riesgo_id : UUID <<FK, NULL>>
+  # hallazgo_id : UUID <<FK, NULL>>
+  # responsable_id : UUID <<FK>>
+  descripcion : VARCHAR(500)
+  fecha_compromiso : DATE <<IDX>>
+  fecha_cierre : DATE <<NULL>>
+  avance_porcentaje : DECIMAL(5,2)
+  estado : VARCHAR(15) <<CK, IDX>>
+  evidencia_url : VARCHAR(255) <<NULL>>
+}
+
+entity "evaluacion_riesgo_producto" as evalprod {
+  * id : UUID <<PK>>
+  --
+  producto : VARCHAR(60) <<UQ+version>>
+  version : SMALLINT
+  # aprobada_por : UUID <<FK, NULL>>
+  riesgos_identificados : JSONB
+  nivel_riesgo_lft : VARCHAR(6) <<CK>>
+  controles_definidos : JSONB
+  requiere_no_objecion : BOOLEAN
+  estado : VARCHAR(15) <<CK>>
+  fecha_aprobacion : DATE <<NULL>>
+}
+
+entity "oficial_cumplimiento" as oficial {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX, M1>>
+  tipo : VARCHAR(10) <<CK>>
+  fecha_designacion : DATE
+  acta_designacion : VARCHAR(80)
+  comunicada_al_regulador_en : DATE <<NULL>>
+  fecha_baja : DATE <<NULL>>
+  activo : BOOLEAN <<IDX>>
+}
+
+entity "capacitacion_cumplimiento" as capac {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX, M1>>
+  tema : VARCHAR(120)
+  modalidad : VARCHAR(15) <<CK>>
+  horas : DECIMAL(5,2)
+  fecha : DATE <<IDX>>
+  calificacion : DECIMAL(5,2) <<NULL>>
+  aprobada : BOOLEAN
+  evidencia_url : VARCHAR(255) <<NULL>>
+  periodo : CHAR(4) <<IDX>>
+}
+
+entity "licencia_regulatoria" as licencia {
+  * id : UUID <<PK>>
+  --
+  organismo : VARCHAR(10) <<CK, IDX>>
+  tipo : VARCHAR(30) <<CK>>
+  categoria_actividad : VARCHAR(40) <<CK>>
+  numero_resolucion : VARCHAR(60) <<UQ, NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  fecha_solicitud : DATE
+  fecha_otorgamiento : DATE <<NULL>>
+  vigente_hasta : DATE <<NULL>>
+  alcance_autorizado : JSONB
+  garantia_seriedad : DECIMAL(16,2) <<NULL>>
+  documento_url : VARCHAR(255) <<NULL>>
+  hash_documento : VARCHAR(64) <<NULL>>
+  # responsable_id : UUID <<FK, NULL>>
+}
+
+entity "entorno_prueba_regulado" as sandbox {
+  * id : UUID <<PK>>
+  --
+  # licencia_regulatoria_id : UUID <<FK, IDX>>
+  servicio_en_prueba : VARCHAR(120)
+  alcance : JSONB
+  limite_usuarios : INTEGER <<NULL>>
+  limite_monto_operacion : DECIMAL(16,2) <<NULL>>
+  garantia_constituida : DECIMAL(16,2) <<NULL>>
+  fecha_inicio : DATE
+  fecha_fin : DATE
+  estado : VARCHAR(15) <<CK, IDX>>
+  informes_remitidos : SMALLINT
+}
+
+entity "comite_gobierno" as comite {
+  * id : UUID <<PK>>
+  --
+  tipo : VARCHAR(30) <<CK, UQ>>
+  periodicidad_minima : VARCHAR(15) <<CK>>
+  composicion_requerida : JSONB
+  quorum_minimo : SMALLINT
+  activo : BOOLEAN
+}
+
+entity "acta_comite" as acta {
+  * id : UUID <<PK>>
+  --
+  # comite_gobierno_id : UUID <<FK, IDX>>
+  # elaborada_por : UUID <<FK, NULL>>
+  numero : VARCHAR(20) <<UQ+comite_gobierno_id>>
+  fecha : DATE <<IDX>>
+  asistentes : JSONB
+  cumple_quorum : BOOLEAN
+  temas_tratados : JSONB
+  decisiones : JSONB
+  url_documento : VARCHAR(255)
+  hash_documento : VARCHAR(64)
+}
+
+entity "politica_interna" as politica {
+  * id : UUID <<PK>>
+  --
+  # acta_comite_id : UUID <<FK, NULL>>
+  # responsable_id : UUID <<FK, NULL>>
+  codigo : VARCHAR(30) <<UQ+version>>
+  tipo : VARCHAR(15) <<CK>>
+  materia : VARCHAR(30) <<CK, IDX>>
+  version : SMALLINT
+  estado : VARCHAR(15) <<CK, IDX>>
+  url_documento : VARCHAR(255)
+  hash_documento : VARCHAR(64)
+  aprobada_por_directorio : BOOLEAN
+  vigente_desde : DATE
+  proxima_revision : DATE <<IDX>>
+}
+
+entity "designacion_regulatoria" as designacion {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX, M1>>
+  # acta_comite_id : UUID <<FK, NULL>>
+  cargo : VARCHAR(40) <<CK, IDX>>
+  tipo : VARCHAR(10) <<CK>>
+  fecha_designacion : DATE
+  organismo_comunicado : VARCHAR(10) <<NULL>>
+  comunicada_al_organismo_en : DATE <<NULL>>
+  fecha_baja : DATE <<NULL>>
+  activo : BOOLEAN <<IDX>>
+}
+
+entity "activo_informacion" as activo {
+  * id : UUID <<PK>>
+  --
+  # propietario_id : UUID <<FK, NULL>>
+  # custodio_id : UUID <<FK, NULL>>
+  # contrato_tercero_id : UUID <<FK, NULL>>
+  codigo : VARCHAR(30) <<UQ>>
+  nombre : VARCHAR(120)
+  tipo : VARCHAR(25) <<CK>>
+  clasificacion : VARCHAR(15) <<CK, IDX>>
+  contiene_datos_personales : BOOLEAN <<IDX>>
+  contiene_datos_sensibles : BOOLEAN
+  criticidad : VARCHAR(10) <<CK>>
+  ubicacion : VARCHAR(120)
+  exige_cifrado : BOOLEAN
+  ultima_revision : DATE
+}
+
+entity "incidente_seguridad" as incseg {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(20) <<UQ>>
+  # activo_informacion_id : UUID <<FK, NULL, IDX>>
+  # incidente_operativo_id : UUID <<FK, NULL, M9>>
+  # evento_riesgo_id : UUID <<FK, NULL>>
+  # responsable_id : UUID <<FK, NULL>>
+  tipo : VARCHAR(30) <<CK, IDX>>
+  severidad : VARCHAR(10) <<CK, IDX>>
+  vector_ataque : VARCHAR(60) <<NULL>>
+  datos_personales_afectados : BOOLEAN <<IDX>>
+  usuarios_afectados : INTEGER
+  detectado_en : TIMESTAMPTZ <<IDX>>
+  contenido_en : TIMESTAMPTZ <<NULL>>
+  reportado_al_organismo_en : TIMESTAMPTZ <<NULL>>
+  notificado_a_titulares_en : TIMESTAMPTZ <<NULL>>
+  plazo_reporte : TIMESTAMPTZ <<IDX>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  leccion_aprendida : TEXT <<NULL>>
+}
+
+entity "plan_continuidad" as plancont {
+  * id : UUID <<PK>>
+  --
+  # politica_interna_id : UUID <<FK, NULL>>
+  # responsable_id : UUID <<FK, NULL>>
+  proceso_critico : VARCHAR(80) <<UQ>>
+  rto_minutos : INTEGER
+  rpo_minutos : INTEGER
+  estrategia : VARCHAR(300)
+  periodicidad_prueba_meses : SMALLINT
+  vigente_desde : DATE
+  proxima_prueba : DATE <<IDX>>
+}
+
+entity "prueba_continuidad" as pruebacont {
+  * id : UUID <<PK>>
+  --
+  # plan_continuidad_id : UUID <<FK, IDX>>
+  # acta_comite_id : UUID <<FK, NULL>>
+  # ejecutada_por : UUID <<FK>>
+  tipo : VARCHAR(25) <<CK>>
+  fecha : DATE <<IDX>>
+  rto_obtenido_minutos : INTEGER
+  rpo_obtenido_minutos : INTEGER
+  resultado : VARCHAR(10) <<CK, IDX>>
+  hallazgos : TEXT <<NULL>>
+  evidencia_url : VARCHAR(255) <<NULL>>
+}
+
+entity "contrato_tercero" as tercero {
+  * id : UUID <<PK>>
+  --
+  # responsable_id : UUID <<FK, NULL>>
+  razon_social : VARCHAR(150)
+  nit : VARCHAR(20) <<NULL>>
+  servicio_contratado : VARCHAR(160)
+  es_critico : BOOLEAN <<IDX>>
+  accede_a_datos_personales : BOOLEAN <<IDX>>
+  pais_procesamiento : CHAR(2)
+  nivel_riesgo : VARCHAR(10) <<CK>>
+  evaluacion_riesgo_url : VARCHAR(255) <<NULL>>
+  clausula_confidencialidad : BOOLEAN
+  clausula_auditoria : BOOLEAN
+  clausula_continuidad : BOOLEAN
+  acuerdo_nivel_servicio : JSONB
+  comunicado_al_organismo : BOOLEAN
+  vigente_desde : DATE
+  vigente_hasta : DATE <<NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+}
+
+entity "evaluacion_tercero" as evaltercero {
+  * id : UUID <<PK>>
+  --
+  # contrato_tercero_id : UUID <<FK, IDX>>
+  # evaluado_por : UUID <<FK>>
+  periodo : CHAR(7) <<UQ+contrato_tercero_id>>
+  cumplimiento_sla : DECIMAL(5,2)
+  incidentes_atribuibles : SMALLINT
+  resultado : VARCHAR(15) <<CK>>
+  acciones_requeridas : VARCHAR(400) <<NULL>>
+  evaluada_en : TIMESTAMPTZ
+}
+
+licencia ||--o{ sandbox : "habilita"
+comite ||--o{ acta : "sesiona en"
+acta ||--o{ politica : "aprueba"
+acta ||--o{ designacion : "designa en"
+politica ||--o{ plancont : "define"
+plancont ||--o{ pruebacont : "se prueba con"
+activo ||--o{ incseg : "sufre"
+incseg }o--o| evriesgo : "puede escalar a"
+tercero ||--o{ evaltercero : "se evalua en"
+tercero ||--o{ activo : "custodia"
+umbraluif ||--o{ opreleva : "clasifica"
+opreleva |o--o{ opreleva : "inicia ventana de"
+
+matrizlft ||--o{ factorlft : "evalua"
+matrizlft ||--o{ califriesgo : "puntua"
+califriesgo ||--o{ ddd : "exige"
+califriesgo ||--o{ revkyc : "programa"
+perfiltx ||--o{ desvio : "se contrasta en"
+desvio }o--o| alertalft : "genera"
+reglalft ||--o{ alertalft : "detecta"
+casolft ||--o{ alertalft : "agrupa"
+opreleva }o--o| repreg : "se reporta en"
+catreg ||--o{ repreg : "define"
+repreg ||--o{ envreg : "se envia en"
+envreg ||--o{ obsreg : "recibe"
+contadh ||--o{ aceptcont : "se acepta en"
+ptoreclamo ||--o{ reclamo : "recibe"
+reclamo ||--o{ instrec : "se eleva a"
+control ||--o{ pruebactrl : "se prueba con"
+evriesgo ||--o{ planriesgo : "remedia con"
+hallazgo ||--o{ planriesgo : "remedia con"
+requaut }o--o| reclamo : "puede originar"
+
+note top of califriesgo
+  <b>Una sola calificacion vigente por usuario</b>
+  EXCLUDE USING gist (usuario_id WITH =,
+    tstzrange(vigente_desde, vigente_hasta) WITH &&).
+  Las calificaciones anteriores no se borran: hay que
+  poder probar en que nivel estaba el cliente el dia
+  de una operacion cuestionada.
+  nivel_dd_requerido gobierna los limites de M10:
+  cambiar la calificacion cambia lo que el usuario
+  puede operar, sin intervencion manual.
+end note
+
+note bottom of reglalft
+  <b>Tipologias parametrizables</b>
+  expresion JSONB describe el patron: fraccionamiento,
+  pitufeo, circularidad entre cuentas, uso de un grupo
+  como pantalla, entrada y salida inmediata.
+  Cargar una tipologia nueva es un INSERT.
+  accion_automatica puede ser SOLO_ALERTAR,
+  RETENER_OPERACION o BLOQUEAR_CUENTA.
+end note
+
+note bottom of reclamo
+  <b>Reglas duras</b>
+  - plazo_respuesta se calcula al ingresar y se guarda:
+    si la norma cambia, los reclamos viejos conservan
+    el plazo que les regia.
+  - Un reclamo con resultado FAVORABLE y monto
+    reclamado exige una devolucion asociada
+    (devolucion_comision_id en M11) o una transaccion
+    de resarcimiento en M10.
+  - Indice parcial de vencidos:
+    CREATE INDEX ON reclamo_cliente (plazo_respuesta)
+      WHERE estado IN ('INGRESADO','EN_ANALISIS');
+end note
+
+note bottom of evriesgo
+  <b>Base de datos de perdidas</b>
+  append-only. Cada descuadre de custodia (M10), cada
+  reverso por error operativo y cada fallo con impacto
+  monetario entra aca. Es lo que permite responder
+  "cuanto nos costo la operacion mal hecha el ultimo
+  anio" con un numero y no con una impresion.
+end note
+
+note bottom of umbraluif
+  <b>Los umbrales son datos, no constantes</b>
+  Cada fila reproduce un inciso del instructivo de la
+  unidad de inteligencia financiera: formulario,
+  concepto de operacion, si es acumulado, umbral en
+  USD, ventana en dias calendario y si exige declarar
+  origen y destino. Cuando la autoridad cambia un
+  umbral (paso reciente: carga y retiro de billetera
+  movil acumulados >= USD 1.000 en 1 a 3 dias), es una
+  fila nueva con vigencia, no un despliegue.
+  base_normativa guarda el articulo exacto.
+end note
+
+note bottom of opreleva
+  <b>Ventana de acumulacion con reinicio</b>
+  operacion_inicio_ventana_id implementa la regla
+  "se considera como inicio la operacion posterior a
+  la ultima que hubiera superado el umbral".
+  En operaciones acumuladas solo se declara origen y
+  destino de la ultima operacion con la que se alcanza
+  el umbral. monto_equivalente_usd guarda el tipo de
+  cambio aplicado para que el umbral sea reproducible.
+  periodo_remision alimenta el envio mensual: hasta el
+  dia 15 del mes siguiente, y si no hubo operaciones
+  igual se informa (reporte_regulatorio.reporte_en_cero).
+end note
+
+note bottom of incseg
+  Un incidente con datos personales afectados dispara
+  tres relojes distintos: contencion, reporte al
+  organismo supervisor y notificacion a los titulares.
+  plazo_reporte se calcula al detectar y se guarda,
+  para poder demostrar si se cumplio con el plazo que
+  regia ese dia.
+end note
+
+note bottom of requaut
+  Los oficios de autoridad se guardan con su hash y su
+  plazo. Un requerimiento que ordena inmovilizar fondos
+  genera bloqueo_saldo en M10; uno que pide informacion
+  genera un registro de acceso a datos en M9. Nunca se
+  ejecuta una orden sin dejar el documento que la
+  respalda.
+end note
+
+@enduml

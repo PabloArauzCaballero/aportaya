@@ -1,0 +1,17 @@
+{
+  "entorno": "minimo",
+  "descripcion": "Catálogos que también se aplican en producción. Se cargan en este orden.",
+  "orden": [
+    "01-plan-de-cuentas.json",
+    "02-politicas.json",
+    "03-limites-operativos.json",
+    "04-tarifario.json",
+    "05-impuestos.json",
+    "06-umbrales-uif.json",
+    "07-reportes-regulatorios.json",
+    "08-gobierno-y-licencia.json",
+    "09-reglas-operativas.json",
+    "10-roles-y-permisos.json",
+    "11-contratos-de-adhesion.json"
+  ]
+}
