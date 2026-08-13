@@ -11,7 +11,7 @@ tags: [marca, identidad, branding, pasanaku, billetera]
 # AportaYa — Modelo de Identidad de Marca
 
 > [!info] Vista interactiva
-> La versión visual navegable está en [[AportaYa-Identidad.html]] (abrir con un lector de HTML o en el navegador).
+> La versión visual navegable está en [AportaYa-Identidad.html](AportaYa-Identidad.html) (abrir con un lector de HTML o en el navegador).
 > Publicada además en: https://claude.ai/code/artifact/238ca073-7c7b-48b1-a3d0-7d5a528753b9
 
 **AportaYa** es una billetera móvil que digitaliza el **pasanaku** boliviano: ahorro rotativo comunitario, gestionado con la calidez de la comunidad y el rigor de una fintech. La persona puede **recargar y retirar dinero en cualquier momento**.
@@ -43,7 +43,7 @@ El isotipo representa **tres aportes que convergen**:
 - **El núcleo naranja** → el aporte activo, el "Ya": el dinero que se mueve y sostiene al grupo.
 - **La apacheta / la "A"** → la estructura andina que se arma piedra sobre piedra, y la inicial de **AportaYa**.
 
-> El SVG del símbolo (interpretación vectorial) está incluido dentro de [[AportaYa-Identidad.html]]. El archivo original del diseñador es la fuente oficial.
+> El SVG del símbolo (interpretación vectorial) está incluido dentro de [AportaYa-Identidad.html](AportaYa-Identidad.html). El archivo original del diseñador es la fuente oficial.
 
 ---
 
@@ -162,4 +162,4 @@ Hablamos de **vos**, con calidez y sin tecnicismos, pero precisos con el dinero.
 - [ ] Definir **iconografía** de la app.
 - [ ] Incorporar la **idea base** original del equipo para alinear esencia y valores.
 
-Relacionado: [[AportaYa-Identidad.html]]
+Relacionado: [AportaYa-Identidad.html](AportaYa-Identidad.html)

@@ -27,6 +27,7 @@ Norma (docs/Cumplimiento.md) → Caso de uso (docs/CasosDeUso/) → Restricción
 | CU-60..69 | Gobernanza del grupo: sorteo, acuerdos, cupos y disolución |
 | CU-70..79 | Transparencia verificable y reputación |
 | CU-80..89 | Notificaciones y comunicación con el usuario |
+| CU-90..99 | Organizador, automatización y proveedores de plataforma |
 
 **Los códigos no se reutilizan ni se renumeran.** Un caso retirado se marca como
 obsoleto y conserva su número.
@@ -97,6 +98,14 @@ programable sin volver a preguntar. Se escriben así:
 
 ## Checklist antes de dar por terminado
 
+Casi todo esto lo verifica una corrida, y **es la que decide**, no la lectura:
+
+```bash
+python3 scripts/verificar_boveda.py   # secciones, errores, gherkin, alternativos,
+                                      # reciprocidad, cobertura de entidades e índices
+```
+
+- [ ] `verificar_boveda.py` termina en `TODO OK`.
 - [ ] Está en el índice `docs/CasosDeUso/_CasosDeUso.md` (tabla del área correcta).
 - [ ] Todos los `[[enlaces]]` resuelven (correr la verificación de la skill `boveda-modelo`).
 - [ ] Cada restricción citada existe en `docs/Restricciones.md`; si no, se agrega

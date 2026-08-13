@@ -38,7 +38,7 @@ docs/
 | --- | --- | --- |
 | **Entidades** | Una nota por tabla, agrupadas en una carpeta por módulo: columnas, claves, FK salientes y entrantes, entidades vecinas y las notas del diagrama. | [[_Entidades]] |
 | **Relaciones** | Una nota por FK, agrupadas por el módulo de la tabla de origen: destino, cardinalidad, si es opcional y si cruza módulos. | [[_Relaciones]] |
-| **entidades/** | Por qué existe cada entidad, a nivel de negocio y de sistema. Un documento por módulo. | [[docs/entidades/README\|Fichas de negocio]] |
+| **entidades/** | Por qué existe cada entidad, a nivel de negocio y de sistema. Un documento por módulo. | [[entidades/README\|Fichas de negocio]] |
 | **Cumplimiento** | Contraste requisito por requisito contra ASFI, UIF, BCB, SIN e ISO, con estado y brechas abiertas. | [[Cumplimiento]] |
 | **Casos de uso** | Cómo se ejecuta cada flujo: pasos, tablas, validaciones, evidencia y criterios de aceptación. | [[_CasosDeUso]] |
 | **Restricciones** | Las reglas que la base de datos hace cumplir, con su DDL y la norma que las obliga. | [[Restricciones]] |
