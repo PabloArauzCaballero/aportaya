@@ -157,4 +157,4 @@ Entonces existe un registro_operacion_relevante con formulario PCC-01
 
 ## Ver también
 
-[[CU-11 Retirar saldo]] · [[CU-40 Evaluar límites antes de una operación]] · [[CU-50 Conciliar la custodia y verificar el encaje]]
+[[CU-11 Retirar saldo]] · [[CU-40 Evaluar límites antes de una operación]] · [[CU-50 Conciliar la custodia y verificar el encaje]] · [[CU-57 Operar un punto de atención y arquear el efectivo]] · [[CU-99 Dar de alta un proveedor de pago y enrutar el cobro]]

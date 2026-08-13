@@ -8,8 +8,8 @@ description: "Proteger datos en AportaYa: contexto de sesión con SET LOCAL, pol
 ## La regla de una línea
 
 **El contexto se fija con `SET LOCAL` dentro de la misma transacción del caso de
-uso, y fuera de una transacción no se consulta nada con RLS** ([[ADR-007 Sesión,
-RLS y pooling]]).
+uso, y fuera de una transacción no se consulta nada con RLS** 
+([[ADR-007 Sesión, RLS y pooling]]).
 
 ```ts
 await db.transaction().execute(async (trx) => {

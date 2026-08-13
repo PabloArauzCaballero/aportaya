@@ -94,6 +94,14 @@ export const ErroresCU63 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `PROPONENTE_NO_HABILITADO` | No es participante activo del grupo o el reglamento reserva ese tipo al organizador |
+| `ACUERDO_DUPLICADO` | Ya hay un acuerdo abierto del mismo tipo y objeto en el grupo |
+| `VOTO_YA_EMITIDO` | El participante ya votó; el voto no se cambia |
+| `VOTACION_CERRADA` | Se votó fuera de plazo o sobre un acuerdo ya resuelto |
+| `PARTE_INTERESADA` | El votante es el afectado directo: su voto se registra como `ABSTENCION_FORZADA` y no pondera |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |
@@ -151,4 +159,4 @@ Entonces queda RECHAZADO_POR_QUORUM y no se ejecuta ningún efecto
 
 ## Ver también
 
-[[CU-62 Permutar turnos entre participantes]] · [[CU-64 Traspasar un cupo]] · [[CU-67 Disolver el grupo anticipadamente]]
+[[CU-60 Sortear los turnos]] · [[CU-62 Permutar turnos entre participantes]] · [[CU-64 Traspasar un cupo]] · [[CU-67 Disolver el grupo anticipadamente]]

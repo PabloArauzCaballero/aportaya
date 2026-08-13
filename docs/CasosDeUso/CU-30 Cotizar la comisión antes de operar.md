@@ -137,4 +137,4 @@ Entonces se rechaza y se recalcula
 
 ## Ver también
 
-[[CU-31 Devengar y cobrar la comisión]] · [[CU-34 Publicar un tarifario nuevo con preaviso]]
+[[CU-31 Devengar y cobrar la comisión]] · [[CU-34 Publicar un tarifario nuevo con preaviso]] · [[CU-36 Segmentar comercialmente y aplicar precio diferenciado]]

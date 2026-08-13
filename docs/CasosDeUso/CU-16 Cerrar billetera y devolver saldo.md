@@ -140,4 +140,4 @@ Entonces los movimientos siguen disponibles
 
 ## Ver también
 
-[[CU-07 Ejercer derechos sobre datos personales]] · [[CU-11 Retirar saldo]]
+[[CU-07 Ejercer derechos sobre datos personales]] · [[CU-09 Cambiar credenciales y solicitar la baja]] · [[CU-11 Retirar saldo]]

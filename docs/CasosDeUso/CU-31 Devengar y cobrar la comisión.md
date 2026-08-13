@@ -143,4 +143,4 @@ Entonces existe una cuenta_por_cobrar_comision para ese devengo
 
 ## Ver también
 
-[[CU-22 Liquidar y entregar el fondo]] · [[CU-32 Emitir factura electrónica]] · [[CU-35 Cerrar la liquidación mensual de ingresos]]
+[[CU-22 Liquidar y entregar el fondo]] · [[CU-30 Cotizar la comisión antes de operar]] · [[CU-32 Emitir factura electrónica]] · [[CU-35 Cerrar la liquidación mensual de ingresos]] · [[CU-36 Segmentar comercialmente y aplicar precio diferenciado]]

@@ -140,4 +140,4 @@ Y el saldo_disponible no baja de cero
 
 ## Ver también
 
-[[CU-33 Devolver comisión y emitir nota de crédito]] · [[CU-54 Registrar un evento de riesgo operativo]] · [[Restricciones]]
+[[CU-19 Reembolsar un pago y atender una disputa]] · [[CU-33 Devolver comisión y emitir nota de crédito]] · [[CU-54 Registrar un evento de riesgo operativo]] · [[Restricciones]]

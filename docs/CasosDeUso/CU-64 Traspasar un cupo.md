@@ -93,6 +93,14 @@ export const ErroresCU64 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `CUPO_NO_TRASPASABLE` | El grupo está suspendido, en liquidación o el reglamento no admite traspasos |
+| `SALIENTE_CON_DEUDA` | Hay obligaciones vencidas impagas: la deuda no viaja con el cupo (`R-GRP-11`) |
+| `ENTRANTE_SIN_KYC` | El entrante no alcanza el `requiere_kyc_minimo` del grupo |
+| `ENTRANTE_SIN_REPUTACION` | El entrante no alcanza la `reputacion_minima` fijada en el reglamento |
+| `ACUERDO_REQUERIDO` | El reglamento exige aprobación del grupo y no hay acuerdo aprobado |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |
@@ -145,4 +153,4 @@ Entonces se rechaza con ENTRANTE_SIN_KYC y se le ofrece elevar su nivel
 
 ## Ver también
 
-[[CU-63 Proponer y votar un acuerdo]] · [[CU-65 Retirarse de un grupo]] · [[CU-66 Reemplazar a un participante moroso]]
+[[CU-63 Proponer y votar un acuerdo]] · [[CU-65 Retirarse de un grupo]] · [[CU-66 Reemplazar a un participante moroso]] · [[CU-68 Postular a un grupo y ser emparejado]]

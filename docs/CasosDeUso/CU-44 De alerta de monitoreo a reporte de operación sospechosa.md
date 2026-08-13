@@ -145,4 +145,4 @@ Y no se generó ninguna notificación al cliente
 
 ## Ver también
 
-[[CU-06 Revisión periódica de conocimiento del cliente]] · [[CU-45 Atender un requerimiento de autoridad]]
+[[CU-03 Declaración PEP y beneficiario final]] · [[CU-06 Revisión periódica de conocimiento del cliente]] · [[CU-12 Transferir saldo entre billeteras]] · [[CU-45 Atender un requerimiento de autoridad]] · [[CU-48 Calibrar reglas de cumplimiento y triar sus alertas]]

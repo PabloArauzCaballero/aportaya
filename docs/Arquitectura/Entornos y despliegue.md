@@ -14,14 +14,15 @@ fecha_revision: 2026-08-12
 
 | Proceso | Qué corre | Rol de base | Escala |
 | --- | --- | --- | --- |
-| `api` | NestJS | `api` | Horizontal, sin estado |
-| `worker` | Graphile Worker (outbox + cron) | `worker` | Horizontal; los trabajos con fecha se bloquean por identificador |
-| `reportes` | Consultas pesadas, exportes | `reportes` (solo lectura) | Contra la réplica |
-| `migrador` | Aplica `sql/` | `migrador` (DDL) | Una vez por despliegue |
+| `api` | NestJS | `rol_aplicacion` | Horizontal, sin estado |
+| `worker` | Graphile Worker (outbox + cron) | `rol_aplicacion` | Horizontal; los trabajos con fecha se bloquean por identificador |
+| `backoffice` | API de cumplimiento y soporte | `rol_backoffice` · `rol_cumplimiento` | Horizontal |
+| `reportes` | Consultas pesadas, exportes | `rol_auditor` (solo lectura) | Contra la réplica |
+| `migrador` | Aplica `sql/` | `rol_migracion` (DDL) | Una vez por despliegue |
 
-Ningún proceso comparte rol con otro, y **ninguno es superusuario**. El rol `api` no
-tiene `UPDATE`/`DELETE` sobre las tablas append-only: la barrera es de base, no de
-código ([[ADR-007 Sesión, RLS y pooling]]).
+Los roles son los que define `sql/00_base/01_roles.sql`; **ninguno es superusuario** y
+`rol_aplicacion` no tiene `UPDATE`/`DELETE` sobre las tablas append-only: la barrera es
+de base, no de código ([[ADR-007 Sesión, RLS y pooling]]).
 
 ## Entornos
 
@@ -42,7 +43,7 @@ auditable y uno que solo dice serlo.
 python3 scripts/generar_ddl.py                        # el DDL sale de la bóveda
 psql -v ON_ERROR_STOP=1 -f sql/aplicar.sql            # tablas → claves → índices → sellos → reglas
 psql -v ON_ERROR_STOP=1 -f sql/60_semillas/sembrar.sql
-psql -f sql/50_verificacion/prueba_humo.sql           # 65 comprobaciones
+psql -f sql/50_verificacion/prueba_humo.sql           # 69 comprobaciones
 pnpm datos:tipos                                      # introspección → tipos de Kysely
 ```
 

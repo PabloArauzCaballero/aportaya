@@ -4,7 +4,7 @@ tags:
   - restricciones
 titulo: "Catálogo de restricciones — AportaYa"
 motor: PostgreSQL 15+
-total_restricciones: 92
+total_restricciones: 119
 fecha: 2026-08-11
 ---
 
@@ -47,17 +47,20 @@ fn_<dominio>_<accion>  función
 | Prefijo | Dominio | Cantidad |
 | --- | --- | --: |
 | `R-AUD` | Auditoría, inmutabilidad y conservación | 8 |
-| `R-BIL` | Billetera, saldo y custodia | 16 |
+| `R-BIL` | Billetera, saldo y custodia | 18 |
 | `R-LIM` | Límites operativos | 3 |
 | `R-TAR` | Tarifas, comisiones y facturación | 13 |
-| `R-UIF` | Prevención de LGI/FT y reportes | 13 |
+| `R-UIF` | Prevención de LGI/FT y reportes | 14 |
 | `R-CON` | Consumidor financiero | 8 |
-| `R-SEG` | Seguridad y datos personales | 6 |
-| `R-LIC` | Licencia y gobierno | 3 |
-| `R-GRP` | Circuito del pasanaku y gobernanza | 13 |
+| `R-SEG` | Seguridad y datos personales | 8 |
+| `R-LIC` | Licencia y gobierno | 4 |
+| `R-GRP` | Circuito del pasanaku y gobernanza | 16 |
 | `R-RIS` | Riesgo operativo y continuidad | 3 |
-| `R-REP` | Reputación y transparencia | 4 |
+| `R-REP` | Reputación y transparencia | 6 |
 | `R-NOT` | Notificaciones | 3 |
+| `R-GAR` | Garantía, incumplimiento y cobranza | 7 |
+| `R-DES` | Desembolsos y entregas | 2 |
+| `R-ORG` | Organizador y automatización | 7 |
 
 ---
 
@@ -171,6 +174,8 @@ ALTER TABLE expediente_cliente
 | R-BIL-13 | No se cierra una cuenta con obligaciones, retenciones o bloqueos | Consumidor financiero | [[CU-16 Cerrar billetera y devolver saldo]] |
 | R-BIL-14 | Un oficio, un bloqueo | Trazabilidad legal | [[CU-17 Bloquear saldo por orden de autoridad]] |
 | R-BIL-15 | Una transacción se reversa una sola vez | Integridad | [[CU-14 Reversar una transacción]] |
+| R-BIL-17 | Una cuenta de destino por titular y número, y una sola principal | ASFI seguridad · UIF titularidad | [[CU-18 Registrar y verificar una cuenta bancaria de destino]] |
+| R-BIL-18 | Un arqueo por punto y fecha, y toda diferencia se justifica | ASFI puntos de atención | [[CU-57 Operar un punto de atención y arquear el efectivo]] |
 
 ```sql
 -- R-BIL-01 · partida doble interna (diferido: se valida al COMMIT)
@@ -354,6 +359,26 @@ ALTER TABLE bloqueo_saldo
 CREATE UNIQUE INDEX uq_reverso_original
   ON reverso_transaccion (transaccion_original_id)
   WHERE estado <> 'RECHAZADO';
+-- R-BIL-17 · cuenta de destino: unicidad por hash y una sola principal
+ALTER TABLE cuenta_bancaria_beneficiario
+  ADD CONSTRAINT uq_cuenta_benef_hash UNIQUE (usuario_id, hash_numero_cuenta),
+  ADD CONSTRAINT ck_cuenta_benef_hash_completo CHECK (length(hash_numero_cuenta) = 64),
+  ADD CONSTRAINT ck_cuenta_benef_verificada CHECK (
+        estado_verificacion <> 'VERIFICADA' OR verificada_en IS NOT NULL);
+
+CREATE UNIQUE INDEX uq_cuenta_benef_principal
+  ON cuenta_bancaria_beneficiario (usuario_id)
+  WHERE (es_principal);
+
+-- R-BIL-18 · arqueo único por punto y fecha; diferencia justificada al cerrar
+ALTER TABLE arqueo_punto_atencion
+  ADD CONSTRAINT uq_arqueo_punto_fecha UNIQUE (punto_atencion_id, fecha),
+  ADD CONSTRAINT ck_arqueo_diferencia_justificada CHECK (
+        cerrado_en IS NULL
+     OR diferencia = 0
+     OR (observaciones IS NOT NULL AND length(btrim(observaciones)) >= 10)),
+  ADD CONSTRAINT ck_arqueo_contado_al_cerrar CHECK (
+        cerrado_en IS NULL OR saldo_contado IS NOT NULL);
 ```
 
 ---
@@ -585,6 +610,7 @@ ALTER TABLE factura_electronica
 | R-UIF-09 | No se opera sin debida diligencia vigente | UIF | [[CU-02 Elevar nivel de debida diligencia]] |
 | R-UIF-10 | Un PEP exige diligencia reforzada y doble revisión | UIF | [[CU-03 Declaración PEP y beneficiario final]] |
 | R-UIF-11 | Una sola calificación de riesgo vigente por cliente | UIF | [[CU-02 Elevar nivel de debida diligencia]] |
+| R-UIF-12 | Un solo oficial de cumplimiento titular activo | UIF designación | [[CU-49 Designar al oficial de cumplimiento y capacitar]] |
 
 ```sql
 -- R-UIF-01 · umbrales versionados con su cita normativa
@@ -825,6 +851,16 @@ ALTER TABLE calificacion_riesgo_cliente
     usuario_id WITH =,
     tstzrange(vigente_desde, vigente_hasta, '[)') WITH &&
   );
+-- R-UIF-12 · un titular activo por vez, y la baja exige fecha
+CREATE UNIQUE INDEX uq_oficial_titular_activo
+  ON oficial_cumplimiento ((tipo))
+  WHERE (activo AND tipo = 'TITULAR');
+
+ALTER TABLE oficial_cumplimiento
+  ADD CONSTRAINT ck_oficial_baja_coherente CHECK (
+        (activo AND fecha_baja IS NULL) OR (NOT activo AND fecha_baja IS NOT NULL)),
+  ADD CONSTRAINT ck_oficial_baja_posterior CHECK (
+        fecha_baja IS NULL OR fecha_baja >= fecha_designacion);
 ```
 
 ---
@@ -923,6 +959,8 @@ ALTER TABLE estado_cuenta_billetera
 | R-SEG-04 | Segregación de funciones: quien autoriza no ejecuta | Control interno | [[CU-22 Liquidar y entregar el fondo]] |
 | R-SEG-05 | Los incidentes guardan su plazo de reporte | ASFI Seguridad de la Información | [[CU-55 Gestionar un incidente de seguridad]] |
 | R-SEG-06 | La anonimización respeta la retención legal | Ley 393 vs. derecho de supresión | [[CU-07 Ejercer derechos sobre datos personales]] |
+| R-SEG-07 | Nadie se otorga a sí mismo un rol | Segregación de funciones | [[CU-08 Asignar y revocar roles de operador]] |
+| R-SEG-08 | Una sola asignación vigente por usuario, rol y ámbito | Control de accesos | [[CU-08 Asignar y revocar roles de operador]] |
 
 ```sql
 -- R-SEG-01 · solo hash, token y enmascarado
@@ -993,6 +1031,23 @@ END $$ LANGUAGE plpgsql;
 CREATE TRIGGER tg_anonimizacion_retencion
   BEFORE INSERT OR UPDATE ON proceso_anonimizacion
   FOR EACH ROW EXECUTE FUNCTION fn_seg_validar_anonimizacion();
+-- R-SEG-07 · nadie se amplía sus propios permisos
+ALTER TABLE asignacion_rol
+  ADD CONSTRAINT ck_asignacion_no_autoasignada CHECK (usuario_id <> otorgada_por),
+  ADD CONSTRAINT ck_asignacion_ambito_completo CHECK (
+        (ambito = 'GRUPO' AND ambito_id IS NOT NULL)
+     OR (ambito <> 'GRUPO' AND ambito_id IS NULL)),
+  ADD CONSTRAINT ck_asignacion_revocacion_motivada CHECK (
+        revocada_en IS NULL OR motivo_revocacion IS NOT NULL);
+
+-- R-SEG-08 · una sola asignación viva por usuario, rol y ámbito
+CREATE UNIQUE INDEX uq_asignacion_vigente
+  ON asignacion_rol (usuario_id, rol_id, ambito, COALESCE(ambito_id, '00000000-0000-0000-0000-000000000000'::uuid))
+  WHERE (revocada_en IS NULL);
+
+CREATE INDEX ix_asignacion_por_vencer
+  ON asignacion_rol (vigente_hasta)
+  WHERE (revocada_en IS NULL AND vigente_hasta IS NOT NULL);
 ```
 
 ---
@@ -1004,6 +1059,7 @@ CREATE TRIGGER tg_anonimizacion_retencion
 | R-LIC-01 | No se habilita un servicio fuera del alcance autorizado | ASFI Res. 540/2025 | [[CU-46 Verificar el alcance de la licencia]] |
 | R-LIC-02 | El sandbox opera dentro de sus límites | ASFI | [[CU-46 Verificar el alcance de la licencia]] |
 | R-LIC-03 | Toda política vigente tiene acta de aprobación | ASFI riesgo operativo | [[CU-56 Ejecutar una prueba de continuidad]] |
+| R-LIC-04 | Un producto que exige no objeción no entra en vigencia sin ella | ASFI Res. 540/2025 | [[CU-47 Evaluar el riesgo del producto antes de lanzarlo]] |
 
 ```sql
 -- R-LIC-01 · alcance autorizado como condición de servicio
@@ -1039,6 +1095,15 @@ ALTER TABLE politica_interna
    OR (aprobada_por_directorio AND acta_comite_id IS NOT NULL)
   ),
   ADD CONSTRAINT ck_politica_revision CHECK (proxima_revision > vigente_desde);
+-- R-LIC-04 · no objeción previa cuando la norma la exige
+ALTER TABLE evaluacion_riesgo_producto
+  ADD CONSTRAINT uq_evaluacion_producto_version UNIQUE (producto, version),
+  ADD CONSTRAINT ck_evaluacion_no_objecion CHECK (
+        estado <> 'VIGENTE'
+     OR NOT requiere_no_objecion
+     OR (fecha_aprobacion IS NOT NULL AND aprobada_por IS NOT NULL)),
+  ADD CONSTRAINT ck_evaluacion_vigente_aprobada CHECK (
+        estado <> 'VIGENTE' OR fecha_aprobacion IS NOT NULL);
 ```
 
 ---
@@ -1060,6 +1125,9 @@ ALTER TABLE politica_interna
 | R-GRP-11 | La deuda no se traspasa con el cupo | Integridad de la deuda | [[CU-64 Traspasar un cupo]] |
 | R-GRP-12 | Un retiro con posición deudora exige plan de pago | Consumidor financiero | [[CU-65 Retirarse de un grupo]] |
 | R-GRP-13 | Un grupo disuelto cierra con saldo cero | Contabilidad | [[CU-67 Disolver el grupo anticipadamente]] |
+| R-GRP-14 | Una solicitud de ingreso pendiente por usuario y grupo | Gobernanza | [[CU-68 Postular a un grupo y ser emparejado]] |
+| R-GRP-15 | La invitación vence y su token se consume una sola vez | Antifraude · datos personales | [[CU-69 Invitar a un contacto y registrar sus referencias]] |
+| R-GRP-16 | Un día no hábil por fecha, alcance y grupo | ASFI plazos hábiles | [[CU-59 Mantener el calendario de días no hábiles]] |
 
 ```sql
 -- R-GRP-01 · una entrega por turno y por período
@@ -1202,6 +1270,35 @@ END $$ LANGUAGE plpgsql;
 CREATE TRIGGER tg_retiro_no_grupo
   BEFORE INSERT ON orden_retiro
   FOR EACH ROW EXECUTE FUNCTION fn_grp_validar_retiro_grupo();
+-- R-GRP-14 · una postulación pendiente por usuario y grupo
+CREATE UNIQUE INDEX uq_solicitud_ingreso_pendiente
+  ON solicitud_ingreso (grupo_id, usuario_id)
+  WHERE (estado = 'PENDIENTE');
+
+ALTER TABLE solicitud_ingreso
+  ADD CONSTRAINT ck_solicitud_ingreso_resuelta CHECK (
+        estado = 'PENDIENTE'
+     OR (fecha_resolucion IS NOT NULL AND revisada_por IS NOT NULL));
+
+-- R-GRP-15 · invitación con vencimiento y token de un solo uso
+ALTER TABLE invitacion
+  ADD CONSTRAINT uq_invitacion_token UNIQUE (token_id),
+  ADD CONSTRAINT ck_invitacion_expira CHECK (fecha_expiracion > fecha_envio),
+  ADD CONSTRAINT ck_invitacion_respuesta CHECK (
+        estado IN ('ENVIADA', 'EXPIRADA') OR fecha_respuesta IS NOT NULL);
+
+CREATE UNIQUE INDEX uq_invitacion_activa
+  ON invitacion (grupo_id, telefono_invitado)
+  WHERE (estado = 'ENVIADA');
+
+-- R-GRP-16 · calendario de días no hábiles sin duplicados ni ámbitos incompletos
+ALTER TABLE dia_no_habil
+  ADD CONSTRAINT ck_dia_no_habil_ambito CHECK (
+        (alcance = 'GRUPO' AND grupo_id IS NOT NULL)
+     OR (alcance <> 'GRUPO' AND grupo_id IS NULL));
+
+CREATE UNIQUE INDEX uq_dia_no_habil
+  ON dia_no_habil (fecha, alcance, COALESCE(grupo_id, '00000000-0000-0000-0000-000000000000'::uuid));
 ```
 
 ---
@@ -1252,6 +1349,8 @@ ALTER TABLE prueba_continuidad
 | R-REP-02 | Un solo puntaje vigente por usuario | Consistencia | [[CU-71 Recalcular el puntaje de reputación]] |
 | R-REP-03 | El total es la suma de sus componentes | Explicabilidad | [[CU-71 Recalcular el puntaje de reputación]] |
 | R-REP-04 | La cadena de bloques es única y encadenada por grupo | Integridad de la evidencia | [[CU-72 Sellar el bloque de transparencia]] |
+| R-REP-05 | Una insignia por usuario, y la revocación no la borra | Transparencia | [[CU-74 Otorgar y revocar una insignia]] |
+| R-REP-06 | Una reseña por autor, evaluado, grupo y dimensión; nadie se reseña | No discriminación arbitraria | [[CU-76 Reseñar a un participante y moderar la reseña]] |
 
 ```sql
 -- R-REP-01 · un hecho puntúa una sola vez
@@ -1313,6 +1412,38 @@ END $$ LANGUAGE plpgsql;
 CREATE TRIGGER tg_bloque_encadenado
   BEFORE INSERT ON bloque_transparencia
   FOR EACH ROW EXECUTE FUNCTION fn_rep_encadenar_bloque();
+-- R-REP-05 · una insignia por usuario; revocar no borra
+ALTER TABLE insignia_otorgada
+  ADD CONSTRAINT uq_insignia_usuario UNIQUE (usuario_id, insignia_id),
+  ADD CONSTRAINT ck_insignia_revocacion_motivada CHECK (
+        revocada_en IS NULL OR motivo_revocacion IS NOT NULL);
+
+-- R-REP-06 · una reseña por autor, evaluado, grupo y dimensión
+ALTER TABLE resena_participante
+  ADD CONSTRAINT uq_resena_autor_evaluado
+    UNIQUE (grupo_id, autor_participante_id, evaluado_usuario_id, dimension),
+  ADD CONSTRAINT ck_resena_moderada CHECK (
+        estado_moderacion = 'PENDIENTE' OR moderada_por IS NOT NULL);
+
+CREATE OR REPLACE FUNCTION fn_rep_validar_resena() RETURNS trigger AS $$
+DECLARE v_usuario_autor UUID;
+BEGIN
+  SELECT usuario_id INTO v_usuario_autor
+    FROM participante WHERE id = NEW.autor_participante_id;
+  IF v_usuario_autor = NEW.evaluado_usuario_id THEN
+    RAISE EXCEPTION 'R-REP-06: nadie puede reseñarse a sí mismo';
+  END IF;
+  IF NOT EXISTS (
+      SELECT 1 FROM participante p
+       WHERE p.grupo_id = NEW.grupo_id AND p.usuario_id = NEW.evaluado_usuario_id) THEN
+    RAISE EXCEPTION 'R-REP-06: el evaluado no participó del grupo %', NEW.grupo_id;
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_resena_convivencia
+  BEFORE INSERT ON resena_participante
+  FOR EACH ROW EXECUTE FUNCTION fn_rep_validar_resena();
 ```
 
 ---
@@ -1377,6 +1508,302 @@ END $$ LANGUAGE plpgsql;
 CREATE TRIGGER tg_notificacion_supresion
   BEFORE INSERT ON notificacion
   FOR EACH ROW EXECUTE FUNCTION fn_not_validar_supresion();
+```
+
+---
+
+## R-GAR — Garantía, incumplimiento y cobranza
+
+| Código | Regla | Obliga | Se verifica en |
+| --- | --- | --- | --- |
+| R-GAR-01 | El plazo de descargo se calcula al notificar y se guarda | Debido proceso | [[CU-25 Declarar el incumplimiento con descargo y evidencia]] |
+| R-GAR-02 | La evidencia de incumplimiento es inmutable | Debido proceso · auditoría | [[CU-25 Declarar el incumplimiento con descargo y evidencia]] |
+| R-GAR-03 | Una ejecución de aval por aval y expediente | Integridad | [[CU-26 Ejecutar el aval y subrogar la deuda]] |
+| R-GAR-04 | Nunca se ejecuta un aval más allá del tope firmado | Protección del avalista | [[CU-26 Ejecutar el aval y subrogar la deuda]] |
+| R-GAR-05 | Una restricción vigente por usuario y tipo, y su levantamiento se motiva | Consumidor financiero | [[CU-27 Restringir al deudor e incluirlo en la lista interna]] |
+| R-GAR-06 | La devolución del fondo no supera lo aportado ni es negativa | Contabilidad | [[CU-29 Devolver los aportes del fondo de garantía]] |
+| R-GAR-07 | Una alerta temprana abierta por usuario, grupo y código, y no se cierra sin desenlace | Gestión de riesgo | [[CU-97 Anticipar el riesgo con alertas tempranas]] |
+
+```sql
+-- R-GAR-01 · notificar es lo que hace correr el plazo, y el plazo se persiste
+ALTER TABLE registro_incumplimiento
+  ADD CONSTRAINT ck_incumplimiento_plazo_guardado CHECK (
+        notificado_en IS NULL OR fecha_limite_subsanacion IS NOT NULL),
+  ADD CONSTRAINT ck_incumplimiento_plazo_posterior CHECK (
+        fecha_limite_subsanacion IS NULL
+     OR fecha_limite_subsanacion > detectado_en),
+  ADD CONSTRAINT ck_incumplimiento_cierre_motivado CHECK (
+        cerrado_en IS NULL OR motivo_cierre IS NOT NULL);
+
+-- R-GAR-02 · la evidencia no se toca
+ALTER TABLE evidencia_incumplimiento
+  ADD CONSTRAINT ck_evidencia_con_respaldo CHECK (
+        url_archivo IS NULL OR hash_archivo IS NOT NULL);
+
+CREATE OR REPLACE FUNCTION fn_gar_evidencia_inmutable() RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION 'R-GAR-02: la evidencia de incumplimiento no admite % ', TG_OP;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_evidencia_inmutable
+  BEFORE UPDATE OR DELETE ON evidencia_incumplimiento
+  FOR EACH ROW EXECUTE FUNCTION fn_gar_evidencia_inmutable();
+
+-- R-GAR-03 · una ejecución por aval y expediente
+ALTER TABLE ejecucion_aval
+  ADD CONSTRAINT uq_ejecucion_aval_registro UNIQUE (aval_id, registro_id),
+  ADD CONSTRAINT ck_ejecucion_aval_monto CHECK (monto_ejecutado > 0),
+  ADD CONSTRAINT ck_ejecucion_aval_plazo CHECK (plazo_respuesta > notificada_en);
+
+-- R-GAR-04 · el tope firmado no se estira
+CREATE OR REPLACE FUNCTION fn_gar_validar_tope_aval() RETURNS trigger AS $$
+DECLARE v_tope NUMERIC(14,2); v_usado NUMERIC(14,2); v_estado VARCHAR(15);
+BEGIN
+  SELECT monto_maximo_avalado, estado INTO v_tope, v_estado
+    FROM aval_participante WHERE id = NEW.aval_id FOR UPDATE;
+  IF v_estado <> 'VIGENTE' THEN
+    RAISE EXCEPTION 'R-GAR-04: el aval % no está vigente', NEW.aval_id;
+  END IF;
+  SELECT COALESCE(SUM(monto_ejecutado), 0) INTO v_usado
+    FROM ejecucion_aval
+   WHERE aval_id = NEW.aval_id AND estado <> 'ANULADA' AND id <> NEW.id;
+  IF v_usado + NEW.monto_ejecutado > v_tope THEN
+    RAISE EXCEPTION 'R-GAR-04: la ejecución (% + %) supera el tope avalado %',
+                    v_usado, NEW.monto_ejecutado, v_tope;
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_ejecucion_aval_tope
+  BEFORE INSERT OR UPDATE ON ejecucion_aval
+  FOR EACH ROW EXECUTE FUNCTION fn_gar_validar_tope_aval();
+
+-- R-GAR-05 · una restricción viva por usuario y tipo; levantarla exige motivo
+ALTER TABLE restriccion_usuario
+  ADD CONSTRAINT ck_restriccion_levantamiento CHECK (
+        (vigente_hasta IS NULL AND levantada_por IS NULL AND motivo_levantamiento IS NULL)
+     OR (vigente_hasta IS NOT NULL)),
+  ADD CONSTRAINT ck_restriccion_vigencia CHECK (
+        vigente_hasta IS NULL OR vigente_hasta > vigente_desde);
+
+CREATE UNIQUE INDEX uq_restriccion_usuario_vigente
+  ON restriccion_usuario (usuario_id, tipo)
+  WHERE (vigente_hasta IS NULL);
+
+ALTER TABLE lista_restriccion_interna
+  ADD CONSTRAINT ck_lista_retiro_motivado CHECK (
+        retirado_en IS NULL OR (retirado_por IS NOT NULL AND motivo_retiro IS NOT NULL));
+
+-- R-GAR-06 · la devolución del fondo no inventa dinero
+ALTER TABLE devolucion_fondo
+  ADD CONSTRAINT ck_devolucion_no_negativa CHECK (monto_a_devolver >= 0),
+  ADD CONSTRAINT ck_devolucion_hasta_lo_aportado CHECK (
+        monto_a_devolver <= monto_aportado),
+  ADD CONSTRAINT ck_devolucion_cuadra CHECK (
+        monto_a_devolver = GREATEST(monto_aportado - monto_consumido, 0)),
+  ADD CONSTRAINT ck_devolucion_retencion_motivada CHECK (
+        estado <> 'RETENIDA' OR motivo_retencion IS NOT NULL);
+
+CREATE UNIQUE INDEX uq_devolucion_fondo_participante
+  ON devolucion_fondo (fondo_id, participante_id);
+
+-- R-GAR-07 · una alerta abierta por causa, y el cierre lleva desenlace
+CREATE UNIQUE INDEX uq_alerta_temprana_abierta
+  ON alerta_temprana (usuario_id, COALESCE(grupo_id, '00000000-0000-0000-0000-000000000000'::uuid), codigo)
+  WHERE (estado = 'ABIERTA');
+
+ALTER TABLE alerta_riesgo
+  ADD CONSTRAINT ck_alerta_riesgo_cierre CHECK (
+        estado <> 'CERRADA' OR cerrada_en IS NOT NULL);
+```
+
+---
+
+## R-DES — Desembolsos y entregas
+
+| Código | Regla | Obliga | Se verifica en |
+| --- | --- | --- | --- |
+| R-DES-01 | Una orden de desembolso viva por entrega, con clave de idempotencia única | BCB pagos · integridad | [[CU-28 Emitir la orden de desembolso y ejecutar el intento]] |
+| R-DES-02 | No se ordena un desembolso a cuenta sin verificar | UIF titularidad · antifraude | [[CU-28 Emitir la orden de desembolso y ejecutar el intento]] |
+
+```sql
+-- R-DES-01 · una orden viva por entrega; la clave corta el doble pago
+ALTER TABLE orden_desembolso
+  ADD CONSTRAINT uq_orden_desembolso_clave UNIQUE (clave_idempotencia),
+  ADD CONSTRAINT ck_orden_desembolso_monto CHECK (monto > 0),
+  ADD CONSTRAINT ck_orden_desembolso_acreditada CHECK (
+        estado <> 'ACREDITADA'
+     OR (acreditada_en IS NOT NULL AND referencia_proveedor IS NOT NULL));
+
+CREATE UNIQUE INDEX uq_orden_desembolso_entrega_viva
+  ON orden_desembolso (entrega_id)
+  WHERE (estado NOT IN ('RECHAZADA', 'FALLIDA', 'REVERSADA'));
+
+ALTER TABLE intento_desembolso
+  ADD CONSTRAINT uq_intento_desembolso_numero UNIQUE (orden_desembolso_id, numero_intento),
+  ADD CONSTRAINT ck_intento_desembolso_fallo CHECK (
+        resultado <> 'FALLO' OR codigo_error IS NOT NULL);
+
+-- R-DES-02 · la cuenta destino tiene que estar verificada y fuera de enfriamiento
+CREATE OR REPLACE FUNCTION fn_des_validar_cuenta_destino() RETURNS trigger AS $$
+DECLARE v_estado VARCHAR(15); v_bloqueada TIMESTAMPTZ;
+BEGIN
+  SELECT estado_verificacion, bloqueada_hasta INTO v_estado, v_bloqueada
+    FROM cuenta_bancaria_beneficiario WHERE id = NEW.cuenta_destino_id;
+  IF v_estado IS DISTINCT FROM 'VERIFICADA' THEN
+    RAISE EXCEPTION 'R-DES-02: la cuenta destino % no está verificada (%)',
+                    NEW.cuenta_destino_id, COALESCE(v_estado, 'inexistente');
+  END IF;
+  IF v_bloqueada IS NOT NULL AND v_bloqueada > now() THEN
+    RAISE EXCEPTION 'R-DES-02: la cuenta destino está en enfriamiento hasta %', v_bloqueada;
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_orden_desembolso_cuenta_verificada
+  BEFORE INSERT ON orden_desembolso
+  FOR EACH ROW EXECUTE FUNCTION fn_des_validar_cuenta_destino();
+```
+
+---
+
+## R-ORG — Organizador y automatización
+
+| Código | Regla | Obliga | Se verifica en |
+| --- | --- | --- | --- |
+| R-ORG-01 | Una solicitud de organizador pendiente por usuario | Gobernanza | [[CU-90 Postular a organizador y habilitarse]] |
+| R-ORG-02 | Un solo contrato de organizador vigente, y sin él no se crean grupos | ASFI Consumidor Financiero | [[CU-91 Firmar y rescindir el contrato de organizador]] |
+| R-ORG-03 | Un contrato firmado no se modifica: se emite versión nueva | Evidencia oponible | [[CU-91 Firmar y rescindir el contrato de organizador]] |
+| R-ORG-04 | Una evaluación de desempeño por organizador y período | Trazabilidad | [[CU-92 Evaluar el desempeño del organizador]] |
+| R-ORG-05 | Una apelación por sanción, resuelta por quien no la aplicó | Debido proceso | [[CU-93 Sancionar al organizador y resolver su apelación]] |
+| R-ORG-06 | Las acciones sensibles exigen confirmación humana | Control interno | [[CU-95 Definir una regla de automatización]] |
+| R-ORG-07 | Una tarea automatizada por clave de idempotencia | Integridad | [[CU-96 Programar y ejecutar una tarea automatizada]] |
+
+```sql
+-- R-ORG-01 · una postulación pendiente por usuario
+CREATE UNIQUE INDEX uq_solicitud_organizador_pendiente
+  ON solicitud_organizador (usuario_id)
+  WHERE (estado = 'PENDIENTE');
+
+ALTER TABLE solicitud_organizador
+  ADD CONSTRAINT ck_solicitud_org_resuelta CHECK (
+        estado = 'PENDIENTE' OR fecha_resolucion IS NOT NULL),
+  ADD CONSTRAINT ck_solicitud_org_rechazo_motivado CHECK (
+        estado <> 'RECHAZADA' OR motivo_rechazo IS NOT NULL);
+
+-- R-ORG-02 · un contrato vigente por organizador, sin solaparse
+ALTER TABLE contrato_organizador
+  ADD CONSTRAINT ck_contrato_org_vigencia CHECK (
+        vigente_hasta IS NULL OR vigente_hasta > vigente_desde),
+  ADD CONSTRAINT ck_contrato_org_rescision CHECK (
+        rescindido_en IS NULL OR motivo_rescision IS NOT NULL),
+  ADD CONSTRAINT ck_contrato_org_firma CHECK (
+        firmado_en IS NULL OR token_firma_id IS NOT NULL);
+
+ALTER TABLE contrato_organizador
+  ADD CONSTRAINT ex_contrato_org_vigente
+  EXCLUDE USING gist (
+    organizador_id WITH =,
+    daterange(vigente_desde, vigente_hasta, '[)') WITH &&
+  ) WHERE (firmado_en IS NOT NULL AND rescindido_en IS NULL);
+
+-- sin contrato firmado y vigente no se crea un grupo con organizador
+CREATE OR REPLACE FUNCTION fn_org_validar_contrato_grupo() RETURNS trigger AS $$
+BEGIN
+  IF NEW.organizador_id IS NULL THEN
+    RETURN NEW;   -- grupo autogestionado: no hay organizador que deba contrato
+  END IF;
+  IF NOT EXISTS (
+      SELECT 1 FROM contrato_organizador c
+       WHERE c.organizador_id = NEW.organizador_id
+         AND c.firmado_en IS NOT NULL
+         AND c.rescindido_en IS NULL
+         AND c.vigente_desde <= CURRENT_DATE
+         AND (c.vigente_hasta IS NULL OR c.vigente_hasta > CURRENT_DATE)) THEN
+    RAISE EXCEPTION 'R-ORG-02: el organizador % no tiene contrato firmado y vigente',
+                    NEW.organizador_id;
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_grupo_contrato_organizador
+  BEFORE INSERT ON grupo
+  FOR EACH ROW EXECUTE FUNCTION fn_org_validar_contrato_grupo();
+
+-- R-ORG-03 · lo firmado no se reescribe
+CREATE OR REPLACE FUNCTION fn_org_contrato_inmutable() RETURNS trigger AS $$
+BEGIN
+  IF OLD.firmado_en IS NOT NULL AND (
+       NEW.contenido_hash IS DISTINCT FROM OLD.contenido_hash
+    OR NEW.obligaciones   IS DISTINCT FROM OLD.obligaciones
+    OR NEW.causales_rescision IS DISTINCT FROM OLD.causales_rescision
+    OR NEW.version        IS DISTINCT FROM OLD.version) THEN
+    RAISE EXCEPTION 'R-ORG-03: un contrato firmado no se modifica; emita una versión nueva';
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_contrato_org_inmutable
+  BEFORE UPDATE ON contrato_organizador
+  FOR EACH ROW EXECUTE FUNCTION fn_org_contrato_inmutable();
+
+-- R-ORG-04 · una evaluación por organizador y período
+ALTER TABLE evaluacion_desempeno
+  ADD CONSTRAINT uq_evaluacion_org_periodo UNIQUE (organizador_id, periodo_evaluado);
+
+ALTER TABLE metrica_organizador
+  ADD CONSTRAINT uq_metrica_org_codigo UNIQUE (evaluacion_id, codigo),
+  ADD CONSTRAINT ck_metrica_org_peso CHECK (peso >= 0 AND peso <= 1);
+
+-- R-ORG-05 · una apelación por sanción, y no la resuelve quien la aplicó
+ALTER TABLE apelacion_sancion_org
+  ADD CONSTRAINT uq_apelacion_por_sancion UNIQUE (sancion_organizador_id),
+  ADD CONSTRAINT ck_apelacion_org_resuelta CHECK (
+        estado = 'PENDIENTE'
+     OR (resuelta_en IS NOT NULL AND resuelta_por IS NOT NULL AND resolucion IS NOT NULL));
+
+CREATE OR REPLACE FUNCTION fn_org_validar_resolutor() RETURNS trigger AS $$
+DECLARE v_aplicada_por UUID;
+BEGIN
+  IF NEW.resuelta_por IS NULL THEN RETURN NEW; END IF;
+  SELECT aplicada_por INTO v_aplicada_por
+    FROM sancion_organizador WHERE id = NEW.sancion_organizador_id;
+  IF v_aplicada_por = NEW.resuelta_por THEN
+    RAISE EXCEPTION 'R-ORG-05: quien aplicó la sanción no puede resolver su apelación';
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_apelacion_org_resolutor
+  BEFORE INSERT OR UPDATE ON apelacion_sancion_org
+  FOR EACH ROW EXECUTE FUNCTION fn_org_validar_resolutor();
+
+ALTER TABLE sancion_organizador
+  ADD CONSTRAINT ck_sancion_org_vigencia CHECK (
+        vigente_hasta IS NULL OR vigente_hasta > vigente_desde);
+
+-- R-ORG-06 · lo que mueve dinero o afecta derechos no se automatiza solo
+ALTER TABLE regla_automatizacion
+  ADD CONSTRAINT ck_regla_confirmacion_humana CHECK (
+        accion NOT IN ('PROPONER_COBRO', 'PROPONER_ENTREGA',
+                       'PROPONER_SANCION', 'PROPONER_COBERTURA')
+     OR requiere_confirmacion_humana),
+  ADD CONSTRAINT ck_regla_prioridad CHECK (prioridad BETWEEN 1 AND 99);
+
+CREATE UNIQUE INDEX uq_regla_automatizacion_prioridad
+  ON regla_automatizacion (disparador, prioridad)
+  WHERE (activa);
+
+-- R-ORG-07 · una tarea por hecho disparador
+ALTER TABLE tarea_automatizada
+  ADD CONSTRAINT uq_tarea_automatizada_clave UNIQUE (clave_idempotencia),
+  ADD CONSTRAINT ck_tarea_intentos CHECK (intentos >= 0);
+
+ALTER TABLE ejecucion_tarea
+  ADD CONSTRAINT ck_ejecucion_tarea_error CHECK (
+        resultado <> 'FALLO' OR mensaje_error IS NOT NULL),
+  ADD CONSTRAINT ck_ejecucion_tarea_fin CHECK (
+        finalizada_en IS NULL OR finalizada_en >= iniciada_en);
 ```
 
 ---

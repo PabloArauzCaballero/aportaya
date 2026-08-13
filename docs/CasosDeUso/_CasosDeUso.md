@@ -3,8 +3,8 @@ tags:
   - moc
   - caso-uso
 titulo: "Casos de uso — AportaYa"
-total_casos: 55
-fecha: 2026-08-11
+total_casos: 87
+fecha: 2026-08-13
 ---
 
 # Casos de uso
@@ -68,6 +68,8 @@ Norma (docs/Cumplimiento.md)  →  Caso de uso (esta carpeta)  →  Restricción
 | [[CU-05 Aceptar contrato de adhesión y tarifario]] | Consentimiento con evidencia oponible | Usuario | ASFI Consumidor Financiero |
 | [[CU-06 Revisión periódica de conocimiento del cliente]] | Actualizar KYC según riesgo | Sistema · Analista | UIF |
 | [[CU-07 Ejercer derechos sobre datos personales]] | Acceso, rectificación y supresión | Titular | Protección de datos |
+| [[CU-08 Asignar y revocar roles de operador]] | Permiso mínimo, temporal y auditable | Administrador | ASFI Seguridad · segregación |
+| [[CU-09 Cambiar credenciales y solicitar la baja]] | Clave, recuperación y baja sin dejar deudas | Usuario · Soporte | ASFI Seguridad · Consumidor Financiero |
 
 ### Billetera, custodia y saldo
 
@@ -81,6 +83,8 @@ Norma (docs/Cumplimiento.md)  →  Caso de uso (esta carpeta)  →  Restricción
 | [[CU-15 Emitir extracto y certificado de saldo]] | Entregar información al titular | Usuario | ASFI Consumidor Financiero |
 | [[CU-16 Cerrar billetera y devolver saldo]] | Baja con devolución | Usuario | ASFI Consumidor Financiero |
 | [[CU-17 Bloquear saldo por orden de autoridad]] | Cumplir un oficio | Autoridad · Legal | UIF · judicial |
+| [[CU-18 Registrar y verificar una cuenta bancaria de destino]] | Titularidad probada y número cifrado | Usuario | ASFI Seguridad · UIF |
+| [[CU-19 Reembolsar un pago y atender una disputa]] | Devolver con asiento y responder contracargos | Soporte · Supervisor | ASFI · reglas de marca |
 
 ### Circuito de dinero del pasanaku
 
@@ -91,6 +95,11 @@ Norma (docs/Cumplimiento.md)  →  Caso de uso (esta carpeta)  →  Restricción
 | [[CU-22 Liquidar y entregar el fondo]] | Bolsa bruta → deducciones → neto | Sistema · Organizador | ASFI · tributario |
 | [[CU-23 Cubrir un incumplimiento con el fondo]] | Cobertura y deuda exigible | Sistema | Contabilidad · debido proceso |
 | [[CU-24 Registrar el asiento contable de una operación]] | Doble partida y cierre | Sistema | Ley 393 · plan de cuentas |
+| [[CU-25 Declarar el incumplimiento con descargo y evidencia]] | Debido proceso antes de la sanción | Sistema · Grupo | Debido proceso · ASFI |
+| [[CU-26 Ejecutar el aval y subrogar la deuda]] | El que firmó responde, y pasa a ser acreedor | Sistema · Avalista | Debido proceso · contabilidad |
+| [[CU-27 Restringir al deudor e incluirlo en la lista interna]] | Restricción proporcional y reversible | Cobranza | Consumidor financiero · datos |
+| [[CU-28 Emitir la orden de desembolso y ejecutar el intento]] | La plata sale una vez y con acuse | Sistema · Tesorería | BCB pagos · conciliación |
+| [[CU-29 Devolver los aportes del fondo de garantía]] | Cada uno recupera lo que puso menos lo que consumió | Sistema · Contabilidad | Contabilidad · transparencia |
 
 ### Comisiones, impuestos y facturación
 
@@ -102,6 +111,7 @@ Norma (docs/Cumplimiento.md)  →  Caso de uso (esta carpeta)  →  Restricción
 | [[CU-33 Devolver comisión y emitir nota de crédito]] | Reparar un cobro indebido | Soporte · Supervisor | SIN · ASFI reclamos |
 | [[CU-34 Publicar un tarifario nuevo con preaviso]] | Cambio de precios conforme | Producto · Directorio | ASFI Consumidor Financiero |
 | [[CU-35 Cerrar la liquidación mensual de ingresos]] | Resultado y conciliación | Contabilidad | Contabilidad · tributario |
+| [[CU-36 Segmentar comercialmente y aplicar precio diferenciado]] | Cobrar distinto con criterio explicable | Producto | ASFI transparencia · no discriminación |
 
 ### Cumplimiento UIF y ASFI
 
@@ -114,6 +124,9 @@ Norma (docs/Cumplimiento.md)  →  Caso de uso (esta carpeta)  →  Restricción
 | [[CU-44 De alerta de monitoreo a reporte de operación sospechosa]] | Investigar y decidir | Analista · Oficial | UIF |
 | [[CU-45 Atender un requerimiento de autoridad]] | Responder oficio en plazo | Legal | UIF · judicial |
 | [[CU-46 Verificar el alcance de la licencia]] | No operar fuera de lo autorizado | Sistema | ASFI Res. 540/2025 |
+| [[CU-47 Evaluar el riesgo del producto antes de lanzarlo]] | Riesgo, control y no objeción antes del lanzamiento | Producto · Oficial | UIF EBR · ASFI 540/2025 |
+| [[CU-48 Calibrar reglas de cumplimiento y triar sus alertas]] | Reglas simuladas y alertas con conclusión | Oficial · Analista | UIF monitoreo · antifraude |
+| [[CU-49 Designar al oficial de cumplimiento y capacitar]] | Titular, suplente y capacitación con evidencia | Directorio · Oficial | UIF designación · capacitación |
 
 ### Operación, control y consumidor financiero
 
@@ -126,6 +139,9 @@ Norma (docs/Cumplimiento.md)  →  Caso de uso (esta carpeta)  →  Restricción
 | [[CU-54 Registrar un evento de riesgo operativo]] | Base de pérdidas y plan de acción | Riesgos | ASFI Libro 3 Título V |
 | [[CU-55 Gestionar un incidente de seguridad]] | Contener, reportar y notificar | Seguridad | ASFI Seguridad de la Información |
 | [[CU-56 Ejecutar una prueba de continuidad]] | RTO/RPO probados y documentados | TI · Riesgos | ASFI · ISO 22301 |
+| [[CU-57 Operar un punto de atención y arquear el efectivo]] | El efectivo cuadra todos los días | Responsable del punto | ASFI puntos de atención · BCB |
+| [[CU-58 Definir, programar y exportar un reporte]] | Sacar datos con permiso, huella y vencimiento | Analista · Auditoría | Protección de datos · ASFI |
+| [[CU-59 Mantener el calendario de días no hábiles]] | Que 'cinco días hábiles' signifique lo mismo para todos | Operaciones | ASFI plazos · Ley 393 |
 
 ### Gobernanza, turnos y ciclo de vida del grupo
 
@@ -139,6 +155,8 @@ Norma (docs/Cumplimiento.md)  →  Caso de uso (esta carpeta)  →  Restricción
 | [[CU-65 Retirarse de un grupo]] | Salida ordenada con liquidación | Participante | Consumidor financiero |
 | [[CU-66 Reemplazar a un participante moroso]] | El grupo sigue; la deuda no se perdona | Sistema · Grupo | Debido proceso |
 | [[CU-67 Disolver el grupo anticipadamente]] | Cierre con prelación y cuadre al centavo | Grupo · Contabilidad | Consumidor financiero · contabilidad |
+| [[CU-68 Postular a un grupo y ser emparejado]] | Entrar a un grupo con gente de riesgo comparable | Usuario · Organizador | UIF KYC · no discriminación |
+| [[CU-69 Invitar a un contacto y registrar sus referencias]] | Crecer entre conocidos, sin filtrar datos | Participante | Protección de datos · antifraude |
 
 ### Reputación y transparencia
 
@@ -148,6 +166,9 @@ Norma (docs/Cumplimiento.md)  →  Caso de uso (esta carpeta)  →  Restricción
 | [[CU-71 Recalcular el puntaje de reputación]] | Un número explicable, no una opinión | Sistema | No discriminación arbitraria |
 | [[CU-72 Sellar el bloque de transparencia]] | La historia del grupo, encadenada por hash | Sistema | Integridad de la evidencia |
 | [[CU-73 Verificar la cadena de transparencia]] | Auditar sin depender de nosotros | Auditor · tercero | Evidencia auditable |
+| [[CU-74 Otorgar y revocar una insignia]] | Reconocer conducta con criterio publicado | Sistema | Transparencia |
+| [[CU-75 Emitir un certificado de reputación verificable]] | Que el historial sirva afuera, por decisión del titular | Usuario · tercero | Protección de datos · transparencia |
+| [[CU-76 Reseñar a un participante y moderar la reseña]] | La experiencia real, moderada y acotada | Participante · Moderador | Datos personales · no discriminación |
 
 ### Notificaciones y comunicaciones
 
@@ -156,12 +177,32 @@ Norma (docs/Cumplimiento.md)  →  Caso de uso (esta carpeta)  →  Restricción
 | [[CU-80 Despachar una notificación]] | Un hecho, un mensaje, con acuse | Sistema | Consumidor financiero · datos |
 | [[CU-81 Programar recordatorios de aporte]] | Cobrar avisando bien, no persiguiendo | Sistema | Buenas prácticas de cobranza |
 | [[CU-82 Procesar una respuesta entrante]] | Que contestar sirva de algo | Participante · Soporte | Consumidor financiero |
+| [[CU-83 Enrutar el envío por proveedor de mensajería]] | Que el aviso obligatorio llegue igual | Sistema | Consumidor financiero · continuidad |
+
+### Organizador, automatización y plataforma
+
+| Código | Caso de uso | Actor | Normativa que lo obliga |
+| --- | --- | --- | --- |
+| [[CU-90 Postular a organizador y habilitarse]] | Administrar plata ajena se gana con requisitos | Usuario · Oficial | UIF DDD reforzada · gobernanza |
+| [[CU-91 Firmar y rescindir el contrato de organizador]] | Obligaciones firmadas y transición ordenada | Organizador · Legal | ASFI Consumidor Financiero |
+| [[CU-92 Evaluar el desempeño del organizador]] | Medir con datos propios y desglose discutible | Sistema | Gobernanza · no discriminación |
+| [[CU-93 Sancionar al organizador y resolver su apelación]] | Causal, descargo, decisión y apelación | Operaciones · Comité | Debido proceso |
+| [[CU-94 Elevar una decisión al comité de gobierno]] | Quórum, acta y voto registrado | Comité · Directorio | ASFI gobierno corporativo |
+| [[CU-95 Definir una regla de automatización]] | Delegar lo repetitivo, nunca lo sensible | Organizador · Operaciones | Control interno |
+| [[CU-96 Programar y ejecutar una tarea automatizada]] | Exactamente una vez, aunque todo se caiga | Sistema | Control interno · continuidad |
+| [[CU-97 Anticipar el riesgo con alertas tempranas]] | Ver el problema antes, para ayudar y no castigar | Sistema · Riesgos | ASFI gestión de riesgo |
+| [[CU-98 Publicar el tablero de indicadores]] | Los mismos números para todos, con su meta | Operaciones · Directorio | ASFI gobierno corporativo |
+| [[CU-99 Dar de alta un proveedor de pago y enrutar el cobro]] | No depender de una sola pasarela | Operaciones · Tesorería | ASFI tercerización · BCB |
 
 ## Casos de uso todavía no escritos
 
-Ninguno. Las cinco familias que estaban pendientes —sorteo, gobernanza, reemplazo y
-disolución, reputación y notificaciones— se escribieron en los rangos CU-60, CU-70 y
-CU-80.
+Ninguno. **Las 274 entidades del modelo tienen al menos un caso de uso que las
+especifica**, y esa es la verificación que se corre: si aparece una entidad sin caso,
+falta escribirlo o sobra la tabla.
+
+Los rangos CU-90..99 se abrieron para el organizador, la automatización y los
+proveedores de plataforma, que hasta entonces existían en el modelo (módulo 07) sin
+especificación de flujo.
 
 ## Ver también
 

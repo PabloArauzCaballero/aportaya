@@ -89,6 +89,12 @@ export const ErroresCU65 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `PARTICIPANTE_NO_ACTIVO` | Ya está retirado, expulsado o el cupo cambió de manos |
+| `POSICION_DEUDORA_SIN_PLAN` | Cobró su turno y quiere irse sin plan de pago ni garantía |
+| `RETIRO_RECHAZADO_POR_GRUPO` | El acuerdo requerido por el reglamento fue rechazado |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |
@@ -140,4 +146,4 @@ Entonces el cupo queda LIBRE y se le devuelve lo aportado íntegro
 
 ## Ver también
 
-[[CU-64 Traspasar un cupo]] · [[CU-66 Reemplazar a un participante moroso]] · [[CU-67 Disolver el grupo anticipadamente]]
+[[CU-29 Devolver los aportes del fondo de garantía]] · [[CU-64 Traspasar un cupo]] · [[CU-66 Reemplazar a un participante moroso]] · [[CU-67 Disolver el grupo anticipadamente]]

@@ -46,6 +46,10 @@ perdieron— está en [[Stack]].
 | [[ADR-007 Sesión, RLS y pooling\|007]] | Identidad de la sesión hasta la base | `SET LOCAL` + PgBouncer *transaction* | Aceptada |
 | [[ADR-008 Pruebas\|008]] | Qué se considera probado | Vitest + Testcontainers, criterio a criterio | Aceptada |
 | [[ADR-009 Composición atómica\|009]] | Cómo se descompone el código, front y back | Átomos, moléculas y organismos | Aceptada |
+| [[ADR-010 Autenticación y sesión\|010]] | Cómo se autentica y cómo llega la identidad a la base | Default-deny · bearer en la app, cookie en el backoffice | Aceptada |
+| [[ADR-011 Lecturas y réplica\|011]] | Qué se lee de la réplica y cuándo vale una proyección | Separación por credencial; proyecciones generadas | Aceptada |
+| [[ADR-012 Empaquetado y despliegue\|012]] | Cómo se empaqueta y se pone en producción | NGINX única puerta · migración como trabajo aparte | Aceptada |
+| [[ADR-013 Respaldo y continuidad\|013]] | Qué se respalda y cómo se prueba que sirve | Punto en el tiempo + ensayo de restauración obligatorio | Aceptada |
 
 ## Documentos de referencia
 
@@ -56,6 +60,7 @@ perdieron— está en [[Stack]].
 | [[Flujo de una transacción]] | Qué pasa, en orden, entre el request y el `COMMIT` |
 | [[Entornos y despliegue]] | Cómo se aplica el esquema, se siembra y se opera |
 | [[Prompts/_Prompts\|Prompts generalistas]] | Los tres prompts —general, backend, frontend— que imponen la composición atómica |
+| [[Lineamientos adoptados y descartados]] | Qué se tomó de los lineamientos externos y qué se eliminó por contradecir la bóveda |
 
 ## Cómo se usa esta carpeta al programar
 

@@ -142,4 +142,4 @@ Entonces existe un hallazgo_auditoria abierto
 
 ## Ver también
 
-[[CU-41 Detectar umbral y registrar formulario PCC-01]] · [[CU-42 Detectar umbral y registrar ROG]] · [[CU-45 Atender un requerimiento de autoridad]]
+[[CU-41 Detectar umbral y registrar formulario PCC-01]] · [[CU-42 Detectar umbral y registrar ROG]] · [[CU-45 Atender un requerimiento de autoridad]] · [[CU-49 Designar al oficial de cumplimiento y capacitar]] · [[CU-58 Definir, programar y exportar un reporte]] · [[CU-59 Mantener el calendario de días no hábiles]]

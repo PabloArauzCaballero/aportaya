@@ -40,4 +40,4 @@ Sistema-Diseno/
 > **Verde `#1C5A3A` = estructura. Naranja `#E5852B` = acción.** Un solo botón naranja por pantalla.
 
 Reglas de uso e implementación: skill del repo `disenar-frontend` (`.claude/skills/disenar-frontend/SKILL.md`).
-Relacionado: [[AportaYa-Identidad]] · [[AportaYa-Logo-Evaluacion]]
+Relacionado: [[AportaYa-Identidad]] · [AportaYa-Logo-Evaluacion.html](../AportaYa-Logo-Evaluacion.html)

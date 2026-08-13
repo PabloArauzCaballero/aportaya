@@ -122,8 +122,16 @@ Y existe un plan_accion_riesgo asociado
 Dado un plan cuya proxima_prueba venció
 Cuando corre el control diario
 Entonces existe un hallazgo_auditoria abierto
+
+Dada una prueba de conmutación real con impacto en clientes
+Cuando se registra su resultado
+Entonces existe además un evento_riesgo_operativo con la pérdida cuantificada
+
+Dado un proceso crítico sin plan_continuidad
+Cuando corre el control de cobertura
+Entonces existe un hallazgo_auditoria que lo identifica por nombre
 ```
 
 ## Ver también
 
-[[CU-54 Registrar un evento de riesgo operativo]] · [[Cumplimiento]]
+[[CU-54 Registrar un evento de riesgo operativo]] · [[CU-83 Enrutar el envío por proveedor de mensajería]] · [[Cumplimiento]]

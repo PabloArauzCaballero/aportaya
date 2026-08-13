@@ -79,8 +79,9 @@ resolver y el generador lo reporta.
 5. Regenerar y verificar:
 
 ```bash
-python3 scripts/generar_boveda.py   # notas de Obsidian
-python3 scripts/generar_ddl.py      # esquema SQL en sql/ + extraer_sql + semillas
+python3 scripts/generar_boveda.py    # notas de Obsidian
+python3 scripts/generar_ddl.py       # esquema SQL en sql/ + extraer_sql + semillas
+python3 scripts/verificar_boveda.py  # coherencia: casos, restricciones e índices
 ```
 
 `generar_ddl.py` encadena `extraer_sql.py` (restricciones del catálogo) y
@@ -92,6 +93,10 @@ valida cada columna contra el modelo y falla si no existe. Eso es deseable.
 
 `generar_boveda.py` **debe** terminar con `"sin_resolver": []`; si aparece alguna
 columna, falta un override.
+
+`verificar_boveda.py` **debe** terminar con `TODO OK` y devuelve 1 si algo falla. Es
+el que detecta la entidad nueva que nadie especificó en un caso de uso, la
+restricción que se cita y no existe, y el índice que quedó desactualizado.
 
 `generar_ddl.py` **debe** terminar con `Sin pendientes a nivel de datos.` Reporta
 como pendiente toda columna `<<CK>>` cuyos valores no pueda derivar del diagrama de

@@ -106,7 +106,7 @@ export const ErroresCU13 = {
 
 ## Restricciones aplicables
 
-`R-BIL-02` · `R-BIL-03` · `R-BIL-07` · `R-BIL-08` · `R-AUD-04`
+`R-BIL-02` · `R-BIL-03` · `R-BIL-07` · `R-BIL-08` · `R-BIL-16` · `R-AUD-04`
 
 ## Evidencia que deja
 

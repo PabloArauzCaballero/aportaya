@@ -55,6 +55,8 @@ normas: [Protección de datos, ISO/IEC 27701, ASFI ETF]
 | 4a | El titular tiene saldo, deuda o grupo activo | La supresión se rechaza motivadamente: hay relación vigente; se ofrece cerrar la cuenta primero ([[CU-16 Cerrar billetera y devolver saldo]]) |
 | 4b | Existe [[requerimiento_autoridad]] o [[caso_investigacion_lft]] abierto | Se suspende la supresión y se documenta el motivo legal |
 | 5a | Se vence el plazo | La solicitud aparece como vencida en tablero y escala como [[hallazgo_auditoria]] |
+| 3a | El paquete de acceso arrastraría datos de terceros | Se entrega redactado: los movimientos con contraparte muestran el alias, nunca el documento ni el teléfono del otro |
+| — | Solicitudes repetidas del mismo titular sobre lo mismo | Se responde con la entrega anterior y su fecha; el derecho no se agota, pero tampoco se convierte en un canal de denegación de servicio |
 
 ## Postcondiciones
 
@@ -143,4 +145,4 @@ Entonces existe un registro_acceso_datos con justificación
 
 ## Ver también
 
-[[CU-16 Cerrar billetera y devolver saldo]] · [[Cumplimiento]] · [[Restricciones]]
+[[CU-09 Cambiar credenciales y solicitar la baja]] · [[CU-16 Cerrar billetera y devolver saldo]] · [[CU-55 Gestionar un incidente de seguridad]] · [[CU-75 Emitir un certificado de reputación verificable]] · [[Cumplimiento]] · [[Restricciones]]

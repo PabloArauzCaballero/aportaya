@@ -53,6 +53,8 @@ normas: [UIF EBR]
 | 1a | La revisión vence sin ejecutarse | Queda `estado='VENCIDA'` y visible en tablero; la cuenta pasa a `LIMITADA` tras el plazo de gracia definido en política |
 | 2a | El cliente no responde el pedido de actualización | Se restringe el alza de posición; se documenta el intento de contacto |
 | 5a | El desvío tiene justificación válida | Se registra en `desvio_perfil.justificacion` y se actualiza el perfil declarado |
+| 4a | La matriz de riesgo cambió entre dos revisiones | Se califica con la matriz vigente **a la fecha de la revisión** y se guarda cuál se usó: dos años después hay que poder explicar con qué regla se lo calificó |
+| — | Cuenta inactiva más allá del plazo de política o titular fallecido | No se programa revisión: se cierra el ciclo con motivo, en vez de acumular vencimientos falsos que ensucian el tablero |
 
 ## Postcondiciones
 
@@ -136,4 +138,4 @@ Entonces la cuenta_billetera queda en estado LIMITADA
 
 ## Ver también
 
-[[CU-02 Elevar nivel de debida diligencia]] · [[CU-44 De alerta de monitoreo a reporte de operación sospechosa]]
+[[CU-02 Elevar nivel de debida diligencia]] · [[CU-03 Declaración PEP y beneficiario final]] · [[CU-44 De alerta de monitoreo a reporte de operación sospechosa]]

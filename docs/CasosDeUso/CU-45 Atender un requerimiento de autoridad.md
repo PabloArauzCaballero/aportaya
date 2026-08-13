@@ -136,4 +136,4 @@ Entonces existe un hallazgo_auditoria abierto
 
 ## Ver también
 
-[[CU-17 Bloquear saldo por orden de autoridad]] · [[CU-44 De alerta de monitoreo a reporte de operación sospechosa]]
+[[CU-17 Bloquear saldo por orden de autoridad]] · [[CU-43 Remitir los reportes mensuales a la UIF]] · [[CU-44 De alerta de monitoreo a reporte de operación sospechosa]] · [[CU-53 Elevar un reclamo a segunda instancia]] · [[CU-58 Definir, programar y exportar un reporte]]

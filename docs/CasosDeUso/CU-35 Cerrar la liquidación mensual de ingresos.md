@@ -44,6 +44,8 @@ normas: [Contabilidad, tributario]
 | 4a | Diferencia contra el mayor | Se abre [[excepcion_conciliacion]] o [[hallazgo_auditoria]]; el período queda abierto |
 | — | Reapertura de un período cerrado | Requiere autorización registrada; queda `reabierto` y auditado |
 | 1a | Devengos de meses anteriores que se cobran ahora | Se imputan al período de devengo, no al de cobro (criterio devengado) |
+| — | Un devengo se declara incobrable después del cierre | Se registra en el período corriente como pérdida, con su asiento; el mes cerrado no se toca |
+| 2a | Faltan cierres diarios dentro del mes | El mes no cierra: la liquidación mensual se apoya en días cuadrados, no los reemplaza |
 
 ## Postcondiciones
 
@@ -124,8 +126,16 @@ Entonces total_cobrado coincide con el saldo de la cuenta de ingresos
 Dada una diferencia entre la liquidación y el mayor
 Cuando se intenta cerrar
 Entonces el cierre se rechaza y queda un hallazgo abierto
+
+Dado un mes con un cierre diario faltante
+Cuando se intenta cerrar la liquidación
+Entonces el cierre se rechaza y el mes queda abierto
+
+Dada una liquidación mensual ya cerrada
+Cuando se reintenta el cierre con la misma clave de idempotencia
+Entonces se devuelve la liquidación existente y no se duplican asientos
 ```
 
 ## Ver también
 
-[[CU-31 Devengar y cobrar la comisión]] · [[CU-51 Ejecutar el cierre diario]]
+[[CU-24 Registrar el asiento contable de una operación]] · [[CU-31 Devengar y cobrar la comisión]] · [[CU-51 Ejecutar el cierre diario]]

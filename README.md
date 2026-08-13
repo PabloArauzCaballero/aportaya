@@ -38,8 +38,8 @@ del sistema, en cuatro capas encadenadas.
 | Capa | Dónde | Responde |
 | --- | --- | --- |
 | Norma | [`docs/Cumplimiento.md`](docs/Cumplimiento.md) | qué obliga ASFI, UIF, BCB, el SIN y las ISO |
-| Caso de uso | [`docs/CasosDeUso/`](docs/CasosDeUso/_CasosDeUso.md) | cómo se ejecuta cada flujo, paso a paso — 55 casos |
-| Restricción | [`docs/Restricciones.md`](docs/Restricciones.md) | qué impide, en la base, que se viole — 92 reglas |
+| Caso de uso | [`docs/CasosDeUso/`](docs/CasosDeUso/_CasosDeUso.md) | cómo se ejecuta cada flujo, paso a paso — 87 casos |
+| Restricción | [`docs/Restricciones.md`](docs/Restricciones.md) | qué impide, en la base, que se viole — 119 reglas |
 | Modelo | [`docs/Modelos/`](docs/Modelos/Entidades/_Entidades.md) | dónde vive cada dato |
 | Esquema | [`sql/`](sql/README.md) | el DDL ejecutable, generado desde las tres capas anteriores |
 | Arquitectura | [`docs/Arquitectura/`](docs/Arquitectura/_Arquitectura.md) | con qué se implementa, y por qué así |
@@ -66,17 +66,15 @@ que se diseña siempre y tres [prompts generalistas](docs/Arquitectura/Prompts/_
 —general, backend y frontend— que imponen dividir todo en átomos, moléculas y
 organismos.
 
-Las **36 skills del proyecto** en [`.claude/skills/`](.claude/skills/README.md)
-describen cómo se trabaja sobre esta bóveda:
+Las **skills del proyecto** describen cómo se trabaja sobre esta bóveda, en siete
+grupos: método y arquitectura, especificación, construcción, interfaz, dominio,
+cumplimiento y control, y operación y entrega. El índice completo —con cuándo se usa
+cada una— está en [`.claude/skills/README.md`](.claude/skills/README.md), y
+`scripts/verificar_boveda.py` comprueba que ninguna quede fuera de ese índice.
 
-| Grupo | Skills |
-| --- | --- |
-| Método | `arquitectura-atomica` · `implementar-desde-boveda` · `codigo-limpio` · `revision-codigo` · `entorno-monorepo` · `git-flujo` · `glosario-dominio` |
-| Especificación | `boveda-modelo` · `caso-de-uso` · `restriccion` · `norma-nueva` · `semillas-catalogos` |
-| Construcción | `contratos-api` · `back-nestjs` · `datos-kysely` · `dinero-decimal` · `trabajos-outbox` · `errores-api` · `idempotencia-reintentos` · `seguridad-sesion-rls` · `pruebas-cu` |
-| Interfaz | `disenar-frontend` · `movil-expo` · `web-backoffice` |
-| Dominio | `kyc-onboarding` · `contabilidad-partida-doble` · `qr-pagos` · `facturacion-sin` · `gobernanza-grupo` · `sorteo-transparencia` · `garantia-mora-cobranza` · `notificaciones-consentimiento` |
-| Cumplimiento | `cumplimiento-uif` · `reportes-regulatorios` · `reclamos-consumidor` · `observabilidad` |
+Los lineamientos externos que se incorporaron —y los que se eliminaron por contradecir
+una decisión ya tomada— están en
+[Lineamientos adoptados y descartados](docs/Arquitectura/Lineamientos%20adoptados%20y%20descartados.md).
 
 ## Cumplimiento normativo
 

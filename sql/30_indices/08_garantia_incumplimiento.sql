@@ -178,7 +178,7 @@ CREATE INDEX IF NOT EXISTS ix_ejecucion_aval_registro_id
 CREATE INDEX IF NOT EXISTS ix_matriz_sancion_politica_id
   ON matriz_sancion (politica_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_matriz_sancion_severidad_numero_reincidencia_tipo_i_8ecd7d
+CREATE UNIQUE INDEX IF NOT EXISTS uq_matriz_sancion_severidad_numero_reincidencia_tipo_i_78af74
   ON matriz_sancion (severidad, numero_reincidencia, tipo_incumplimiento);
 
 CREATE INDEX IF NOT EXISTS ix_sancion_registro_id

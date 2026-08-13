@@ -144,4 +144,4 @@ Entonces se crea una obligación de tipo RECARGO_MORA con obligacion_origen_id
 
 ## Ver también
 
-[[CU-22 Liquidar y entregar el fondo]] · [[CU-51 Ejecutar el cierre diario]]
+[[CU-12 Transferir saldo entre billeteras]] · [[CU-22 Liquidar y entregar el fondo]] · [[CU-51 Ejecutar el cierre diario]] · [[CU-59 Mantener el calendario de días no hábiles]] · [[CU-81 Programar recordatorios de aporte]] · [[CU-82 Procesar una respuesta entrante]] · [[CU-99 Dar de alta un proveedor de pago y enrutar el cobro]]

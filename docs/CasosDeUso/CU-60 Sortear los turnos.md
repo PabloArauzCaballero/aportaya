@@ -102,6 +102,14 @@ export const ErroresCU60 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `GRUPO_NO_CONFORMADO` | Quedan cupos libres o participantes sin aceptar: no se sortea un grupo a medio armar |
+| `SORTEO_YA_EXISTE` | El grupo ya tiene un sorteo comprometido; no se vuelve a comprometer |
+| `FECHA_DE_REVELADO_FUTURA` | Se pidió revelar antes de la fecha comprometida: el compromiso sería inútil |
+| `HASH_NO_VERIFICA` | La semilla revelada no reproduce el hash. **Aborta, no asigna turnos y abre incidente** |
+| `REGLAMENTO_SIN_FIRMAR` | Algún participante no aceptó el reglamento que fija el método de sorteo |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |
@@ -160,4 +168,4 @@ Y el sorteo queda ANULADO con su incidente registrado
 
 ## Ver también
 
-[[CU-61 Verificar públicamente el sorteo]] · [[CU-63 Proponer y votar un acuerdo]] · [[CU-20 Crear grupo y congelar tarifario]]
+[[CU-20 Crear grupo y congelar tarifario]] · [[CU-61 Verificar públicamente el sorteo]] · [[CU-62 Permutar turnos entre participantes]] · [[CU-63 Proponer y votar un acuerdo]]

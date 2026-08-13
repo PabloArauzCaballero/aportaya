@@ -93,6 +93,13 @@ export const ErroresCU66 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `INCUMPLIMIENTO_NO_FIRME` | El plazo de descargo sigue abierto: no se reemplaza a nadie sobre un incumplimiento discutible |
+| `SIN_ACUERDO_DE_EXPULSION` | El reglamento exige acuerdo del grupo y no lo hay |
+| `CANDIDATO_NO_ELEGIBLE` | No alcanza el KYC mínimo, la reputación mínima, o ya ocupa un cupo del grupo |
+| `MOROSO_REGULARIZADO` | Se puso al día durante el proceso: conserva su cupo y el reemplazo se cierra |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |
@@ -147,4 +154,4 @@ Entonces se activa el plan de contingencia del grupo
 
 ## Ver también
 
-[[CU-23 Cubrir un incumplimiento con el fondo]] · [[CU-64 Traspasar un cupo]] · [[CU-67 Disolver el grupo anticipadamente]]
+[[CU-23 Cubrir un incumplimiento con el fondo]] · [[CU-25 Declarar el incumplimiento con descargo y evidencia]] · [[CU-26 Ejecutar el aval y subrogar la deuda]] · [[CU-64 Traspasar un cupo]] · [[CU-65 Retirarse de un grupo]] · [[CU-67 Disolver el grupo anticipadamente]] · [[CU-68 Postular a un grupo y ser emparejado]]

@@ -84,6 +84,11 @@ export const ErroresCU81 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `PERIODO_NO_ABIERTO` | El período no está abierto o ya se liquidó: no hay qué recordar |
+| `SIN_PROGRAMACION` | El grupo no definió escalera de recordatorios; se aplican solo los obligatorios |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |
@@ -139,4 +144,4 @@ Entonces no se duplica ningún envío
 
 ## Ver también
 
-[[CU-21 Cobrar el aporte del período]] · [[CU-80 Despachar una notificación]] · [[CU-82 Procesar una respuesta entrante]]
+[[CU-21 Cobrar el aporte del período]] · [[CU-80 Despachar una notificación]] · [[CU-82 Procesar una respuesta entrante]] · [[CU-83 Enrutar el envío por proveedor de mensajería]] · [[CU-95 Definir una regla de automatización]] · [[CU-96 Programar y ejecutar una tarea automatizada]] · [[CU-97 Anticipar el riesgo con alertas tempranas]]

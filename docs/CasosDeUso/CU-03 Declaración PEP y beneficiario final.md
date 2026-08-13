@@ -49,6 +49,8 @@ normas: [UIF EBR]
 | 2a | El usuario declara no ser PEP pero el cotejo devuelve coincidencia | Se abre [[coincidencia_lista]] y [[caso_investigacion_lft]]; la declaración falsa es en sí un factor de riesgo |
 | 5a | Deja de ser PEP (`hasta` cumplido) | La condición **no se borra**: se cierra con `hasta` y la recalificación se evalúa en la próxima revisión |
 | 3a | El beneficiario final no coincide con el titular | Se exige documentación adicional antes de habilitar operaciones |
+| 4a | La coincidencia con la lista resulta homónima | Se descarta con evidencia y firma del oficial de cumplimiento. **La descartada también se guarda**: la próxima vez no se investiga desde cero |
+| — | El beneficiario final es a su vez PEP | La condición se propaga al titular: el riesgo se hereda hacia arriba, no se diluye en la estructura |
 
 ## Postcondiciones
 
@@ -127,6 +129,15 @@ Dado un usuario que declaró no ser PEP
 Y existe una coincidencia_lista confirmada con su nombre
 Cuando se evalúa su perfil
 Entonces se abre un caso_investigacion_lft
+
+Dado un usuario que declara ser PEP sin informar cargo ni institución
+Cuando intenta guardar la declaración
+Entonces se rechaza con DECLARACION_INCOMPLETA
+Y no se crea ninguna declaracion_pep
+
+Dado un beneficiario_final declarado que es PEP extranjero
+Cuando se guarda la estructura de control
+Entonces la debida_diligencia del titular queda en REFORZADA
 ```
 
 ## Ver también

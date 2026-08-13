@@ -79,6 +79,12 @@ export const ErroresCU72 = {
 } as const
 ```
 
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `PERIODO_CON_EXCEPCIONES` | Quedan excepciones de conciliación abiertas: un bloque con datos provisorios miente con firma |
+| `CADENA_ROTA` | El `hash_bloque` del anterior no coincide con lo encadenado. **Detiene el sellado y abre incidente** |
+| `BLOQUE_DUPLICADO` | Ya existe ese `numero_bloque` para el grupo (`R-REP-04`) |
+
 ## Descomposición atómica
 
 | Nivel | Pieza | Responsabilidad |
@@ -131,4 +137,4 @@ Entonces la base lo rechaza por unicidad
 
 ## Ver también
 
-[[CU-73 Verificar la cadena de transparencia]] · [[CU-51 Ejecutar el cierre diario]]
+[[CU-51 Ejecutar el cierre diario]] · [[CU-71 Recalcular el puntaje de reputación]] · [[CU-73 Verificar la cadena de transparencia]]
