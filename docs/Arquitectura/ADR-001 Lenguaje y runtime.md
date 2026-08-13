@@ -11,7 +11,7 @@ fecha: 2026-08-12
 
 ## Contexto
 
-El sistema ya está especificado: 12 módulos, 274 tablas, 565 claves foráneas, 36
+El sistema ya está especificado: 12 módulos, 274 tablas, 566 claves foráneas, 87
 casos de uso con criterios de aceptación y un catálogo de restricciones que la base
 hace cumplir. Lo que falta no es diseñar: es **traducir** esa especificación a
 código sin que se desincronice. Hay además tres artefactos que hablan del mismo

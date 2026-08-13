@@ -11,13 +11,13 @@ fecha: 2026-08-12
 
 ## Contexto
 
-Doce módulos, 274 tablas y 36 casos de uso escritos por un equipo chico durante
+Doce módulos, 274 tablas y 87 casos de uso escritos por un equipo chico durante
 años. Sin una regla de descomposición, el resultado conocido es siempre el mismo:
 pantallas de 800 líneas, servicios que hacen ocho cosas, lógica de negocio copiada
 en tres lugares y ninguna pieza que se pueda probar sola.
 
 El sistema de diseño de AportaYa ya está definido en átomos, moléculas y organismos
-(skill `disenar-frontend-aportaya`). Falta decidir que **esa misma disciplina se
+(skill `disenar-frontend`). Falta decidir que **esa misma disciplina se
 aplica al backend**, con el vocabulario traducido.
 
 ## Decisión

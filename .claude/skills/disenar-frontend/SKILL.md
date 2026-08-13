@@ -134,6 +134,8 @@ Navbar web, **sidebar**, **formulario completo**, **tabla de datos** (toolbar co
 - **Snackbar**: mensaje inferior efímero.
 - **Tarjeta de saldo móvil**: encabezado verde con saldo + Recargar (naranja) / Retirar (fantasma).
 - **Onboarding**: slides con símbolo, título, texto, paginación por puntos.
+- **Estados obligatorios** (toda vista con datos remotos): `Cargando`, `EstadoVacio`, `EstadoError` (con `sinConexion`). Nunca dejes una pantalla sin su estado de carga/vacío/error.
+- **Tema**: envolvé con `ProveedorTema` (override manual + sistema); consumí siempre con `usarTema()`.
 - **Pantallas de referencia**: Home billetera, Detalle de pasanaku, Recargar/Retirar, Movimientos, Crear pasanaku.
 
 ## 5 · Voz en la UI
@@ -150,7 +152,9 @@ Navbar web, **sidebar**, **formulario completo**, **tabla de datos** (toolbar co
 - [ ] Tema claro y oscuro probados con `data-theme`.
 - [ ] Tablas en `overflow-x:auto`; sin scroll lateral del body.
 - [ ] `prefers-reduced-motion` respetado.
-- [ ] Copy en voz de marca.
+- [ ] Copy en voz de marca y vocabulario del `glosario-dominio` (grupo/cupo/turno/período/aporte/entrega).
+- [ ] Estados cubiertos: cargando / vacío / error / sin conexión.
+- [ ] Prueba unitaria de todo átomo con aritmética (ej: `dominio/dinero.spec.ts`).
 
 ## Cómo usar
 1. Abrí el HTML de referencia para ver cada componente renderizado y copiar marcado/CSS.

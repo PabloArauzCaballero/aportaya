@@ -31,7 +31,7 @@ TypeScript, consumiendo el mismo paquete de contratos.
   (biometría), notificaciones vía FCM/APNs, actualizaciones OTA con EAS Update.
 - Backoffice: TanStack Router + TanStack Query, tablas virtualizadas, exportación.
 - Ambos: **composición atómica obligatoria** ([[ADR-009 Composición atómica]]) y el
-  sistema de diseño de la skill `disenar-frontend-aportaya`.
+  sistema de diseño de la skill `disenar-frontend`.
 
 ## Motivo
 
@@ -83,7 +83,7 @@ es experto; compartir componentes de dominio sí, compartir layout no.
 | Ninguna regla de negocio vive solo en el cliente | El cliente da buen mensaje; la base garantiza |
 | Toda operación de dinero envía clave de idempotencia | El reintento del usuario no puede duplicar un aporte |
 | La app asume red intermitente | Estados de carga, error y reintento explícitos en cada pantalla de dinero |
-| Los colores salen de los tokens de la marca | Skill `disenar-frontend-aportaya`; nunca hex sueltos |
+| Los colores salen de los tokens de la marca | Skill `disenar-frontend`; nunca hex sueltos |
 
 ## Cómo se verifica
 

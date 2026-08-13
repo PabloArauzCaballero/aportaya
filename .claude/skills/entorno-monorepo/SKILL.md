@@ -37,7 +37,7 @@ python3 scripts/generar_ddl.py                # el esquema sale de la bóveda
 psql -d aportaya -v ON_ERROR_STOP=1 -f sql/aplicar.sql
 psql -d aportaya -v ON_ERROR_STOP=1 -f sql/60_semillas/sembrar.sql
 psql -d aportaya -f sql/60_semillas/99_desarrollo.sql   # solo local
-psql -d aportaya -f sql/50_verificacion/prueba_humo.sql # 65 comprobaciones
+psql -d aportaya -f sql/50_verificacion/prueba_humo.sql # 69 comprobaciones
 
 pnpm datos:tipos                              # introspección → tipos de Kysely
 pnpm dev                                      # api + worker + backoffice

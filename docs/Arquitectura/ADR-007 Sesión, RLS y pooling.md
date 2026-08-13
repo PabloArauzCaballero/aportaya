@@ -31,9 +31,11 @@ y nunca fuera de ella.**
 - Fuera de transacción **no se consulta nada** de tablas con RLS.
 - **PgBouncer en modo *transaction***, compatible con `SET LOCAL` porque el contexto
   muere en el `COMMIT`/`ROLLBACK`.
-- Roles de base distintos por proceso: `api`, `worker`, `reportes` (solo lectura),
-  `migrador`. Ninguno es superusuario, y ninguno tiene `UPDATE`/`DELETE` sobre las
-  tablas append-only.
+- Roles de base distintos por proceso, **los que ya define `sql/00_base/01_roles.sql`**:
+  `rol_aplicacion`, `rol_backoffice`, `rol_cumplimiento`, `rol_auditor` (solo lectura)
+  y `rol_migracion`. Ninguno es superusuario, y ninguno tiene `UPDATE`/`DELETE` sobre
+  las tablas append-only. Si el worker necesita menos privilegios que la API, el rol
+  se agrega al generador —no se improvisa en el despliegue.
 - Los trabajos del worker fijan su propio contexto y actúan como sistema, no
   suplantando a un usuario, salvo que el evento indique el actor original.
 
@@ -97,7 +99,7 @@ comprometido, no puede escribir; si el worker lo es, no puede alterar el libro.
       filas —no un error de aplicación, cero filas por política.
 - [ ] Prueba: dos requests seguidos sobre la misma conexión del pool no comparten
       contexto.
-- [ ] Prueba: el rol `reportes` falla al intentar escribir.
+- [ ] Prueba: el rol `rol_auditor` falla al intentar escribir.
 - [ ] Regla de lint: ninguna consulta fuera de `conTransaccion`.
 
 ## Ver también
