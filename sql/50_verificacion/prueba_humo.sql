@@ -5,6 +5,9 @@
 --  Cada línea debe empezar con OK. Una línea FALLA significa que una regla
 --  que debería ser imposible de violar no está protegiendo nada.
 --
+--  Funciona igual con la base recién creada o ya sembrada: usa códigos y
+--  monedas propios que no colisionan con los catálogos de seeders/.
+--
 --  Este archivo está escrito a mano (el resto de sql/ es generado).
 -- =====================================================================
 \set QUIET on
@@ -40,11 +43,12 @@ SELECT pg_temp.debe_pasar('alta de cuenta de plataforma', $q$
           'PLATAFORMA_INGRESOS', 'BOB', 'ACTIVA', 'ESTANDAR', now())
 $q$);
 
+-- La cuenta puente es contrapartida del sistema: por diseño opera en negativo
 SELECT pg_temp.debe_pasar('alta de cuenta técnica de custodia', $q$
   INSERT INTO cuenta_billetera (id, numero_cuenta, tipo, moneda, estado,
-      nivel_debida_diligencia, fecha_apertura)
+      nivel_debida_diligencia, fecha_apertura, permite_saldo_negativo)
   VALUES ('22222222-2222-2222-2222-222222222222', 'PUE-0001',
-          'PUENTE_CUSTODIA', 'BOB', 'ACTIVA', 'ESTANDAR', now())
+          'PUENTE_CUSTODIA', 'BOB', 'ACTIVA', 'ESTANDAR', now(), TRUE)
 $q$);
 
 -- --- R-BIL-05 · titularidad coherente con el tipo ---------------------
@@ -155,19 +159,37 @@ SELECT pg_temp.debe_pasar('R-BIL-08 retención de autoridad sin vencimiento', $q
           'VIGENTE', now())
 $q$);
 
--- --- R-BIL-07 · el saldo retenido se sincroniza solo ------------------
-SELECT CASE WHEN saldo_retenido = 10
-            THEN 'OK    · R-BIL-07 saldo retenido sincronizado por trigger'
-            ELSE 'FALLA · R-BIL-07 saldo retenido = ' || saldo_retenido END
+-- --- R-BIL-07 y R-BIL-16 · los saldos se derivan del libro ------------
+SELECT CASE WHEN saldo_retenido = 10 AND saldo_disponible = 90 AND saldo_total = 100
+            THEN 'OK    · R-BIL-07/16 saldos derivados por trigger (100 = 90 + 10)'
+            ELSE 'FALLA · R-BIL-07/16 disponible=' || saldo_disponible
+                 || ' retenido=' || saldo_retenido || ' total=' || saldo_total END
   FROM cuenta_billetera WHERE numero_cuenta = 'PLT-0001';
 
+SELECT CASE WHEN saldo_disponible = -100
+            THEN 'OK    · R-BIL-16 la cuenta puente refleja el débito del libro'
+            ELSE 'FALLA · R-BIL-16 cuenta puente con saldo ' || saldo_disponible END
+  FROM cuenta_billetera WHERE numero_cuenta = 'PUE-0001';
+
+SELECT CASE WHEN count(*) = 0
+            THEN 'OK    · R-BIL-16 ninguna caché de saldo difiere del libro'
+            ELSE 'FALLA · R-BIL-16 ' || count(*) || ' cuenta(s) con saldo divergente' END
+  FROM (SELECT c.id FROM cuenta_billetera c
+          LEFT JOIN movimiento_billetera m ON m.cuenta_billetera_id = c.id
+         GROUP BY c.id, c.saldo_disponible, c.saldo_retenido
+        HAVING c.saldo_disponible + c.saldo_retenido
+             <> COALESCE(SUM(CASE WHEN m.sentido='CREDITO' THEN m.monto
+                                  ELSE -m.monto END), 0)) x;
+
 -- --- R-UIF-01 · umbrales como dato, con cita normativa y sin solape ---
+-- Se usa PCC-01 + ELECTRONICA: combinación que los seeders no ocupan, para
+-- que la prueba corra igual sobre una base ya sembrada.
 SELECT pg_temp.debe_fallar('R-UIF-01 umbral sin cita normativa', $q$
   INSERT INTO umbral_reporte_uif (formulario, inciso, concepto_operacion,
       es_acumulado, umbral_usd, ventana_dias_calendario,
       exige_declaracion_origen_destino, reinicia_tras_superar, base_normativa,
       vigente_desde, activo)
-  VALUES ('PCC-01', 'i', 'CARGA_BILLETERA', TRUE, 1000, 3, TRUE, TRUE, '   ',
+  VALUES ('PCC-01', 'z', 'ELECTRONICA', TRUE, 1000, 3, TRUE, TRUE, '   ',
           current_date, TRUE)
 $q$);
 
@@ -176,8 +198,8 @@ SELECT pg_temp.debe_pasar('R-UIF-01 umbral con cita normativa', $q$
       es_acumulado, umbral_usd, ventana_dias_calendario,
       exige_declaracion_origen_destino, reinicia_tras_superar, base_normativa,
       vigente_desde, activo)
-  VALUES ('PCC-01', 'i', 'CARGA_BILLETERA', TRUE, 1000, 3, TRUE, TRUE,
-          'Instructivo EIF art. 52 inc. i (R.A. UIF/050/2026)', current_date, TRUE)
+  VALUES ('PCC-01', 'z', 'ELECTRONICA', TRUE, 1000, 3, TRUE, TRUE,
+          'Prueba de humo — inciso ficticio', current_date, TRUE)
 $q$);
 
 SELECT pg_temp.debe_fallar('R-UIF-01 vigencias solapadas del mismo umbral', $q$
@@ -185,7 +207,7 @@ SELECT pg_temp.debe_fallar('R-UIF-01 vigencias solapadas del mismo umbral', $q$
       es_acumulado, umbral_usd, ventana_dias_calendario,
       exige_declaracion_origen_destino, reinicia_tras_superar, base_normativa,
       vigente_desde, activo)
-  VALUES ('PCC-01', 'i', 'CARGA_BILLETERA', TRUE, 500, 3, TRUE, TRUE,
+  VALUES ('PCC-01', 'z', 'ELECTRONICA', TRUE, 500, 3, TRUE, TRUE,
           'duplicado que se solapa', current_date, TRUE)
 $q$);
 
@@ -194,20 +216,21 @@ SELECT pg_temp.debe_fallar('R-UIF-01 umbral acumulado sin ventana', $q$
       es_acumulado, umbral_usd, ventana_dias_calendario,
       exige_declaracion_origen_destino, reinicia_tras_superar, base_normativa,
       vigente_desde, activo)
-  VALUES ('ROG-03', 'g', 'TRANSFERENCIA_BILLETERA', TRUE, 1000, NULL, FALSE,
-          TRUE, 'art. 53 inc. g', current_date, TRUE)
+  VALUES ('ROG-03', 'z', 'ACTIVO_VIRTUAL', TRUE, 1000, NULL, FALSE,
+          TRUE, 'Prueba de humo — acumulado sin ventana', current_date, TRUE)
 $q$);
 
 -- --- R-UIF-04 · sin tipo de cambio no hay conversión reproducible -----
+-- XTS es el código ISO reservado para pruebas: nunca lo siembra un catálogo.
 SELECT pg_temp.debe_fallar('R-UIF-04 conversión sin tipo de cambio cargado', $q$
-  SELECT (fn_fx_a_usd(100, 'BOB', current_date)).monto_usd
+  SELECT (fn_fx_a_usd(100, 'XTS', current_date)).monto_usd
 $q$);
 
 SELECT pg_temp.debe_pasar('R-UIF-04 conversión con tipo de cambio cargado', $q$
   INSERT INTO tipo_cambio (moneda_origen, moneda_destino, fecha, tipo_cambio,
       fuente, cargado_en)
-  VALUES ('BOB', 'USD', current_date, 0.143678, 'BCB', now());
-  SELECT (fn_fx_a_usd(100, 'BOB', current_date)).monto_usd;
+  VALUES ('XTS', 'USD', current_date, 0.500000, 'MANUAL', now());
+  SELECT (fn_fx_a_usd(100, 'XTS', current_date)).monto_usd;
 $q$);
 
 -- --- R-UIF-06 · el reporte en cero tiene que ser coherente ------------
@@ -230,10 +253,22 @@ SELECT pg_temp.debe_fallar('R-UIF-07 alerta descartada sin conclusión', $q$
   VALUES (NULL, NULL, 0, '{}'::jsonb, 'ALTA', 'DESCARTADA', now())
 $q$);
 
--- --- R-LIM-01 · denegar por omisión cuando no hay límite configurado --
-SELECT pg_temp.debe_fallar('R-LIM-01 operación sin límite configurado', $q$
-  SELECT fn_lim_evaluar('11111111-1111-1111-1111-111111111111', 'RETIRO', 100)
+-- --- R-LIM-01 · denegar por omisión y respeto del techo ---------------
+SELECT pg_temp.debe_fallar('R-LIM-01 concepto sin límite configurado', $q$
+  SELECT fn_lim_evaluar('11111111-1111-1111-1111-111111111111',
+                        'CONCEPTO_SIN_LIMITE', 100)
 $q$);
+
+-- Con los catálogos sembrados, el techo tiene que hacerse cumplir; sin ellos,
+-- la misma llamada se rechaza por omisión. Las dos respuestas son correctas.
+SELECT CASE WHEN EXISTS (SELECT 1 FROM limite_operativo_billetera
+                          WHERE concepto = 'RETIRO' AND activo)
+            THEN pg_temp.debe_fallar('R-LIM-01 retiro que supera el techo del nivel', $q$
+                   SELECT fn_lim_evaluar('11111111-1111-1111-1111-111111111111',
+                                         'RETIRO', 9999999)
+                 $q$)
+            ELSE 'OK    · R-LIM-01 sin catálogo de límites: se deniega por omisión'
+       END;
 
 -- --- R-LIC-01 · servicio no autorizado --------------------------------
 SELECT CASE WHEN fn_lic_servicio_habilitado('BILLETERA') = FALSE

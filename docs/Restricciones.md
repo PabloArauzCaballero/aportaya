@@ -4,7 +4,7 @@ tags:
   - restricciones
 titulo: "Catálogo de restricciones — Pasanaku Digital"
 motor: PostgreSQL 15+
-total_restricciones: 75
+total_restricciones: 76
 fecha: 2026-08-11
 ---
 
@@ -47,7 +47,7 @@ fn_<dominio>_<accion>  función
 | Prefijo | Dominio | Cantidad |
 | --- | --- | --: |
 | `R-AUD` | Auditoría, inmutabilidad y conservación | 8 |
-| `R-BIL` | Billetera, saldo y custodia | 15 |
+| `R-BIL` | Billetera, saldo y custodia | 16 |
 | `R-LIM` | Límites operativos | 3 |
 | `R-TAR` | Tarifas, comisiones y facturación | 13 |
 | `R-UIF` | Prevención de LGI/FT y reportes | 13 |
@@ -160,6 +160,7 @@ ALTER TABLE expediente_cliente
 | R-BIL-05 | La titularidad es coherente con el tipo de cuenta | Separación patrimonial | [[CU-20 Crear grupo y congelar tarifario]] |
 | R-BIL-06 | Idempotencia de toda operación con dinero | Evitar doble acreditación | [[CU-10 Recargar saldo]] |
 | R-BIL-07 | `saldo_retenido` = suma de retenciones vigentes | Consistencia | [[CU-13 Retener y liberar saldo]] |
+| R-BIL-16 | El saldo disponible se deriva del libro, no lo escribe la aplicación | Integridad del dinero | [[CU-10 Recargar saldo]] |
 | R-BIL-08 | Toda retención expira, salvo orden de autoridad | Nada queda congelado sin fin | [[CU-13 Retener y liberar saldo]] |
 | R-BIL-09 | El retiro exige MFA e instrumento verificado del titular | Antifraude · UIF | [[CU-11 Retirar saldo]] |
 | R-BIL-10 | La referencia externa de recarga es única | Evitar doble acreditación | [[CU-10 Recargar saldo]] |
@@ -224,21 +225,43 @@ ALTER TABLE orden_recarga        ADD CONSTRAINT uq_recarga_idem UNIQUE (clave_id
 ALTER TABLE orden_retiro         ADD CONSTRAINT uq_retiro_idem  UNIQUE (clave_idempotencia);
 ALTER TABLE devengo_comision     ADD CONSTRAINT uq_devengo_idem UNIQUE (clave_idempotencia);
 
--- R-BIL-07 · el retenido es exactamente la suma de retenciones vigentes
-CREATE OR REPLACE FUNCTION fn_bil_sincronizar_retenido() RETURNS trigger AS $$
-DECLARE v_cuenta UUID; v_suma NUMERIC(16,2);
+-- R-BIL-07 y R-BIL-16 · los dos saldos se derivan, no se escriben
+--
+--   saldo_retenido   = SUM(retenciones VIGENTES)
+--   saldo_disponible = SUM(movimientos) - saldo_retenido
+--   saldo_total      = disponible + retenido  (columna generada)
+--
+-- Mantenerlos por trigger elimina toda una clase de defecto: una aplicación que
+-- olvide actualizar la caché, un script suelto, o un reintento a medias.
+CREATE OR REPLACE FUNCTION fn_bil_recalcular_saldos(p_cuenta UUID) RETURNS VOID AS $$
+DECLARE v_movimientos NUMERIC(16,2); v_retenido NUMERIC(16,2);
 BEGIN
-  v_cuenta := COALESCE(NEW.cuenta_billetera_id, OLD.cuenta_billetera_id);
-  SELECT COALESCE(SUM(monto),0) INTO v_suma
+  SELECT COALESCE(SUM(CASE WHEN sentido = 'CREDITO' THEN monto ELSE -monto END), 0)
+    INTO v_movimientos
+    FROM movimiento_billetera WHERE cuenta_billetera_id = p_cuenta;
+  SELECT COALESCE(SUM(monto), 0) INTO v_retenido
     FROM retencion_saldo
-    WHERE cuenta_billetera_id = v_cuenta AND estado = 'VIGENTE';
-  UPDATE cuenta_billetera SET saldo_retenido = v_suma WHERE id = v_cuenta;
+   WHERE cuenta_billetera_id = p_cuenta AND estado = 'VIGENTE';
+  UPDATE cuenta_billetera
+     SET saldo_retenido   = v_retenido,
+         saldo_disponible = v_movimientos - v_retenido
+   WHERE id = p_cuenta;
+END $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION fn_bil_sincronizar_saldos() RETURNS trigger AS $$
+BEGIN
+  PERFORM fn_bil_recalcular_saldos(
+    COALESCE(NEW.cuenta_billetera_id, OLD.cuenta_billetera_id));
   RETURN NULL;
 END $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER tg_retencion_sincroniza_saldo
   AFTER INSERT OR UPDATE OF estado, monto ON retencion_saldo
-  FOR EACH ROW EXECUTE FUNCTION fn_bil_sincronizar_retenido();
+  FOR EACH ROW EXECUTE FUNCTION fn_bil_sincronizar_saldos();
+
+CREATE TRIGGER tg_movimiento_sincroniza_saldo
+  AFTER INSERT ON movimiento_billetera
+  FOR EACH ROW EXECUTE FUNCTION fn_bil_sincronizar_saldos();
 
 -- R-BIL-08 · toda retención expira salvo orden de autoridad
 ALTER TABLE retencion_saldo
@@ -357,10 +380,15 @@ BEGIN
          AND (vigente_hasta IS NULL OR vigente_hasta >= current_date)
   LOOP
     v_hay := TRUE;
-    SELECT COALESCE(monto_acumulado,0) INTO v_acumulado
+    -- Si no hay fila de consumo, la variable queda en NULL y la comparación
+    -- devuelve NULL: el límite dejaría de aplicarse en la primera operación de
+    -- la ventana. Se inicializa en cero de forma explícita.
+    v_acumulado := 0;
+    SELECT COALESCE(monto_acumulado, 0) INTO v_acumulado
       FROM consumo_limite
      WHERE cuenta_billetera_id = p_cuenta AND limite_id = v_lim.id
        AND now() BETWEEN ventana_inicio AND ventana_fin;
+    v_acumulado := COALESCE(v_acumulado, 0);
     IF v_lim.monto_maximo IS NOT NULL
        AND v_acumulado + p_monto > v_lim.monto_maximo THEN
       RAISE EXCEPTION 'R-LIM-01: límite % (%) superado: disponible %',
@@ -1240,10 +1268,18 @@ una restricción, **se edita acá** y se regenera.
 > [!tip] Verificado contra PostgreSQL
 > El esquema completo aplica sin errores sobre PostgreSQL 16 y
 > `sql/50_verificacion/prueba_humo.sql` comprueba que las restricciones
-> **rechazan efectivamente** lo que deben rechazar: 65 comprobaciones, incluidas
-> saldo negativo, transacción descuadrada, doble idempotencia, `UPDATE` sobre
-> tablas selladas, retención sin vencimiento, umbral sin cita normativa y
-> vigencias solapadas.
+> **rechazan efectivamente** lo que deben rechazar: **68 comprobaciones, todas
+> en OK**, incluidas saldo negativo, transacción descuadrada, doble
+> idempotencia, `UPDATE` sobre tablas selladas, retención sin vencimiento,
+> umbral sin cita normativa, vigencias solapadas, techo de límite superado y
+> conversión sin tipo de cambio.
+>
+> Ejecutar la prueba contra una base ya sembrada destapó tres defectos que la
+> revisión de escritorio no había visto: `fn_lim_evaluar` no aplicaba el techo
+> en la primera operación de la ventana (comparación contra `NULL`), el saldo
+> disponible no se mantenía desde el libro, y un `CHECK` incondicional impedía
+> que las cuentas técnicas de contrapartida operaran en negativo. Los tres están
+> corregidos.
 
 ## Ver también
 

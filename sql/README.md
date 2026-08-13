@@ -84,9 +84,15 @@ psql -d pasanaku -f sql/60_semillas/99_desarrollo.sql   # solo entorno local
 psql -d pasanaku -f sql/50_verificacion/verificaciones.sql
 
 # prueba de humo de las restricciones: cada línea debe empezar con OK
-# (requiere base recién creada: inserta datos de prueba y no los limpia)
 psql -d pasanaku -f sql/50_verificacion/prueba_humo.sql
 ```
+
+> [!tip] Verificado de punta a punta sobre PostgreSQL 16
+> Esquema + catálogos mínimos + datos de prueba cargan sin un solo error, la
+> prueba de humo da **68 OK y ninguna falla**, y los controles de integridad
+> devuelven cero filas. La prueba funciona igual con la base recién creada o ya
+> sembrada: usa códigos y monedas propios (`XTS`) que no colisionan con los
+> catálogos.
 
 ## Qué se crea
 
@@ -98,7 +104,7 @@ psql -d pasanaku -f sql/50_verificacion/prueba_humo.sql
 | `UNIQUE` | 67 |
 | `EXCLUDE` (vigencias sin solape) | 4 |
 | Índices | 947 |
-| Disparadores | 17 + 19 de sellado append-only |
+| Disparadores | 18 + 19 de sellado append-only |
 | Columnas generadas | 7 |
 | Políticas de seguridad por fila | 2 |
 | Comentarios de columna | 1.883 |
