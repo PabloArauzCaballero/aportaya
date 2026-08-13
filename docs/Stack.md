@@ -20,7 +20,7 @@ las tiene que soportar.
 
 | Exigencia | De dónde viene | Qué le pide al stack |
 | --- | --- | --- |
-| **La base es la fuente de verdad, y su DDL es generado** | `scripts/generar_ddl.py` → 274 tablas, 565 FK | Un ORM que *administre* el esquema está descartado. El acceso a datos se genera **desde** la base (introspección/codegen), nunca al revés. |
+| **La base es la fuente de verdad, y su DDL es generado** | `scripts/generar_ddl.py` → 274 tablas, 566 FK | Un ORM que *administre* el esquema está descartado. El acceso a datos se genera **desde** la base (introspección/codegen), nunca al revés. |
 | **Una transacción por caso de uso** | `implementar-desde-boveda` | Control explícito de `BEGIN…COMMIT` en la capa de aplicación. Nada de repositorios con autocommit implícito por operación. |
 | **Contexto de sesión para RLS** | `app.usuario_id`, `app.rol` | Poder ejecutar `SET LOCAL` en la **misma conexión** que la transacción. Esto elimina varios ORM y todo pooling mal configurado. |
 | **Dinero exacto en `DECIMAL(14,2)`** | modelo relacional, partida doble | Tipo decimal real de punta a punta. Un `float` en cualquier capa es un defecto de cumplimiento, no de estilo. |
@@ -61,8 +61,8 @@ convivir con un DDL generado, controlar la transacción y poner el contexto de R
 en la conexión correcta. En las tres la solución es la misma —query builder o
 codegen, nunca un ORM dueño del esquema—, así que ninguna gana por ahí.
 
-Empatado eso, decide lo práctico: esta bóveda tiene **36 casos de uso con criterios
-de aceptación y 565 relaciones**. El cuello de botella del proyecto es traducir esa
+Empatado eso, decide lo práctico: esta bóveda tiene **87 casos de uso con criterios
+de aceptación y 566 relaciones**. El cuello de botella del proyecto es traducir esa
 especificación, no el rendimiento del runtime. Con TypeScript el contrato de cada
 caso de uso se escribe **una vez** en Zod y lo consumen la API, la app y el
 backoffice; con un backend en otro lenguaje se escribe tres veces y se
@@ -214,7 +214,7 @@ para una billetera.**
 **Elegida: la Opción 1.** Expo para la app, React para el backoffice, tipos y
 validaciones compartidos con el backend — que es justamente lo que desempató la
 elección del backend. La identidad visual y el sistema atómico de ambos productos
-están en la skill `disenar-frontend-aportaya`; este documento solo decide la
+están en la skill `disenar-frontend`; este documento solo decide la
 tecnología, no el diseño.
 
 ---
