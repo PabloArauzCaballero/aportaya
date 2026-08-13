@@ -52,6 +52,63 @@ normas: [UIF, requerimientos judiciales y fiscales, secreto financiero]
 - Existe trazabilidad completa: qué pidieron, qué se entregó, quién lo consultó y
   cuándo se respondió.
 
+## Contrato · `packages/contratos/CU-45.ts`
+
+```ts
+export const EntradaCU45 = z.object({
+  autoridad: z.enum(['FISCALIA','UIF','ASFI','JUZGADO','SIN','POLICIA']),
+  numeroOficio: z.string().max(60),
+  plazoRespuesta: z.string().datetime(),
+  usuarioAfectadoId: z.string().uuid().optional(),
+  alcance: z.string().min(10).max(300),
+  documentoUrl: z.string().url(),
+  hashDocumento: z.string().length(64),
+}).strict()
+
+export const SalidaCU45 = z.object({
+  requerimientoId: z.string().uuid(),
+  bloqueoSaldoId: z.string().uuid().nullable(),
+  accesosRegistrados: z.number().int(),
+  respuestaUrl: z.string().url().nullable(),
+}).strict()
+
+export const ErroresCU45 = {
+  OFICIO_DUPLICADO: 'AP-CU45-01',
+  SIN_DOCUMENTO: 'AP-CU45-02',
+  ALCANCE_AMBIGUO: 'AP-CU45-03',
+  PLAZO_VENCIDO: 'AP-CU45-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `OFICIO_DUPLICADO` | Ese número ya fue registrado |
+| `SIN_DOCUMENTO` | No se actúa sin el oficio y su hash |
+| `ALCANCE_AMBIGUO` | Se pide aclaración antes de entregar información |
+| `PLAZO_VENCIDO` | Se responde igual y se abre hallazgo |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `delimitarAlcance` | Traduce el pedido a un conjunto acotado de datos; puro |
+| Molécula | `RequerimientoRepositorio` | Expediente del oficio |
+| Molécula | `AccesoDatosRepositorio` | Registra cada consulta con su justificación |
+| Organismo | `CU45AtenderRequerimiento` | Transacción: registro, extracción y bloqueo si lo ordena |
+| Página | `POST /cumplimiento/requerimientos` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `requerimiento.recibido` | Plazo en el tablero y asignación a legal | `OFICIAL_CUMPLIMIENTO` |
+| `requerimiento.respondido` | Archivo de la respuesta con su hash | — |
+
+## Interfaz
+
+- **App:** Sin pantalla; si hay bloqueo, el titular ve el número de oficio.
+- **Backoffice:** Bandeja de oficios con plazo, alcance y respuesta archivada.
+
 ## Restricciones aplicables
 
 `R-SEG-02` · `R-BIL-14` · `R-AUD-08` · `R-UIF-08`

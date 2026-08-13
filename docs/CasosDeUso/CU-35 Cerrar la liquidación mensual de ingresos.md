@@ -50,6 +50,62 @@ normas: [Contabilidad, tributario]
 - Existe un resultado mensual reproducible desde los devengos, no desde una
   planilla aparte.
 
+## Contrato · `packages/contratos/CU-35.ts`
+
+```ts
+export const EntradaCU35 = z.object({
+  periodo: z.string().regex(/^\d{4}-\d{2}$/),
+  cerradaPor: z.string().uuid(),
+}).strict()
+
+export const SalidaCU35 = z.object({
+  liquidacionId: z.string().uuid(),
+  totalDevengado: MontoSchema,
+  totalCobrado: MontoSchema,
+  totalDevuelto: MontoSchema,
+  totalImpuestos: MontoSchema,
+  ingresoNeto: MontoSchema,
+  cuadraContraMayor: z.boolean(),
+}).strict()
+
+export const ErroresCU35 = {
+  DIAS_SIN_CERRAR: 'AP-CU35-01',
+  EXCEPCIONES_ABIERTAS: 'AP-CU35-02',
+  NO_CUADRA_CONTRA_MAYOR: 'AP-CU35-03',
+  PERIODO_YA_CERRADO: 'AP-CU35-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `DIAS_SIN_CERRAR` | Hay cierres diarios pendientes del período |
+| `EXCEPCIONES_ABIERTAS` | Quedan excepciones de conciliación sin resolver |
+| `NO_CUADRA_CONTRA_MAYOR` | La liquidación difiere del saldo de la cuenta de ingresos |
+| `PERIODO_YA_CERRADO` | Requiere reapertura autorizada |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `consolidarDevengos` | Agrega por estado y período; puro |
+| Átomo | `compararConMayor` | Contrasta el total cobrado con el saldo contable |
+| Molécula | `LiquidacionIngresosRepositorio` | Consolidación mensual |
+| Molécula | `AsientoRepositorio` | Asiento de cierre del período |
+| Organismo | `CU35CerrarLiquidacion` | Transacción: consolidación, cuadre y asiento de cierre |
+| Página | `POST /contabilidad/liquidaciones/:periodo/cierre` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `liquidacion.cerrada` | Publicación del resultado del período | `CONTABILIDAD` |
+| `liquidacion.descuadrada` | Hallazgo de auditoría y bloqueo del cierre | — |
+
+## Interfaz
+
+- **App:** Sin pantalla en la app: es información interna.
+- **Backoffice:** Cierre mensual con el cuadre a la vista; no se puede confirmar si no cuadra.
+
 ## Restricciones aplicables
 
 `R-AUD-05` · `R-AUD-06` · `R-BIL-12`

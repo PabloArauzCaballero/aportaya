@@ -57,6 +57,61 @@ normas: [ASFI Consumidor Financiero]
 
 - Existe el documento archivado con su hash: se puede probar qué se entregó.
 
+## Contrato · `packages/contratos/CU-15.ts`
+
+```ts
+export const EntradaCU15 = z.object({
+  cuentaBilleteraId: z.string().uuid(),
+  tipo:   z.enum(['EXTRACTO','CERTIFICADO']),
+  desde:  z.string().date().optional(),
+  hasta:  z.string().date().optional(),
+  fechaCorte: z.string().date().optional(),
+}).strict()
+
+export const SalidaCU15 = z.object({
+  documentoId: z.string().uuid(),
+  folio:  z.string().nullable(),
+  urlArchivo: z.string().url(),
+  hashArchivo: z.string().length(64),
+  saldoFinal:  MontoSchema,
+}).strict()
+
+export const ErroresCU15 = {
+  PERIODO_SIN_CIERRES: 'AP-CU15-01',
+  EXTRACTO_NO_CUADRA: 'AP-CU15-02',
+  SIN_PERMISO_SOBRE_LA_CUENTA: 'AP-CU15-03',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `PERIODO_SIN_CIERRES` | Faltan cierres diarios en el rango pedido |
+| `EXTRACTO_NO_CUADRA` | El calculado difiere del saldo diario sellado |
+| `SIN_PERMISO_SOBRE_LA_CUENTA` | El solicitante no es el titular ni backoffice |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `componerExtracto` | Arma saldo corrido y totales desde los movimientos; puro |
+| Átomo | `verificarContraSaldoDiario` | Contrasta el calculado con el sellado |
+| Molécula | `SaldoDiarioRepositorio` | Cierres diarios encadenados |
+| Molécula | `DocumentoAdaptador` | Genera el PDF y lo guarda con object lock |
+| Organismo | `CU15EmitirExtracto` | Transacción: emisión, hash y registro de entrega |
+| Página | `GET /billetera/extractos` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `extracto.emitido` | Entrega por el canal preferido y archivo con hash | `BILLETERA_VER` |
+| `certificado.emitido` | Publicación del folio verificable | — |
+
+## Interfaz
+
+- **App:** *Movimientos → Descargar*: extracto por mes y certificado de saldo con folio.
+- **Backoffice:** Emisión de certificados a pedido, con registro de acceso a datos.
+
 ## Restricciones aplicables
 
 `R-CON-08` · `R-AUD-07` · `R-SEG-02`

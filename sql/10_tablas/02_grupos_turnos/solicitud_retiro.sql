@@ -8,13 +8,18 @@ CREATE TABLE IF NOT EXISTS solicitud_retiro (
   motivo                             VARCHAR(200) NOT NULL,
   solicitado_en                      TIMESTAMPTZ NOT NULL,
   estado                             VARCHAR(15) NOT NULL,
+  posicion                           VARCHAR(10),
+  plan_regularizacion_id             UUID,
   requiere_reemplazo                 BOOLEAN DEFAULT FALSE NOT NULL,
   liquidacion_calculada              NUMERIC(14,2) NOT NULL,
   CONSTRAINT pk_solicitud_retiro PRIMARY KEY (id),
-  CONSTRAINT ck_solicitud_retiro_estado CHECK (estado IN ('APROBADA', 'PENDIENTE', 'RECHAZADA'))
+  CONSTRAINT ck_solicitud_retiro_estado CHECK (estado IN ('APROBADA', 'PENDIENTE', 'RECHAZADA')),
+  CONSTRAINT ck_solicitud_retiro_posicion CHECK (posicion IN ('ACREEDORA', 'DEUDORA', 'NEUTRA'))
 );
 
 COMMENT ON TABLE solicitud_retiro IS 'Módulo 02 — Grupos, Cupos, Turnos y Gobernanza. Reglas del juego, orden de cobro y decisiones colectivas';
 COMMENT ON COLUMN solicitud_retiro.id IS 'PK';
 COMMENT ON COLUMN solicitud_retiro.participante_id IS 'FK, UQ parcial';
 COMMENT ON COLUMN solicitud_retiro.estado IS 'CK';
+COMMENT ON COLUMN solicitud_retiro.posicion IS 'CK, NULL';
+COMMENT ON COLUMN solicitud_retiro.plan_regularizacion_id IS 'FK, NULL';

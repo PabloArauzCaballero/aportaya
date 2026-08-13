@@ -1,6 +1,6 @@
 ---
 name: boveda-modelo
-description: "Modificar el modelo de datos de Pasanaku (agregar, cambiar o quitar tablas, columnas y claves foráneas) y regenerar la bóveda de Obsidian. Úsala siempre que el trabajo toque docs/entidades/*.puml, entidades nuevas, columnas nuevas, relaciones o el generador scripts/generar_boveda.py. Incluye las convenciones de notación, la resolución de FK por nombre y la verificación obligatoria posterior."
+description: "Modificar el modelo de datos de AportaYa (agregar, cambiar o quitar tablas, columnas y claves foráneas) y regenerar la bóveda de Obsidian. Úsala siempre que el trabajo toque docs/entidades/*.puml, entidades nuevas, columnas nuevas, relaciones o el generador scripts/generar_boveda.py. Incluye las convenciones de notación, la resolución de FK por nombre y la verificación obligatoria posterior."
 ---
 
 # Modificar el modelo de datos
@@ -80,8 +80,13 @@ resolver y el generador lo reporta.
 
 ```bash
 python3 scripts/generar_boveda.py   # notas de Obsidian
-python3 scripts/generar_ddl.py      # esquema SQL en sql/
+python3 scripts/generar_ddl.py      # esquema SQL en sql/ + extraer_sql + semillas
 ```
+
+`generar_ddl.py` encadena `extraer_sql.py` (restricciones del catálogo) y
+`generar_semillas.py` (`seeders/*.json` → `sql/60_semillas/` y `sql/61_prueba/`).
+Una columna nueva en el modelo puede romper una semilla: el generador de semillas
+valida cada columna contra el modelo y falla si no existe. Eso es deseable.
 
 ## Verificación obligatoria
 
@@ -97,10 +102,10 @@ pendientes: se agregan los valores a `VALORES` en el generador, o se corrige el
 Y después, contra una base real:
 
 ```bash
-docker run --rm -d --name pg-pasanaku -e POSTGRES_PASSWORD=x -e POSTGRES_DB=pasanaku \
+docker run --rm -d --name pg-aportaya -e POSTGRES_PASSWORD=x -e POSTGRES_DB=aportaya \
   -v "$PWD/sql:/sql:ro" postgres:16 && sleep 10
-docker exec pg-pasanaku psql -U postgres -d pasanaku -v ON_ERROR_STOP=1 -f /sql/aplicar.sql
-docker exec pg-pasanaku psql -U postgres -d pasanaku -f /sql/50_verificacion/prueba_humo.sql
+docker exec pg-aportaya psql -U postgres -d aportaya -v ON_ERROR_STOP=1 -f /sql/aplicar.sql
+docker exec pg-aportaya psql -U postgres -d aportaya -f /sql/50_verificacion/prueba_humo.sql
 ```
 
 La prueba de humo tiene que dar **todo OK**. Requiere base recién creada.
@@ -144,7 +149,14 @@ EOF
   verificar el resultado: el generador resuelve primero en el módulo propio, pero
   la ambigüedad se lee mal (ya pasó con `EstadoTransaccion` en M03 y M10).
 
+## Tamaño actual
+
+274 tablas · 566 claves foráneas · 640 índices · 378 `CHECK`, en 12 módulos.
+Si una corrida devuelve menos tablas de las que había, algo se rompió al parsear:
+se revisa el `.puml` tocado antes de commitear.
+
 ## Ver también
 
-- Skills relacionadas: `caso-de-uso`, `restriccion`, `norma-nueva`.
+- Skills relacionadas: `caso-de-uso`, `restriccion`, `norma-nueva`,
+  `semillas-catalogos`, `datos-kysely`, `glosario-dominio`.
 - `docs/Index.md` · `docs/entidades/README.md` · `docs/Cumplimiento.md`

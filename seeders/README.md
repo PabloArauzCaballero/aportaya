@@ -106,18 +106,21 @@ Las referencias pueden anidarse: `{"$ref":"participante","grupo_id":{"$ref":"gru
 
 ```bash
 # 1) esquema
-psql -d pasanaku -v ON_ERROR_STOP=1 -f sql/aplicar.sql
+psql -d aportaya -v ON_ERROR_STOP=1 -f sql/aplicar.sql
 # 2) catálogos (también en producción)
-psql -d pasanaku -v ON_ERROR_STOP=1 -f sql/60_semillas/sembrar.sql
+psql -d aportaya -v ON_ERROR_STOP=1 -f sql/60_semillas/sembrar.sql
 # 3) datos de prueba (nunca en producción)
-psql -d pasanaku -v ON_ERROR_STOP=1 -f sql/61_prueba/sembrar_prueba.sql
+psql -d aportaya -v ON_ERROR_STOP=1 -f sql/61_prueba/sembrar_prueba.sql
 ```
 
 Los mínimos son idempotentes: volver a ejecutarlos no duplica nada.
 
-## Usarlos desde MikroORM
+## Usarlos desde la aplicación
 
-El mismo JSON sirve para un seeder del ORM sin transformarlo: cada bloque es una
-tabla y cada fila un objeto. Si se opta por ese camino, hay que resolver los
-`$ref` contra el repositorio correspondiente antes de persistir, y respetar el
-orden del `manifiesto.json`.
+El mismo JSON sirve para sembrar desde código sin transformarlo: cada bloque es una
+tabla y cada fila un objeto, insertable con Kysely tal cual. Hay que resolver los
+`$ref` contra la tabla correspondiente antes de insertar y respetar el orden del
+`manifiesto.json`, que es el orden en que las claves foráneas resuelven.
+
+En las pruebas se aplica el SQL generado, no el JSON: es exactamente lo que corre
+en producción, y probar otra cosa es probar otro sistema (skill `pruebas-cu`).

@@ -6,7 +6,7 @@ tabla: acuerdo
 clase: Acuerdo
 modulo: "02 — Grupos, Cupos, Turnos y Gobernanza"
 clave_primaria: [id]
-columnas: 14
+columnas: 15
 fk_salientes: 2
 fk_entrantes: 8
 append_only: false
@@ -33,6 +33,7 @@ append_only: false
 | `referencia_afectada_id` | UUID | — | sí | NULL, polimorfica |
 | `abierto_en` | TIMESTAMPTZ | — | no | — |
 | `cierra_en` | TIMESTAMPTZ | — | no | — |
+| `resuelto_en` | TIMESTAMPTZ | — | sí | NULL |
 | `ejecutado_en` | TIMESTAMPTZ | — | sí | NULL |
 
 ## Claves foráneas salientes

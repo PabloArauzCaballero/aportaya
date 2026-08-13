@@ -54,6 +54,50 @@ normas: [UIF — Instructivo EIF, art. 53 (modificado por R.A. UIF/050/2026)]
 
 - Cada obligación de reporte tiene su propio registro, clasificado por formulario.
 
+## Contrato · `packages/contratos/CU-42.ts`
+
+```ts
+export const EntradaCU42 = z.object({
+  transaccionId: z.string().uuid(),
+}).strict()
+
+export const SalidaCU42 = z.object({
+  registros: z.array(z.object({ registroId: z.string().uuid(), formulario: z.enum(['ROG-01','ROG-02','ROG-03','ROG-04']) })),
+  periodoRemision: z.string(),
+}).strict()
+
+export const ErroresCU42 = {
+  SIN_TIPO_DE_CAMBIO: 'AP-CU42-01',
+  REGISTRO_DUPLICADO: 'AP-CU42-02',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SIN_TIPO_DE_CAMBIO` | Falta cotización para convertir a dólares |
+| `REGISTRO_DUPLICADO` | Ya existe el registro para esa transacción y umbral |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `clasificarConceptoRog` | Traduce el tipo de transacción al concepto del artículo 53; puro |
+| Molécula | `UmbralUifRepositorio` | Umbrales ROG vigentes |
+| Molécula | `OperacionRelevanteRepositorio` | Alta del registro |
+| Organismo | `CU42RegistrarRog` | Se ejecuta en la transacción de la operación |
+| Página | — | Sin endpoint: lo dispara el planificador o un evento |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `uif.operacion_general` | Inclusión en el reporte mensual | Interno |
+
+## Interfaz
+
+- **App:** Sin pantalla: el usuario no ve estos registros.
+- **Backoffice:** Consulta por período y formulario, con exportación.
+
 ## Restricciones aplicables
 
 `R-UIF-01` · `R-UIF-02` · `R-UIF-03` · `R-UIF-04` · `R-UIF-05` · `R-AUD-01`

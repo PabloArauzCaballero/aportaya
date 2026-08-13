@@ -56,6 +56,59 @@ normas: [Contabilidad, debido proceso, ASFI riesgo]
 - La bolsa quedó completa sin que nadie pusiera plata de su bolsillo fuera del fondo.
 - Existe deuda exigible con expediente, no una pérdida silenciosa.
 
+## Contrato · `packages/contratos/CU-23.ts`
+
+```ts
+export const EntradaCU23 = z.object({
+  claveIdempotencia: z.string().uuid(),
+  obligacionId: z.string().uuid(),
+  acuerdoId: z.string().uuid().optional(),
+}).strict()
+
+export const SalidaCU23 = z.object({
+  coberturaId: z.string().uuid(),
+  montoCubierto: MontoSchema,
+  deudaId: z.string().uuid(),
+  saldoFondoDespues: MontoSchema,
+}).strict()
+
+export const ErroresCU23 = {
+  FONDO_INSUFICIENTE: 'AP-CU23-01',
+  TOPE_POR_PARTICIPANTE: 'AP-CU23-02',
+  REQUIERE_ACUERDO: 'AP-CU23-03',
+  OBLIGACION_NO_VENCIDA: 'AP-CU23-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `FONDO_INSUFICIENTE` | El fondo no alcanza para cubrir |
+| `TOPE_POR_PARTICIPANTE` | Superó su tope de coberturas |
+| `REQUIERE_ACUERDO` | El monto exige aprobación del grupo |
+| `OBLIGACION_NO_VENCIDA` | Todavía está en plazo de gracia |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `evaluarPoliticaCobertura` | Aplica topes y devuelve cuánto se puede cubrir; puro |
+| Molécula | `FondoGarantiaRepositorio` | Movimiento del fondo, append-only |
+| Molécula | `DeudaRepositorio` | Deuda del participante y su subrogación |
+| Organismo | `CU23CubrirIncumplimiento` | Transacción: cobertura, deuda, subrogación y asiento |
+| Página | `POST /fondo/coberturas` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `incumplimiento.cubierto` | Gestión de cobranza y evento de reputación | `GRUPO_ADMINISTRAR` |
+| `fondo.consumido` | Aviso al grupo del saldo restante del fondo | — |
+
+## Interfaz
+
+- **App:** El grupo ve que la bolsa se completó con el fondo y quién la debe reponer.
+- **Backoffice:** Panel del fondo por grupo: saldo, cubierto, recuperado y en gestión.
+
 ## Restricciones aplicables
 
 `R-BIL-01` · `R-AUD-01` · `R-AUD-05` · `R-GRP-02`

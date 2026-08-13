@@ -61,6 +61,62 @@ normas: [UIF — enfoque basado en riesgo, ROS sin límite de monto]
 
 - Cada alerta tiene destino y justificación escrita; cada reporte, su expediente.
 
+## Contrato · `packages/contratos/CU-44.ts`
+
+```ts
+export const EntradaCU44 = z.object({
+  alertaIds: z.array(z.string().uuid()).min(1),
+  analistaId: z.string().uuid(),
+  decision: z.enum(['DESCARTAR','MONITOREO_REFORZADO','REPORTAR','TERMINAR_RELACION']).optional(),
+  conclusion: z.string().min(20).max(2000).optional(),
+}).strict()
+
+export const SalidaCU44 = z.object({
+  casoId: z.string().uuid(),
+  estado: z.enum(['ABIERTO','EN_ANALISIS','EN_REVISION','CERRADO']),
+  plazoLimite: z.string().datetime(),
+  reporteSospechosoId: z.string().uuid().nullable(),
+}).strict()
+
+export const ErroresCU44 = {
+  CONCLUSION_REQUERIDA: 'AP-CU44-01',
+  REVISOR_ES_ANALISTA: 'AP-CU44-02',
+  REPORTE_SIN_NARRATIVA: 'AP-CU44-03',
+  CASO_VENCIDO: 'AP-CU44-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `CONCLUSION_REQUERIDA` | No se cierra una alerta sin justificación (R-UIF-07) |
+| `REVISOR_ES_ANALISTA` | La revisión debe ser independiente |
+| `REPORTE_SIN_NARRATIVA` | Decidir reportar exige narrativa y tipología |
+| `CASO_VENCIDO` | Se pasó el plazo de investigación |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `agruparAlertas` | Reúne alertas del mismo cliente en un caso; puro |
+| Átomo | `calcularPlazoInvestigacion` | Fecha límite según severidad |
+| Molécula | `AlertaRepositorio` | Alertas y su tratamiento |
+| Molécula | `CasoRepositorio` | Expediente de investigación |
+| Molécula | `ReporteSospechosoRepositorio` | ROS y su radicado |
+| Organismo | `CU44InvestigarYReportar` | Transacción: caso, decisión y reporte si corresponde |
+| Página | `POST /cumplimiento/casos` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `caso.abierto` | Asignación a analista con plazo | `CUMPLIMIENTO_CASOS` |
+| `caso.decidido` | Reporte, monitoreo reforzado o cierre de la relación | `OFICIAL_CUMPLIMIENTO` |
+
+## Interfaz
+
+- **App:** **Sin pantalla ni aviso al titular**: rige el deber de reserva.
+- **Backoffice:** Bandeja de alertas y casos, con plazo y decisión obligatoria.
+
 ## Restricciones aplicables
 
 `R-UIF-07` · `R-UIF-08` · `R-SEG-02` · `R-SEG-04` · `R-AUD-01`

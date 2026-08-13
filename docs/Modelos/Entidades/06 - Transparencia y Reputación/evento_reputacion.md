@@ -7,7 +7,7 @@ tabla: evento_reputacion
 clase: EventoReputacion
 modulo: "06 — Transparencia y Reputación"
 clave_primaria: [id]
-columnas: 14
+columnas: 15
 fk_salientes: 4
 fk_entrantes: 1
 append_only: true
@@ -26,6 +26,7 @@ append_only: true
 | `grupo_id` | UUID | FK IDX | sí | FK, NULL, IDX |
 | `participante_id` | UUID | FK | sí | FK, NULL |
 | `tipo` | VARCHAR(40) | IDX | no | CK, IDX |
+| `referencia_tipo` | VARCHAR(30) | — | no | CK |
 | `referencia_origen_id` | UUID | — | sí | NULL, polimorfica |
 | `impacto` | DECIMAL(6,2) | — | no | — |
 | `factor_afectado` | VARCHAR(40) | — | no | — |

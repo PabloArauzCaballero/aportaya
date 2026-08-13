@@ -1,5 +1,5 @@
 -- =====================================================================
---  Pasanaku Digital — restricciones normativas
+--  AportaYa — restricciones normativas
 --  GENERADO desde docs/Restricciones.md por scripts/extraer_sql.py
 --  No edite este archivo a mano: edite el documento y regenere.
 --
@@ -931,6 +931,96 @@ CREATE UNIQUE INDEX uq_obligacion_periodo_cupo
   ON obligacion_aporte (periodo_id, cupo_id)
   WHERE tipo = 'APORTE_PERIODICO' AND estado <> 'ANULADO';
 
+-- R-GRP-05 · un solo sorteo por grupo; el compromiso es inmutable
+ALTER TABLE sorteo_turnos
+  ADD CONSTRAINT uq_sorteo_grupo UNIQUE (grupo_id),
+  ADD CONSTRAINT ck_sorteo_revelado CHECK (
+      estado <> 'REVELADO'
+   OR (semilla_servidor IS NOT NULL AND fecha_ejecucion IS NOT NULL)
+  ),
+  ADD CONSTRAINT ck_sorteo_compromiso CHECK (
+      length(hash_semilla_previo) = 64 AND fecha_compromiso IS NOT NULL
+  );
+
+-- El compromiso no se reescribe: cambiarlo después de publicarlo destruye toda
+-- la garantía del esquema commit-reveal.
+CREATE OR REPLACE FUNCTION fn_grp_compromiso_inmutable() RETURNS trigger AS $$
+BEGIN
+  IF NEW.hash_semilla_previo IS DISTINCT FROM OLD.hash_semilla_previo
+     OR NEW.fecha_compromiso IS DISTINCT FROM OLD.fecha_compromiso THEN
+    RAISE EXCEPTION 'R-GRP-05: el compromiso del sorteo es inmutable';
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_sorteo_compromiso_inmutable
+  BEFORE UPDATE ON sorteo_turnos
+  FOR EACH ROW EXECUTE FUNCTION fn_grp_compromiso_inmutable();
+
+-- R-GRP-06 · un turno por período y un orden único por grupo
+ALTER TABLE turno
+  ADD CONSTRAINT uq_turno_periodo UNIQUE (periodo_id),
+  ADD CONSTRAINT uq_turno_orden UNIQUE (grupo_id, orden_asignado);
+
+-- R-GRP-07 · lo ya cobrado no se reordena
+CREATE OR REPLACE FUNCTION fn_grp_validar_permuta() RETURNS trigger AS $$
+DECLARE v_estados TEXT[];
+BEGIN
+  SELECT array_agg(estado) INTO v_estados
+    FROM turno WHERE id IN (NEW.turno_origen_id, NEW.turno_destino_id);
+  IF v_estados && ARRAY['COBRADO','EN_CURSO','ANULADO'] THEN
+    RAISE EXCEPTION 'R-GRP-07: solo se permutan turnos PROGRAMADOS';
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_permuta_valida
+  BEFORE INSERT ON solicitud_permuta
+  FOR EACH ROW EXECUTE FUNCTION fn_grp_validar_permuta();
+
+-- R-GRP-08 · un voto por participante y acuerdo, sin cambios
+ALTER TABLE voto_participante
+  ADD CONSTRAINT uq_voto_acuerdo_participante UNIQUE (acuerdo_id, participante_id);
+
+CREATE OR REPLACE FUNCTION fn_grp_voto_inmutable() RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION 'R-GRP-08: el voto emitido no se modifica ni se borra';
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_voto_inmutable
+  BEFORE UPDATE OR DELETE ON voto_participante
+  FOR EACH ROW EXECUTE FUNCTION fn_grp_voto_inmutable();
+
+-- R-GRP-09 · un acuerdo abierto por tipo y objeto
+CREATE UNIQUE INDEX uq_acuerdo_abierto
+  ON acuerdo (grupo_id, tipo, COALESCE(referencia_afectada_id, grupo_id))
+  WHERE estado = 'EN_VOTACION';
+
+-- R-GRP-12 · retiro deudor exige plan
+ALTER TABLE solicitud_retiro
+  ADD CONSTRAINT ck_retiro_deudor_con_plan CHECK (
+      estado <> 'APROBADO'
+   OR posicion <> 'DEUDORA'
+   OR plan_regularizacion_id IS NOT NULL
+  );
+
+-- R-GRP-13 · un grupo disuelto cierra en cero
+CREATE OR REPLACE FUNCTION fn_grp_validar_disolucion() RETURNS trigger AS $$
+DECLARE v_saldo NUMERIC(16,2);
+BEGIN
+  IF NEW.estado <> 'CERRADA' THEN RETURN NEW; END IF;
+  SELECT COALESCE(saldo_disponible + saldo_retenido, 0) INTO v_saldo
+    FROM cuenta_billetera WHERE grupo_id = NEW.grupo_id AND tipo = 'GRUPO';
+  IF v_saldo <> 0 THEN
+    RAISE EXCEPTION 'R-GRP-13: la cuenta del grupo cierra con % y debe cerrar en cero', v_saldo;
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_disolucion_cuadra
+  BEFORE UPDATE OF estado ON disolucion_anticipada
+  FOR EACH ROW EXECUTE FUNCTION fn_grp_validar_disolucion();
+
 -- R-GRP-04 · el grupo es el titular, nunca una persona
 --   (cubierto por ck_cuenta_titularidad de R-BIL-05; se refuerza el egreso)
 CREATE OR REPLACE FUNCTION fn_grp_validar_retiro_grupo() RETURNS trigger AS $$
@@ -977,6 +1067,128 @@ ALTER TABLE prueba_continuidad
       resultado <> 'EXITOSA'
    OR (rto_obtenido_minutos IS NOT NULL AND acta_comite_id IS NOT NULL)
   );
+
+
+-- ---------------------------------------------------------------------
+-- R-REP — Reputación y transparencia
+-- ---------------------------------------------------------------------
+
+-- R-REP-01 · un hecho puntúa una sola vez
+ALTER TABLE evento_reputacion
+  ADD CONSTRAINT uq_evento_reputacion_hecho
+  UNIQUE (usuario_id, referencia_tipo, referencia_origen_id, tipo);
+
+-- R-REP-02 · un solo puntaje vigente por usuario
+ALTER TABLE puntaje_reputacion
+  ADD CONSTRAINT ex_puntaje_vigente
+  EXCLUDE USING gist (
+    usuario_id WITH =,
+    tstzrange(vigente_desde, vigente_hasta, '[)') WITH &&
+  );
+
+-- R-REP-03 · el total cuadra con sus componentes
+CREATE OR REPLACE FUNCTION fn_rep_validar_componentes() RETURNS trigger AS $$
+DECLARE v_suma NUMERIC(12,4);
+BEGIN
+  SELECT COALESCE(SUM(contribucion), 0) INTO v_suma
+    FROM componente_score WHERE puntaje_id = NEW.id;
+  IF round(v_suma, 2) <> round(NEW.puntaje, 2) THEN
+    RAISE EXCEPTION 'R-REP-03: el puntaje % no cuadra con sus componentes (% vs %)',
+                    NEW.id, NEW.puntaje, v_suma;
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE CONSTRAINT TRIGGER tg_puntaje_cuadra
+  AFTER INSERT OR UPDATE ON puntaje_reputacion
+  DEFERRABLE INITIALLY DEFERRED
+  FOR EACH ROW EXECUTE FUNCTION fn_rep_validar_componentes();
+
+-- R-REP-04 · cadena de transparencia única y encadenada
+ALTER TABLE bloque_transparencia
+  ADD CONSTRAINT uq_bloque_grupo_numero UNIQUE (grupo_id, numero_bloque),
+  ADD CONSTRAINT ck_bloque_genesis CHECK (
+      (numero_bloque = 1 AND hash_bloque_anterior IS NULL)
+   OR (numero_bloque > 1 AND hash_bloque_anterior IS NOT NULL)
+  );
+
+CREATE OR REPLACE FUNCTION fn_rep_encadenar_bloque() RETURNS trigger AS $$
+DECLARE v_hash VARCHAR(64); v_numero INTEGER;
+BEGIN
+  SELECT hash_bloque, numero_bloque INTO v_hash, v_numero
+    FROM bloque_transparencia
+   WHERE grupo_id = NEW.grupo_id
+   ORDER BY numero_bloque DESC LIMIT 1;
+  IF v_numero IS NOT NULL AND NEW.numero_bloque <> v_numero + 1 THEN
+    RAISE EXCEPTION 'R-REP-04: salto de numeración en la cadena (% tras %)',
+                    NEW.numero_bloque, v_numero;
+  END IF;
+  IF v_hash IS NOT NULL AND NEW.hash_bloque_anterior IS DISTINCT FROM v_hash THEN
+    RAISE EXCEPTION 'R-REP-04: hash_bloque_anterior no coincide con el bloque previo';
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_bloque_encadenado
+  BEFORE INSERT ON bloque_transparencia
+  FOR EACH ROW EXECUTE FUNCTION fn_rep_encadenar_bloque();
+
+
+-- ---------------------------------------------------------------------
+-- R-NOT — Notificaciones
+-- ---------------------------------------------------------------------
+
+-- R-NOT-01 · idempotencia del envío
+ALTER TABLE envio_notificacion
+  ADD CONSTRAINT uq_envio_idempotencia UNIQUE (clave_idempotencia);
+
+-- R-NOT-02 · tope diario configurable, denegando por omisión
+CREATE OR REPLACE FUNCTION fn_not_puede_enviar(
+    p_destinatario UUID, p_es_obligatorio BOOLEAN) RETURNS VOID AS $$
+DECLARE v_tope INTEGER; v_hoy INTEGER;
+BEGIN
+  IF p_es_obligatorio THEN RETURN; END IF;      -- los regulatorios no topean
+  -- El tope se lee de la preferencia del usuario; sin preferencia, uno conservador.
+  SELECT tope_diario_mensajes INTO v_tope
+    FROM preferencia_notificacion WHERE usuario_id = p_destinatario;
+  v_tope := COALESCE(v_tope, 3);                -- por omisión, conservador
+  SELECT count(*) INTO v_hoy
+    FROM envio_notificacion e
+    JOIN notificacion n ON n.id = e.notificacion_id
+   WHERE n.usuario_id = p_destinatario
+     AND e.encolado_en >= date_trunc('day', now());
+  IF v_hoy >= v_tope THEN
+    RAISE EXCEPTION 'R-NOT-02: tope diario de % mensajes alcanzado', v_tope;
+  END IF;
+END $$ LANGUAGE plpgsql;
+
+-- R-NOT-03 · la supresión vigente gana sobre cualquier campaña
+-- La categoría y la obligatoriedad son del tipo de evento, no de cada aviso:
+-- se resuelven por join contra el catálogo, sin duplicar el dato.
+CREATE OR REPLACE FUNCTION fn_not_validar_supresion() RETURNS trigger AS $$
+DECLARE v_suprimido BOOLEAN; v_categoria TEXT; v_obligatorio BOOLEAN;
+BEGIN
+  SELECT e.categoria, e.es_obligatorio INTO v_categoria, v_obligatorio
+    FROM evento_notificable e WHERE e.id = NEW.evento_id;
+  IF COALESCE(v_obligatorio, FALSE) THEN
+    RETURN NEW;                       -- los avisos obligatorios no se suprimen
+  END IF;
+  SELECT EXISTS (
+    SELECT 1 FROM lista_supresion s
+      JOIN canal_vinculado c ON c.identificador = s.identificador
+     WHERE c.usuario_id = NEW.usuario_id
+       AND s.activa
+       AND (s.categoria = v_categoria OR s.categoria = 'TODAS')
+  ) INTO v_suprimido;
+  IF v_suprimido THEN
+    RAISE EXCEPTION 'R-NOT-03: destinatario suprimido para la categoría %', v_categoria;
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_notificacion_supresion
+  BEFORE INSERT ON notificacion
+  FOR EACH ROW EXECUTE FUNCTION fn_not_validar_supresion();
 
 
 -- ---------------------------------------------------------------------

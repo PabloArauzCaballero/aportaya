@@ -59,6 +59,58 @@ normas: [Ley 393 (conservación e integridad), ASFI riesgo operativo]
 - La transacción original sigue existiendo, íntegra y visible.
 - El extracto del usuario muestra el movimiento y su corrección.
 
+## Contrato · `packages/contratos/CU-14.ts`
+
+```ts
+export const EntradaCU14 = z.object({
+  claveIdempotencia: z.string().uuid(),
+  transaccionOriginalId: z.string().uuid(),
+  tipo:   z.enum(['ANULACION','CONTRACARGO','ERROR_OPERATIVO','ORDEN_AUTORIDAD']),
+  motivo: z.string().min(20).max(300),
+  autorizadaPor: z.string().uuid(),
+}).strict()
+
+export const SalidaCU14 = z.object({
+  reversoId: z.string().uuid(),
+  transaccionReversoId: z.string().uuid(),
+  generaObligacionDeRestitucion: z.boolean(),
+}).strict()
+
+export const ErroresCU14 = {
+  TRANSACCION_NO_REVERSABLE: 'AP-CU14-01',
+  FALTA_AUTORIZACION: 'AP-CU14-02',
+  SALDO_INSUFICIENTE_PARA_REVERSO: 'AP-CU14-03',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `TRANSACCION_NO_REVERSABLE` | No está aplicada o ya fue reversada (R-BIL-15) |
+| `FALTA_AUTORIZACION` | Quien autoriza no puede ser quien solicita (R-SEG-04) |
+| `SALDO_INSUFICIENTE_PARA_REVERSO` | Se generó obligación de restitución en su lugar |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `espejarMovimientos` | Invierte débitos y créditos; puro |
+| Molécula | `ReversoRepositorio` | Expediente del reverso |
+| Molécula | `TransaccionBilleteraRepositorio` | Alta de la transacción compensatoria |
+| Organismo | `CU14ReversarTransaccion` | Transacción: compensación, asiento de reversa y riesgo operativo |
+| Página | `POST /billetera/transacciones/:id/reverso` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `transaccion.reversada` | Asiento de reversa, devolución de comisión y aviso | `REVERSO_AUTORIZAR` |
+| `riesgo.evento_registrado` | Base de pérdidas si el motivo es error operativo | — |
+
+## Interfaz
+
+- **App:** El extracto muestra el movimiento y su corrección, nunca solo el resultado.
+- **Backoffice:** Formulario de reverso con doble aprobación y motivo obligatorio.
+
 ## Restricciones aplicables
 
 `R-AUD-01` · `R-AUD-03` · `R-AUD-06` · `R-BIL-02` · `R-BIL-15` · `R-SEG-04`

@@ -7,7 +7,7 @@ clase: PuntajeReputacion
 modulo: "06 — Transparencia y Reputación"
 estereotipo: Raíz de agregado
 clave_primaria: [id]
-columnas: 16
+columnas: 18
 fk_salientes: 2
 fk_entrantes: 1
 append_only: false
@@ -35,6 +35,8 @@ append_only: false
 | `antiguedad_meses` | SMALLINT | — | no | — |
 | `eventos_considerados` | INTEGER | — | no | — |
 | `modelo_version` | VARCHAR(20) | — | no | — |
+| `vigente_desde` | TIMESTAMPTZ | — | no | — |
+| `vigente_hasta` | TIMESTAMPTZ | — | sí | NULL |
 | `calculado_en` | TIMESTAMPTZ | — | no | — |
 | `proximo_recalculo_en` | TIMESTAMPTZ | IDX | no | IDX |
 

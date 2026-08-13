@@ -763,6 +763,8 @@ entity "solicitud_retiro" as retiro {
   motivo : VARCHAR(200)
   solicitado_en : TIMESTAMPTZ
   estado : VARCHAR(15) <<CK>>
+  posicion : VARCHAR(10) <<CK, NULL>>
+  # plan_regularizacion_id : UUID <<FK, NULL>>
   requiere_reemplazo : BOOLEAN
   liquidacion_calculada : DECIMAL(14,2)
 }
@@ -832,7 +834,11 @@ entity "sorteo_turnos" as sorteo {
   --
   # grupo_id : UUID <<FK, UQ parcial>>
   algoritmo : VARCHAR(30)
+  estado : VARCHAR(15) <<CK, IDX>>
   hash_semilla_previo : VARCHAR(64)
+  aportes_entropia : JSONB <<NULL>>
+  fecha_compromiso : TIMESTAMPTZ
+  fecha_revelado_prevista : TIMESTAMPTZ <<NULL>>
   semilla_servidor : VARCHAR(128) <<NULL hasta revelar>>
   semilla_publica : VARCHAR(128)
   resultado : JSONB
@@ -929,6 +935,7 @@ entity "acuerdo" as acuerdo {
   referencia_afectada_id : UUID <<NULL, polimorfica>>
   abierto_en : TIMESTAMPTZ
   cierra_en : TIMESTAMPTZ
+  resuelto_en : TIMESTAMPTZ <<NULL>>
   ejecutado_en : TIMESTAMPTZ <<NULL>>
 }
 

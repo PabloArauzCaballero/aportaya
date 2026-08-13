@@ -55,6 +55,57 @@ normas: [UIF EBR]
 - Existe una declaración PEP fechada por usuario, con su histórico completo.
 - Un PEP nunca queda con debida diligencia menor a reforzada.
 
+## Contrato · `packages/contratos/CU-03.ts`
+
+```ts
+export const EntradaCU03 = z.object({
+  usuarioId:  z.string().uuid(),
+  esPep:      z.boolean(),
+  tipoPep:    z.enum(['NACIONAL','EXTRANJERO','ORG_INTERNACIONAL','FAMILIAR','ALLEGADO']).optional(),
+  cargo:      z.string().max(120).optional(),
+  institucion:z.string().max(120).optional(),
+  beneficiariosFinales: z.array(z.object({ nombre: z.string(), documento: z.string(), porcentaje: z.string() })).optional(),
+}).strict()
+
+export const SalidaCU03 = z.object({
+  declaracionId: z.string().uuid(),
+  exigeDiligenciaReforzada: z.boolean(),
+  nivelRiesgo:   z.enum(['BAJO','MEDIO','ALTO']),
+}).strict()
+
+export const ErroresCU03 = {
+  DECLARACION_INCOMPLETA: 'AP-CU03-01',
+  BENEFICIARIO_SIN_DOCUMENTO: 'AP-CU03-02',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `DECLARACION_INCOMPLETA` | Dice ser PEP pero no informa cargo ni institución |
+| `BENEFICIARIO_SIN_DOCUMENTO` | Falta identificar a un beneficiario final |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `clasificarPep` | Traduce la declaración a nivel de riesgo; puro |
+| Molécula | `DeclaracionPepRepositorio` | Persistencia de la declaración y sus vínculos |
+| Molécula | `ListaRestrictivaRepositorio` | Cotejo del nombre declarado |
+| Organismo | `CU03DeclararPep` | Transacción: declaración, recalificación y marcado de monitoreo |
+| Página | `POST /usuarios/:id/pep` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `pep.declarado` | Recalificación de riesgo y monitoreo intensificado | `PARTICIPANTE` |
+| `pep.verificado` | Cierre de la verificación por cumplimiento | `OFICIAL_CUMPLIMIENTO` |
+
+## Interfaz
+
+- **App:** Formulario con las cinco categorías explicadas en lenguaje llano, no en jerga normativa.
+- **Backoffice:** Panel de PEP con su verificación y la fecha de la próxima revisión.
+
 ## Restricciones aplicables
 
 `R-UIF-10` · `R-UIF-11` · `R-SEG-04` · `R-AUD-08`

@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS preferencia_notificacion (
   acepta_correo                      BOOLEAN DEFAULT FALSE NOT NULL,
   acepta_sms                         BOOLEAN DEFAULT FALSE NOT NULL,
   acepta_push                        BOOLEAN DEFAULT FALSE NOT NULL,
+  tope_diario_mensajes               SMALLINT NOT NULL,
   hora_no_molestar_desde             TIME,
   hora_no_molestar_hasta             TIME,
   frecuencia_resumen                 VARCHAR(15) NOT NULL,

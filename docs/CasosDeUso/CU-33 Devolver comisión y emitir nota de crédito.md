@@ -58,6 +58,61 @@ normas: [SIN, ASFI atención de reclamos]
 
 - El dinero volvió y el documento fiscal quedó corregido, ambos trazables entre sí.
 
+## Contrato · `packages/contratos/CU-33.ts`
+
+```ts
+export const EntradaCU33 = z.object({
+  claveIdempotencia: z.string().uuid(),
+  devengoId: z.string().uuid(),
+  motivo: z.enum(['ENTREGA_ANULADA','ERROR_DE_TARIFA','RECLAMO_PROCEDENTE','FALLA_DE_SERVICIO']),
+  montoDevuelto: MontoSchema,
+  forma: z.enum(['ABONO_BILLETERA','NOTA_CREDITO','COMPENSACION']),
+  reclamoId: z.string().uuid().optional(),
+  autorizadaPor: z.string().uuid(),
+}).strict()
+
+export const SalidaCU33 = z.object({
+  devolucionId: z.string().uuid(),
+  notaCreditoId: z.string().uuid().nullable(),
+  transaccionId: z.string().uuid().nullable(),
+  cuf: z.string().nullable(),
+}).strict()
+
+export const ErroresCU33 = {
+  EXCEDE_LO_COBRADO: 'AP-CU33-01',
+  DEVENGO_NO_COBRADO: 'AP-CU33-02',
+  FACTURA_SIN_ENVIAR: 'AP-CU33-03',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `EXCEDE_LO_COBRADO` | La devolución supera lo efectivamente cobrado (R-TAR-11) |
+| `DEVENGO_NO_COBRADO` | No hay nada que devolver |
+| `FACTURA_SIN_ENVIAR` | Primero se envía la factura offline y luego la nota |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `calcularMaximoDevolvible` | Cobrado menos ya devuelto; puro |
+| Molécula | `DevolucionRepositorio` | Expediente de la devolución |
+| Molécula | `NotaCreditoRepositorio` | Documento fiscal de corrección |
+| Organismo | `CU33DevolverComision` | Transacción: devolución, asiento de reversa y nota de crédito |
+| Página | `POST /comisiones/:devengoId/devoluciones` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `comision.devuelta` | Nota de crédito y aviso con el motivo | `SOPORTE` con autorización |
+| `riesgo.evento_registrado` | Pérdida operativa si el motivo es error o falla | — |
+
+## Interfaz
+
+- **App:** El abono aparece en el extracto con el motivo escrito.
+- **Backoffice:** Formulario de devolución enlazado al reclamo que la origina.
+
 ## Restricciones aplicables
 
 `R-TAR-10` · `R-TAR-11` · `R-CON-04` · `R-AUD-01` · `R-AUD-06` · `R-SEG-04`

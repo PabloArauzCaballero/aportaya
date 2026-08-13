@@ -61,6 +61,60 @@ normas: [Protección de datos, ISO/IEC 27701, ASFI ETF]
 - Toda solicitud tiene fecha límite guardada, respuesta y trazabilidad.
 - Nunca se destruye información que la ley obliga a conservar.
 
+## Contrato · `packages/contratos/CU-07.ts`
+
+```ts
+export const EntradaCU07 = z.object({
+  usuarioId: z.string().uuid(),
+  tipo:      z.enum(['ACCESO','RECTIFICACION','OPOSICION','SUPRESION']),
+  descripcion: z.string().min(10).max(1000),
+}).strict()
+
+export const SalidaCU07 = z.object({
+  solicitudId:      z.string().uuid(),
+  fechaLimiteLegal: z.string().datetime(),
+  resultado:        z.enum(['ATENDIDA','PARCIAL','RECHAZADA','EN_PROCESO']),
+  datosRetenidosPorLey: z.array(z.string()),
+}).strict()
+
+export const ErroresCU07 = {
+  IDENTIDAD_NO_VERIFICADA: 'AP-CU07-01',
+  RELACION_VIGENTE: 'AP-CU07-02',
+  RETENCION_LEGAL_VIGENTE: 'AP-CU07-03',
+  REQUERIMIENTO_ABIERTO: 'AP-CU07-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `IDENTIDAD_NO_VERIFICADA` | El solicitante no acreditó ser el titular |
+| `RELACION_VIGENTE` | Tiene saldo, deuda o grupo activo: primero se cierra |
+| `RETENCION_LEGAL_VIGENTE` | La conservación obligatoria impide borrar (R-SEG-06) |
+| `REQUERIMIENTO_ABIERTO` | Hay un oficio o caso que suspende la supresión |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `calcularPlazoLegal` | Fecha límite según tipo; se guarda, no se recalcula |
+| Átomo | `clasificarDatosRetenibles` | Qué se conserva por ley y qué se seudonimiza |
+| Molécula | `SolicitudDatosRepositorio` | Alta y seguimiento |
+| Molécula | `AnonimizacionRepositorio` | Ejecuta la estrategia elegida |
+| Organismo | `CU07AtenderDerechosDeDatos` | Transacción: resolución y ejecución de la estrategia |
+| Página | `POST /usuarios/:id/solicitudes-datos` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `datos.solicitud_recibida` | Arranca el reloj del plazo legal | `PARTICIPANTE` |
+| `datos.solicitud_atendida` | Entrega del paquete o constancia de supresión | `SOPORTE` |
+
+## Interfaz
+
+- **App:** *Mis datos*: descargar, corregir u oponerse, con el plazo de respuesta a la vista.
+- **Backoffice:** Cola de solicitudes con su vencimiento; las vencidas escalan a hallazgo.
+
 ## Restricciones aplicables
 
 `R-SEG-02` · `R-SEG-06` · `R-AUD-08` · `R-CON-05`

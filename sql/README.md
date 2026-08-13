@@ -34,17 +34,17 @@ el orden que necesita la introspección de un ORM.
 ## Aplicar
 
 ```bash
-psql -d pasanaku -v ON_ERROR_STOP=1 -f sql/aplicar.sql
+psql -d aportaya -v ON_ERROR_STOP=1 -f sql/aplicar.sql
 ```
 
 Con Docker, de cero:
 
 ```bash
-docker run --rm -d --name pg-pasanaku \
-  -e POSTGRES_PASSWORD=pasanaku -e POSTGRES_DB=pasanaku \
+docker run --rm -d --name pg-aportaya \
+  -e POSTGRES_PASSWORD=aportaya -e POSTGRES_DB=aportaya \
   -p 5432:5432 -v "$PWD/sql:/sql:ro" postgres:16
 sleep 10
-docker exec pg-pasanaku psql -U postgres -d pasanaku -v ON_ERROR_STOP=1 -f /sql/aplicar.sql
+docker exec pg-aportaya psql -U postgres -d aportaya -v ON_ERROR_STOP=1 -f /sql/aplicar.sql
 ```
 
 ## Sembrar los catálogos
@@ -54,8 +54,8 @@ rechaza toda operación sin límite configurado, sin tarifario y sin licencia. E
 deliberado (`R-LIM-01`, `R-LIC-01`).
 
 ```bash
-psql -d pasanaku -v ON_ERROR_STOP=1 -f sql/60_semillas/sembrar.sql
-psql -d pasanaku -f sql/60_semillas/99_desarrollo.sql   # solo entorno local
+psql -d aportaya -v ON_ERROR_STOP=1 -f sql/60_semillas/sembrar.sql
+psql -d aportaya -f sql/60_semillas/99_desarrollo.sql   # solo entorno local
 ```
 
 | Archivo | Qué carga | Estado |
@@ -81,10 +81,10 @@ psql -d pasanaku -f sql/60_semillas/99_desarrollo.sql   # solo entorno local
 
 ```bash
 # controles de integridad: TODAS las consultas deben devolver cero filas
-psql -d pasanaku -f sql/50_verificacion/verificaciones.sql
+psql -d aportaya -f sql/50_verificacion/verificaciones.sql
 
 # prueba de humo de las restricciones: cada línea debe empezar con OK
-psql -d pasanaku -f sql/50_verificacion/prueba_humo.sql
+psql -d aportaya -f sql/50_verificacion/prueba_humo.sql
 ```
 
 > [!tip] Verificado de punta a punta sobre PostgreSQL 16
@@ -109,59 +109,42 @@ psql -d pasanaku -f sql/50_verificacion/prueba_humo.sql
 | Políticas de seguridad por fila | 2 |
 | Comentarios de columna | 1.883 |
 
-## Introspección con MikroORM
+## Introspección con Kysely
 
-El esquema está preparado para generar entidades por introspección:
+El acceso a datos es **Kysely**, un constructor de consultas tipado, no un ORM
+([[ADR-002 Acceso a datos]]). Los tipos se generan por introspección del esquema
+real, así que la base sigue siendo la fuente de verdad:
 
-- **Claves foráneas explícitas y nombradas** (`fk_<tabla>_<columna>`): MikroORM
-  infiere de ahí las relaciones `@ManyToOne` / `@OneToMany`.
-- **`UNIQUE` sobre la columna de una FK** marca la relación como `@OneToOne`.
-- **Comentarios en todas las columnas** con las anotaciones del modelo: quedan
-  como documentación en la entidad generada.
+```bash
+npx kysely-codegen --dialect postgres --out-file packages/datos/src/esquema.d.ts
+```
+
+Lo que el esquema aporta a esa generación:
+
+- **Claves foráneas explícitas y nombradas** (`fk_<tabla>_<columna>`): documentan la
+  relación en la base, donde se verifica, y no en una anotación que puede mentir.
+- **Comentarios en todas las columnas** con las anotaciones del modelo: sobreviven a
+  la generación y quedan a la vista en el editor.
 - **Tipos nativos**: `uuid`, `numeric`, `timestamptz`, `date`, `jsonb`, `inet`,
   `char(n)`. Sin tipos `enum` de PostgreSQL a propósito: los enumerados son
   `CHECK` sobre `varchar`, que se mapean a uniones de literales de TypeScript.
+- **`numeric` llega como cadena** y se opera con decimales exactos, nunca con
+  `number` ([[ADR-005 Dinero y decimales]], skill `dinero-decimal`).
 
-### Configuración
+### Convenciones al consultar
 
-```ts
-// mikro-orm.config.ts
-import { defineConfig } from '@mikro-orm/postgresql';
-import { UnderscoreNamingStrategy } from '@mikro-orm/core';
-
-export default defineConfig({
-  clientUrl: process.env.DATABASE_URL,
-  namingStrategy: UnderscoreNamingStrategy,   // snake_case ↔ camelCase
-  discovery: { warnWhenNoEntities: false },
-  entityGenerator: {
-    bidirectionalRelations: true,   // genera también el lado @OneToMany
-    identifiedReferences: true,
-    readOnlyPivotTables: true,
-    scalarTypeInDecorator: true,
-  },
-});
-```
-
-```bash
-npx mikro-orm-cli generate-entities --save --path ./src/entities
-```
-
-### Convenciones que conviene respetar al usar las entidades
-
-1. **No confíe en el ORM para las reglas de dinero.** Las restricciones están en
-   la base porque un `flush()` mal ordenado o un script suelto no deben poder
-   violarlas. El ORM va a recibir el error; la regla vive abajo.
-2. **Las tablas append-only no admiten `em.remove()` ni actualización.** Márquelas
-   como `@Entity({ readonly: true })` después de la generación y corrija con el
-   movimiento inverso.
+1. **La regla de dinero vive abajo.** El código recibe el error de la restricción;
+   la garantía no está en la capa de acceso a datos ni en un servicio.
+2. **Las tablas *append-only* no admiten `update` ni `delete`.** El rol de
+   aplicación no tiene ese permiso: la corrección es el movimiento inverso.
 3. **Las columnas generadas** (`saldo_total`, `perdida_neta`, `ratio_cobertura`,
-   `saldo_pendiente`, …) deben quedar como `@Property({ persist: false })`.
+   `saldo_pendiente`, …) se leen, no se escriben.
 4. **Los invariantes diferidos** (partida doble de `transaccion_billetera` y de
-   `asiento_contable`) se validan al `COMMIT`: una sola unidad de trabajo por caso
-   de uso, nunca un `flush()` por paso.
-5. **Seguridad por fila**: la conexión debe setear `app.usuario_id` y `app.rol` en
-   cada request, o las políticas de `cuenta_billetera` y `movimiento_billetera` no
-   protegen nada.
+   `asiento_contable`) se validan al `COMMIT`: **una transacción por caso de uso**,
+   nunca una por paso.
+5. **Seguridad por fila**: cada transacción fija `app.usuario_id` y `app.rol` con
+   `SET LOCAL`, o las políticas de `cuenta_billetera` y `movimiento_billetera` no
+   protegen nada ([[ADR-007 Sesión, RLS y pooling]], skill `seguridad-sesion-rls`).
 
 ## Antes de operar con datos reales
 

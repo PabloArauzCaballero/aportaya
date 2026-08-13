@@ -3,12 +3,12 @@ tags:
   - moc
   - modulo/02-grupos-cupos-turnos-y-gobernanza
 modulo: "02 — Grupos, Cupos, Turnos y Gobernanza"
-relaciones_fk: 48
+relaciones_fk: 49
 ---
 
 # 02 — Grupos, Cupos, Turnos y Gobernanza · relaciones
 
-Las **48 claves foráneas** que salen de las tablas de este módulo.
+Las **49 claves foráneas** que salen de las tablas de este módulo.
 
 [[_Relaciones|← Todas las relaciones]] · [[Index]]
 
@@ -50,6 +50,7 @@ Las **48 claves foráneas** que salen de las tablas de este módulo.
 | [[solicitud_permuta.turno_destino_id → turno]] | [[turno]] | — | no |
 | [[solicitud_permuta.turno_origen_id → turno]] | [[turno]] | — | no |
 | [[solicitud_retiro.participante_id → participante]] | [[participante]] | — | no |
+| [[solicitud_retiro.plan_regularizacion_id → plan_regularizacion]] | [[plan_regularizacion]] | ↗ 03 | sí |
 | [[sorteo_turnos.ejecutado_por → usuario]] | [[usuario]] | ↗ 01 | no |
 | [[sorteo_turnos.grupo_id → grupo]] | [[grupo]] | — | no |
 | [[traspaso_cupo.aprobado_por_acuerdo_id → acuerdo]] | [[acuerdo]] | — | sí |

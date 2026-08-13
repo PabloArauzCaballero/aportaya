@@ -1,6 +1,6 @@
 ---
 name: norma-nueva
-description: "Incorporar una norma o cambio regulatorio al proyecto Pasanaku: investigar la fuente real (ASFI, UIF, BCB, SIN), actualizar docs/Cumplimiento.md, decidir si es dato de catálogo o estructura nueva, y propagar a casos de uso y restricciones. Úsala cuando aparezca una resolución, circular, instructivo o umbral nuevo, o cuando haya que verificar si el modelo cumple algo."
+description: "Incorporar una norma o cambio regulatorio al proyecto AportaYa: investigar la fuente real (ASFI, UIF, BCB, SIN), actualizar docs/Cumplimiento.md, decidir si es dato de catálogo o estructura nueva, y propagar a casos de uso y restricciones. Úsala cuando aparezca una resolución, circular, instructivo o umbral nuevo, o cuando haya que verificar si el modelo cumple algo."
 ---
 
 # Incorporar una norma nueva
@@ -54,7 +54,7 @@ la resolución modificatoria, que suele venir en texto.
 
 | Situación | Qué hacer |
 | --- | --- |
-| Cambia un valor (umbral, plazo, alícuota, límite) | Fila nueva en el catálogo con vigencia. **Cero código.** |
+| Cambia un valor (umbral, plazo, alícuota, límite) | Fila nueva en `seeders/minimos/*.json` con vigencia. **Cero código.** Skill `semillas-catalogos` |
 | Aparece un concepto nuevo con datos propios (formulario, registro, declaración) | Tabla nueva → skill `boveda-modelo` |
 | Cambia un procedimiento | Caso de uso → skill `caso-de-uso` |
 | La norma exige que algo sea imposible | Restricción → skill `restriccion` |
@@ -84,8 +84,12 @@ frontmatter.
 
 ```bash
 python3 scripts/generar_boveda.py     # sin_resolver debe ser []
-python3 scripts/extraer_sql.py
+python3 scripts/generar_ddl.py        # esquema + restricciones + semillas
 ```
+
+Si la norma cambió un valor de catálogo, la verificación es que la fila vieja
+**siga estando** con su `vigente_hasta` cerrado. Borrarla rompe la reproducción de
+operaciones pasadas, que es exactamente lo que un supervisor viene a mirar.
 
 ## Cómo redactar el estado con honestidad
 
@@ -106,4 +110,6 @@ python3 scripts/extraer_sql.py
 
 ## Ver también
 
-`docs/Cumplimiento.md` · skills `boveda-modelo`, `caso-de-uso`, `restriccion`.
+`docs/Cumplimiento.md` · skills `boveda-modelo`, `caso-de-uso`, `restriccion`,
+`semillas-catalogos`, `cumplimiento-uif`, `facturacion-sin`,
+`reclamos-consumidor`.

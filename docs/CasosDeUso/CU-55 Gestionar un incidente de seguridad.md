@@ -60,6 +60,61 @@ normas: [ASFI Gestión de Seguridad de la Información, ISO/IEC 27001 A.5.24-A.5
 - Existe línea de tiempo completa: detección, contención, reporte y notificación,
   con los plazos que regían ese día.
 
+## Contrato · `packages/contratos/CU-55.ts`
+
+```ts
+export const EntradaCU55 = z.object({
+  tipo: z.enum(['ACCESO_NO_AUTORIZADO','FUGA_DE_DATOS','MALWARE','DENEGACION_SERVICIO','PHISHING','FRAUDE_TECNOLOGICO']),
+  severidad: z.enum(['BAJA','MEDIA','ALTA','CRITICA']),
+  activoInformacionId: z.string().uuid().optional(),
+  datosPersonalesAfectados: z.boolean(),
+  usuariosAfectados: z.number().int(),
+  detectadoEn: z.string().datetime(),
+}).strict()
+
+export const SalidaCU55 = z.object({
+  incidenteId: z.string().uuid(),
+  codigo: z.string(),
+  plazoReporte: z.string().datetime(),
+  requiereNotificarTitulares: z.boolean(),
+  eventoRiesgoId: z.string().uuid().nullable(),
+}).strict()
+
+export const ErroresCU55 = {
+  SIN_RESPONSABLE_DESIGNADO: 'AP-CU55-01',
+  PLAZO_REPORTE_VENCIDO: 'AP-CU55-02',
+  CIERRE_SIN_NOTIFICAR: 'AP-CU55-03',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SIN_RESPONSABLE_DESIGNADO` | No hay responsable de seguridad activo |
+| `PLAZO_REPORTE_VENCIDO` | Se reporta igual y se abre hallazgo |
+| `CIERRE_SIN_NOTIFICAR` | Con datos personales afectados no se cierra sin notificar (R-SEG-05) |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `calcularPlazosDelIncidente` | Contención, reporte y notificación; se guardan, no se recalculan |
+| Molécula | `IncidenteSeguridadRepositorio` | Expediente del incidente |
+| Molécula | `ActivoInformacionRepositorio` | Activo afectado y su clasificación |
+| Organismo | `CU55GestionarIncidente` | Transacción: alta, plazos y enlace con riesgo operativo |
+| Página | `POST /seguridad/incidentes` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `seguridad.incidente_detectado` | Contención y relojes de reporte | `RESPONSABLE_SEGURIDAD` |
+| `seguridad.titulares_notificados` | Constancia de la notificación | — |
+
+## Interfaz
+
+- **App:** Si afecta al usuario, recibe un aviso claro de qué pasó y qué hacer.
+- **Backoffice:** Panel de incidentes con los tres relojes y su vencimiento.
+
 ## Restricciones aplicables
 
 `R-SEG-05` · `R-SEG-02` · `R-RIS-01` · `R-AUD-01`

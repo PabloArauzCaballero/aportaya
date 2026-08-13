@@ -31,7 +31,7 @@ append_only: false
 | `moneda` | CHAR(3) | — | no | — |
 | `estado` | VARCHAR(25) | IDX | no | CK, IDX |
 | `nivel_debida_diligencia` | VARCHAR(15) | — | no | CK |
-| `saldo_disponible` | DECIMAL(16,2) | — | no | CK: >= 0 |
+| `saldo_disponible` | DECIMAL(16,2) | — | no | — |
 | `saldo_retenido` | DECIMAL(16,2) | — | no | CK: >= 0 |
 | `saldo_total` | DECIMAL(16,2) | — | no | GENERATED |
 | `permite_saldo_negativo` | BOOLEAN | — | no | — |
@@ -80,7 +80,9 @@ append_only: false
 > OR (tipo='GRUPO'   AND grupo_id  IS NOT NULL)
 > OR (tipo LIKE 'PLATAFORMA%' AND usuario_id IS NULL
 > AND grupo_id IS NULL)
-> - CHECK: saldo_disponible >= 0 salvo permite_saldo_negativo.
+> - CHECK: saldo_disponible >= 0 salvo permite_saldo_negativo. La regla es
+> condicional, asi que vive en el catalogo (R-BIL-02) y no como anotacion
+> de la columna: las cuentas tecnicas de contrapartida operan en negativo.
 > - saldo_total = saldo_disponible + saldo_retenido.
 > - Las columnas de saldo son cache: un job de verificacion
 > recalcula desde movimiento_billetera y alerta si difiere

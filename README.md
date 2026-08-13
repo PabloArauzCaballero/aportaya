@@ -1,7 +1,7 @@
-# Pasanaku — Modelo de datos
+# AportaYa — Modelo de datos
 
-Sistema destinado a la creación, administración y seguimiento de grupos de
-pasanaku, **operado como una billetera móvil**: los participantes tienen saldo,
+**AportaYa** es un sistema para crear, administrar y seguir grupos de pasanaku,
+**operado como una billetera móvil**: los participantes tienen saldo,
 aportan y cobran desde la app, y la plataforma cobra una comisión pequeña por cada
 juego. Esta rama contiene el **modelo de datos completo** del sistema.
 
@@ -38,30 +38,45 @@ del sistema, en cuatro capas encadenadas.
 | Capa | Dónde | Responde |
 | --- | --- | --- |
 | Norma | [`docs/Cumplimiento.md`](docs/Cumplimiento.md) | qué obliga ASFI, UIF, BCB, el SIN y las ISO |
-| Caso de uso | [`docs/CasosDeUso/`](docs/CasosDeUso/_CasosDeUso.md) | cómo se ejecuta cada flujo, paso a paso |
-| Restricción | [`docs/Restricciones.md`](docs/Restricciones.md) | qué impide, en la base, que se viole |
+| Caso de uso | [`docs/CasosDeUso/`](docs/CasosDeUso/_CasosDeUso.md) | cómo se ejecuta cada flujo, paso a paso — 55 casos |
+| Restricción | [`docs/Restricciones.md`](docs/Restricciones.md) | qué impide, en la base, que se viole — 92 reglas |
 | Modelo | [`docs/Modelos/`](docs/Modelos/Entidades/_Entidades.md) | dónde vive cada dato |
 | Esquema | [`sql/`](sql/README.md) | el DDL ejecutable, generado desde las tres capas anteriores |
+| Arquitectura | [`docs/Arquitectura/`](docs/Arquitectura/_Arquitectura.md) | con qué se implementa, y por qué así |
+| Stack | [`docs/Stack.md`](docs/Stack.md) | qué tecnología se eligió y qué alternativas perdieron |
 
 ```bash
 python3 scripts/generar_boveda.py   # notas del modelo (Obsidian) desde los .puml
 python3 scripts/generar_ddl.py      # esquema SQL completo desde los .puml + el catálogo
-psql -d pasanaku -v ON_ERROR_STOP=1 -f sql/aplicar.sql
-psql -d pasanaku -v ON_ERROR_STOP=1 -f sql/60_semillas/sembrar.sql
-psql -d pasanaku -f sql/50_verificacion/prueba_humo.sql   # 65 comprobaciones
+psql -d aportaya -v ON_ERROR_STOP=1 -f sql/aplicar.sql
+psql -d aportaya -v ON_ERROR_STOP=1 -f sql/60_semillas/sembrar.sql
+psql -d aportaya -f sql/50_verificacion/prueba_humo.sql   # 69 comprobaciones
 ```
 
 El esquema son **274 tablas en un archivo cada una**, con las claves foráneas y los
-índices en pasadas aparte —el orden que necesita la introspección de un ORM— más el
+índices en pasadas aparte —el orden que necesita la introspección de tipos— más el
 sellado de las tablas append-only y el catálogo de restricciones. Verificado sobre
 PostgreSQL 16: aplica sin errores y la prueba de humo confirma que las restricciones
 rechazan lo que deben rechazar.
 
-Las **skills del proyecto** en [`.claude/skills/`](.claude/skills/) describen cómo
-se trabaja sobre esta bóveda: `boveda-modelo` (tocar el modelo), `caso-de-uso`
-(especificar un flujo), `restriccion` (agregar una regla dura), `norma-nueva`
-(incorporar una norma) e `implementar-desde-boveda` (programar a partir de todo lo
-anterior).
+La **arquitectura** está en [`docs/Arquitectura/`](docs/Arquitectura/_Arquitectura.md):
+una decisión por documento, cada una con el motivo por el que se tomó y lo que la
+revertiría, más el [método](docs/Arquitectura/Método%20de%20arquitectura.md) con el
+que se diseña siempre y tres [prompts generalistas](docs/Arquitectura/Prompts/_Prompts.md)
+—general, backend y frontend— que imponen dividir todo en átomos, moléculas y
+organismos.
+
+Las **36 skills del proyecto** en [`.claude/skills/`](.claude/skills/README.md)
+describen cómo se trabaja sobre esta bóveda:
+
+| Grupo | Skills |
+| --- | --- |
+| Método | `arquitectura-atomica` · `implementar-desde-boveda` · `codigo-limpio` · `revision-codigo` · `entorno-monorepo` · `git-flujo` · `glosario-dominio` |
+| Especificación | `boveda-modelo` · `caso-de-uso` · `restriccion` · `norma-nueva` · `semillas-catalogos` |
+| Construcción | `contratos-api` · `back-nestjs` · `datos-kysely` · `dinero-decimal` · `trabajos-outbox` · `errores-api` · `idempotencia-reintentos` · `seguridad-sesion-rls` · `pruebas-cu` |
+| Interfaz | `disenar-frontend` · `movil-expo` · `web-backoffice` |
+| Dominio | `kyc-onboarding` · `contabilidad-partida-doble` · `qr-pagos` · `facturacion-sin` · `gobernanza-grupo` · `sorteo-transparencia` · `garantia-mora-cobranza` · `notificaciones-consentimiento` |
+| Cumplimiento | `cumplimiento-uif` · `reportes-regulatorios` · `reclamos-consumidor` · `observabilidad` |
 
 ## Cumplimiento normativo
 

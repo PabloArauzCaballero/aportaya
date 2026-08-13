@@ -57,6 +57,61 @@ normas: [UIF, requerimientos judiciales y fiscales]
 - El importe ordenado está indisponible y trazado a un oficio con hash.
 - Ninguna orden se ejecuta sin documento de respaldo registrado.
 
+## Contrato · `packages/contratos/CU-17.ts`
+
+```ts
+export const EntradaCU17 = z.object({
+  cuentaBilleteraId: z.string().uuid(),
+  autoridad: z.enum(['JUZGADO','UIF','ASFI','FISCALIA','INTERNO']),
+  numeroOficio: z.string().max(60),
+  alcance: z.enum(['TOTAL','PARCIAL']),
+  montoBloqueado: MontoSchema.optional(),
+  documentoUrl: z.string().url(),
+  hashDocumento: z.string().length(64),
+}).strict()
+
+export const SalidaCU17 = z.object({
+  bloqueoId: z.string().uuid(),
+  retencionId: z.string().uuid(),
+  montoEfectivamenteBloqueado: MontoSchema,
+  faltante: MontoSchema,
+}).strict()
+
+export const ErroresCU17 = {
+  OFICIO_DUPLICADO: 'AP-CU17-01',
+  CUENTA_INEXISTENTE: 'AP-CU17-02',
+  SIN_DOCUMENTO_DE_RESPALDO: 'AP-CU17-03',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `OFICIO_DUPLICADO` | Ya existe un bloqueo con ese número (R-BIL-14) |
+| `CUENTA_INEXISTENTE` | No se identificó al titular |
+| `SIN_DOCUMENTO_DE_RESPALDO` | No se ejecuta una orden sin el oficio y su hash |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `calcularAlcance` | Cuánto se puede bloquear y cuánto queda faltante; puro |
+| Molécula | `BloqueoSaldoRepositorio` | Expediente del bloqueo |
+| Molécula | `RetencionSaldoRepositorio` | Materializa la inmovilización |
+| Organismo | `CU17BloquearSaldo` | Transacción: bloqueo, retención y trazabilidad del oficio |
+| Página | `POST /cumplimiento/bloqueos` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `saldo.bloqueado` | Aviso al titular con número de oficio y autoridad | `CUMPLIMIENTO_CASOS` |
+| `saldo.desbloqueado` | Liberación de la retención al levantarse | — |
+
+## Interfaz
+
+- **App:** El titular ve el monto no disponible con el número de oficio y a quién consultar.
+- **Backoffice:** Alta de oficios con carga del documento; sin archivo no se ejecuta.
+
 ## Restricciones aplicables
 
 `R-BIL-08` · `R-BIL-14` · `R-BIL-13` · `R-SEG-02` · `R-AUD-04`

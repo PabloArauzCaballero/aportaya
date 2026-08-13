@@ -52,6 +52,58 @@ normas: [Integridad de saldo, ASFI Consumidor Financiero]
 - `saldo_retenido` es siempre igual a la suma de retenciones vigentes (`R-BIL-07`).
 - Toda retención tiene un final registrado.
 
+## Contrato · `packages/contratos/CU-13.ts`
+
+```ts
+export const EntradaCU13 = z.object({
+  cuentaBilleteraId: z.string().uuid(),
+  monto:  MontoSchema,
+  motivo: z.enum(['APORTE_PROGRAMADO','ENTREGA_EN_CURSO','DISPUTA','ORDEN_AUTORIDAD','ANTIFRAUDE','COMISION_PENDIENTE']),
+  referencia: z.object({ tipo: z.string(), id: z.string().uuid() }).optional(),
+  expiraEn: z.string().datetime().optional(),
+}).strict()
+
+export const SalidaCU13 = z.object({
+  retencionId: z.string().uuid(),
+  saldoDisponible: MontoSchema,
+  saldoRetenido:   MontoSchema,
+  expiraEn:        z.string().datetime().nullable(),
+}).strict()
+
+export const ErroresCU13 = {
+  SALDO_INSUFICIENTE: 'AP-CU13-01',
+  VENCIMIENTO_REQUERIDO: 'AP-CU13-02',
+  RETENCION_YA_EJECUTADA: 'AP-CU13-03',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SALDO_INSUFICIENTE` | No hay disponible para retener |
+| `VENCIMIENTO_REQUERIDO` | Falta expiración y el motivo no es orden de autoridad (R-BIL-08) |
+| `RETENCION_YA_EJECUTADA` | Se intentó operar sobre una retención cerrada |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `vigenciaDeRetencion` | Calcula el vencimiento según motivo y política; puro |
+| Molécula | `RetencionSaldoRepositorio` | Alta, ejecución y liberación |
+| Organismo | `CU13RetenerSaldo` | Transacción: retención y recálculo de saldos por trigger |
+| Página | `POST /billetera/retenciones` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `saldo.retenido` | Aviso al titular con el motivo en lenguaje llano | Interno o `BACKOFFICE` |
+| `saldo.liberado` | Devolución del importe a disponible | — |
+
+## Interfaz
+
+- **App:** El saldo retenido se muestra separado, con el motivo y hasta cuándo.
+- **Backoffice:** Listado de retenciones vigentes por cuenta, con su origen.
+
 ## Restricciones aplicables
 
 `R-BIL-02` · `R-BIL-03` · `R-BIL-07` · `R-BIL-08` · `R-AUD-04`

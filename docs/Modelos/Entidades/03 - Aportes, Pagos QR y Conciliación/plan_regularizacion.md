@@ -8,7 +8,7 @@ modulo: "03 — Aportes, Pagos QR y Conciliación"
 clave_primaria: [id]
 columnas: 7
 fk_salientes: 2
-fk_entrantes: 1
+fk_entrantes: 2
 append_only: false
 ---
 
@@ -40,10 +40,11 @@ append_only: false
 | Entidad | Columna | Módulo | Relación |
 | --- | --- | :-: | --- |
 | [[obligacion_aporte]] | `plan_regularizacion_id` | 03 | [[obligacion_aporte.plan_regularizacion_id → plan_regularizacion]] |
+| [[solicitud_retiro]] | `plan_regularizacion_id` | ↗ 02 | [[solicitud_retiro.plan_regularizacion_id → plan_regularizacion]] |
 
 ## Entidades vecinas
 
-[[obligacion_aporte]] · [[participante]] · [[usuario]]
+[[obligacion_aporte]] · [[participante]] · [[solicitud_retiro]] · [[usuario]]
 
 ## Ver también
 

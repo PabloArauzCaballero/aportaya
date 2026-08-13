@@ -1030,6 +1030,7 @@ entity "preferencia_notificacion" as pref {
   acepta_correo : BOOLEAN
   acepta_sms : BOOLEAN
   acepta_push : BOOLEAN
+  tope_diario_mensajes : SMALLINT
   hora_no_molestar_desde : TIME <<NULL>>
   hora_no_molestar_hasta : TIME <<NULL>>
   frecuencia_resumen : VARCHAR(15)

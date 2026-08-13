@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS acuerdo (
   referencia_afectada_id             UUID,
   abierto_en                         TIMESTAMPTZ DEFAULT now() NOT NULL,
   cierra_en                          TIMESTAMPTZ NOT NULL,
+  resuelto_en                        TIMESTAMPTZ,
   ejecutado_en                       TIMESTAMPTZ,
   CONSTRAINT pk_acuerdo PRIMARY KEY (id),
   CONSTRAINT ck_acuerdo_tipo CHECK (tipo IN ('ADMISION_REEMPLAZO', 'CAMBIO_FECHA_COBRO', 'CAMBIO_MONTO', 'CAMBIO_REGLAMENTO', 'CONDONACION_MORA', 'DISOLUCION_ANTICIPADA', 'EXPULSION_PARTICIPANTE', 'PERMUTA_TURNOS')),
@@ -29,4 +30,5 @@ COMMENT ON COLUMN acuerdo.tipo IS 'CK';
 COMMENT ON COLUMN acuerdo.propuesto_por IS 'FK';
 COMMENT ON COLUMN acuerdo.estado IS 'CK';
 COMMENT ON COLUMN acuerdo.referencia_afectada_id IS 'NULL, polimorfica';
+COMMENT ON COLUMN acuerdo.resuelto_en IS 'NULL';
 COMMENT ON COLUMN acuerdo.ejecutado_en IS 'NULL';

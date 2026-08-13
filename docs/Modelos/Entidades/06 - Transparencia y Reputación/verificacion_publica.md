@@ -6,7 +6,7 @@ tabla: verificacion_publica
 clase: VerificacionPublica
 modulo: "06 — Transparencia y Reputación"
 clave_primaria: [codigo]
-columnas: 6
+columnas: 9
 fk_salientes: 0
 fk_entrantes: 0
 append_only: false
@@ -24,6 +24,9 @@ append_only: false
 | `tipo_documento` | VARCHAR(30) | — | no | CK |
 | `referencia_id` | UUID | IDX | no | IDX |
 | `hash_esperado` | VARCHAR(64) | — | no | — |
+| `hash_recomputado` | VARCHAR(64) | — | sí | NULL |
+| `resultado` | VARCHAR(15) | — | sí | CK, NULL |
+| `verificado_en` | TIMESTAMPTZ | — | sí | NULL |
 | `consultas` | INTEGER | — | no | — |
 | `ultima_consulta_en` | TIMESTAMPTZ | — | sí | NULL |
 

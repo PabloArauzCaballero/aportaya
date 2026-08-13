@@ -36,6 +36,6 @@ Las **25 tablas** de este módulo. Justificación de negocio en [[01_identidad_u
 | [[rol_permiso]] | 2 | 2 | 0 |
 | [[asignacion_rol]] | 10 | 3 | 0 |
 | [[consentimiento]] | 10 | 1 | 0 |
-| [[preferencia_notificacion]] | 11 | 1 | 0 |
+| [[preferencia_notificacion]] | 12 | 1 | 0 |
 | [[reputacion_usuario]] | 11 | 1 | 0 |
 | [[solicitud_baja]] | 6 | 1 | 0 |

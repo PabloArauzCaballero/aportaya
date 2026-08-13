@@ -55,6 +55,56 @@ normas: [Límites BCB para dinero electrónico, UIF enfoque basado en riesgo]
 - Ninguna operación aplicada excede el límite vigente al momento de aplicarse.
 - El consumo por ventana es reconstruible y auditable.
 
+## Contrato · `packages/contratos/CU-40.ts`
+
+```ts
+export const EntradaCU40 = z.object({
+  cuentaBilleteraId: z.string().uuid(),
+  concepto: z.string().max(25),
+  monto: MontoSchema,
+}).strict()
+
+export const SalidaCU40 = z.object({
+  permitido: z.boolean(),
+  limitesEvaluados: z.array(z.object({ ventana: z.string(), tope: MontoSchema, consumido: MontoSchema, disponible: MontoSchema })),
+  motivoRechazo: z.string().nullable(),
+}).strict()
+
+export const ErroresCU40 = {
+  SIN_LIMITE_CONFIGURADO: 'AP-CU40-01',
+  LIMITE_EXCEDIDO: 'AP-CU40-02',
+  CANTIDAD_EXCEDIDA: 'AP-CU40-03',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SIN_LIMITE_CONFIGURADO` | No hay límite para ese concepto y nivel: se deniega por omisión (R-LIM-01) |
+| `LIMITE_EXCEDIDO` | El acumulado más la operación supera el tope |
+| `CANTIDAD_EXCEDIDA` | Superó la cantidad máxima de operaciones de la ventana |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `evaluarTope` | Compara acumulado más monto contra el tope; nunca contra NULL; puro |
+| Átomo | `resolverVentana` | Calcula inicio y fin de la ventana vigente |
+| Molécula | `LimiteRepositorio` | Límites vigentes por concepto y nivel |
+| Molécula | `ConsumoLimiteRepositorio` | Acumulado de la ventana, con bloqueo |
+| Organismo | `CU40EvaluarLimites` | Se ejecuta dentro de la transacción de la operación |
+| Página | — | Sin endpoint: lo dispara el planificador o un evento |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `limite.rechazo` | Aviso con el disponible restante | Interno |
+
+## Interfaz
+
+- **App:** Antes de operar se muestra cuánto queda del límite del mes.
+- **Backoffice:** Consulta de límites y consumo por usuario, para atención.
+
 ## Restricciones aplicables
 
 `R-LIM-01` · `R-LIM-02` · `R-LIM-03` · `R-BIL-02`

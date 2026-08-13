@@ -6,7 +6,7 @@ tabla: envio_notificacion
 clase: EnvioNotificacion
 modulo: "05 — Notificaciones y Comunicaciones"
 clave_primaria: [id]
-columnas: 20
+columnas: 22
 fk_salientes: 4
 fk_entrantes: 3
 append_only: false
@@ -27,6 +27,8 @@ append_only: false
 | `canal_vinculado_id` | UUID | FK | sí | FK, NULL |
 | `canal` | VARCHAR(15) | — | no | CK |
 | `destinatario` | VARCHAR(150) | — | no | — |
+| `clave_idempotencia` | VARCHAR(120) | UQ | no | UQ |
+| `encolado_en` | TIMESTAMPTZ | — | no | — |
 | `contenido_enviado` | TEXT | — | no | — |
 | `estado` | VARCHAR(25) | IDX | no | CK, IDX |
 | `id_mensaje_proveedor` | VARCHAR(120) | UQ | sí | UQ, NULL |

@@ -2,7 +2,7 @@
 tags:
   - moc
   - cumplimiento
-titulo: "Cumplimiento normativo y estándares — Pasanaku Digital"
+titulo: "Cumplimiento normativo y estándares — AportaYa"
 fecha_revision: 2026-08-11
 entidades_modelo: 273
 modulos: 12

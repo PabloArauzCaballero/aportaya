@@ -1,6 +1,6 @@
 ---
 name: caso-de-uso
-description: "Escribir o modificar un caso de uso de Pasanaku en docs/CasosDeUso/. Úsala cuando haya que especificar un flujo nuevo (registro, pago, entrega, reporte, reclamo), cambiar uno existente, o cuando alguien pida 'cómo debería funcionar X' antes de programarlo. Incluye la plantilla obligatoria, la numeración, las reglas de transaccionalidad e idempotencia y los criterios de aceptación."
+description: "Escribir o modificar un caso de uso de AportaYa en docs/CasosDeUso/. Úsala cuando haya que especificar un flujo nuevo (registro, pago, entrega, reporte, reclamo), cambiar uno existente, o cuando alguien pida 'cómo debería funcionar X' antes de programarlo. Incluye la plantilla obligatoria, la numeración, las reglas de transaccionalidad e idempotencia y los criterios de aceptación."
 ---
 
 # Escribir un caso de uso
@@ -24,6 +24,9 @@ Norma (docs/Cumplimiento.md) → Caso de uso (docs/CasosDeUso/) → Restricción
 | CU-30..39 | Comisiones, impuestos y facturación |
 | CU-40..49 | Cumplimiento UIF y ASFI |
 | CU-50..59 | Operación, control y consumidor financiero |
+| CU-60..69 | Gobernanza del grupo: sorteo, acuerdos, cupos y disolución |
+| CU-70..79 | Transparencia verificable y reputación |
+| CU-80..89 | Notificaciones y comunicación con el usuario |
 
 **Los códigos no se reutilizan ni se renumeran.** Un caso retirado se marca como
 obsoleto y conserva su número.
@@ -53,11 +56,25 @@ normas: [..]
 ## Flujo principal         ← pasos numerados, con tabla.columna concretas
 ## Flujos alternativos     ← tabla: # | Situación | Resultado
 ## Postcondiciones
+## Contrato · `packages/contratos/CU-NN.ts`  ← Zod: entrada, salida y códigos de error
+## Descomposición atómica  ← tabla: Nivel | Pieza | Responsabilidad
+## Eventos, trabajos y permisos ← tabla: Emite | Dispara | Exige
+## Interfaz                ← una línea para la app y una para el backoffice
 ## Restricciones aplicables ← códigos R-XXX-nn de [[Restricciones]]
 ## Evidencia que deja      ← qué filas quedan escritas
 ## Criterios de aceptación ← bloque ```gherkin
 ## Ver también
 ```
+
+Las cuatro secciones intermedias son las que convierten la especificación en algo
+programable sin volver a preguntar. Se escriben así:
+
+| Sección | Qué contiene | Regla |
+| --- | --- | --- |
+| **Contrato** | `EntradaCUNN`, `SalidaCUNN` y `ErroresCUNN` en Zod, más una tabla que explica cuándo se devuelve cada error | Códigos `AP-CU<NN>-<nn>`; importes como *string*; `.strict()`. Ver `contratos-api` |
+| **Descomposición atómica** | Átomos, moléculas, el organismo y la página | El organismo es **el único** que abre transacción; si no hay endpoint, la fila Página dice qué lo dispara. Ver `arquitectura-atomica` |
+| **Eventos, trabajos y permisos** | Qué evento de dominio emite, qué trabajo dispara y qué permiso exige | El evento se escribe en la misma transacción (*outbox*). Ver `trabajos-outbox` |
+| **Interfaz** | Qué ve el usuario en la app y qué ve el operador en el backoffice | Una línea cada uno. "Sin pantalla en la app" es una respuesta válida y frecuente |
 
 ## Reglas de escritura
 
@@ -88,6 +105,11 @@ normas: [..]
       `docs/Cumplimiento.md` lo referencia.
 - [ ] Las entidades que menciona existen en el modelo; si falta alguna, se agrega
       con la skill `boveda-modelo` **antes** de terminar el caso.
+- [ ] Están las cuatro secciones de implementación: contrato, descomposición,
+      eventos y interfaz.
+- [ ] Cada error del contrato corresponde a un criterio de aceptación o a una
+      restricción citada. Un código de error sin prueba es decorativo.
+- [ ] `_CasosDeUso.md` refleja el total y el caso aparece en su rango.
 
 ## Errores frecuentes
 

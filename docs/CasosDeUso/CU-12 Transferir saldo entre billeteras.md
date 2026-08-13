@@ -61,6 +61,65 @@ normas: [UIF art. 53 inc. g, límites BCB]
 - La suma de saldos del sistema no cambió: el dinero cambió de cuenta.
 - Si era aporte, la obligación quedó saldada o parcialmente pagada, con traza.
 
+## Contrato · `packages/contratos/CU-12.ts`
+
+```ts
+export const EntradaCU12 = z.object({
+  claveIdempotencia: z.string().uuid(),
+  cuentaOrigenId:    z.string().uuid(),
+  destino:           z.object({ tipo: z.enum(['ALIAS','GRUPO']), valor: z.string() }),
+  monto:             MontoSchema,
+  concepto:          z.string().max(140),
+  obligacionId:      z.string().uuid().optional(),
+}).strict()
+
+export const SalidaCU12 = z.object({
+  transaccionId: z.string().uuid(),
+  saldoDespues:  MontoSchema,
+  destinatario:  z.object({ nombre: z.string(), tipo: z.string() }),
+  obligacionSaldada: z.boolean(),
+}).strict()
+
+export const ErroresCU12 = {
+  SALDO_INSUFICIENTE: 'AP-CU12-01',
+  DESTINO_INEXISTENTE: 'AP-CU12-02',
+  CUENTA_DESTINO_NO_OPERATIVA: 'AP-CU12-03',
+  LIMITE_EXCEDIDO: 'AP-CU12-04',
+  P2P_NO_HABILITADO: 'AP-CU12-05',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SALDO_INSUFICIENTE` | No alcanza el disponible (R-BIL-02) |
+| `DESTINO_INEXISTENTE` | El alias o el grupo no existe |
+| `CUENTA_DESTINO_NO_OPERATIVA` | Está cerrada o congelada |
+| `LIMITE_EXCEDIDO` | Supera el techo de transferencia del nivel |
+| `P2P_NO_HABILITADO` | La política de la cuenta no permite transferencias |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `componerParDeMovimientos` | Débito y crédito que suman cero; puro |
+| Átomo | `aplicarAObligacion` | Cuánto del monto salda la obligación y cuánto queda a favor |
+| Molécula | `TransferenciaRepositorio` | Alta de la transferencia |
+| Molécula | `ObligacionRepositorio` | Actualiza el aporte si la transferencia lo salda |
+| Organismo | `CU12TransferirSaldo` | Transacción: par de movimientos, obligación y asiento |
+| Página | `POST /billetera/transferencias` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `transferencia.ejecutada` | Umbrales UIF, asiento y aviso a ambas partes | `BILLETERA_OPERAR` |
+| `aporte.confirmado` | Actualiza el tablero del grupo | — |
+
+## Interfaz
+
+- **App:** Enviar con confirmación de a quién: nombre y foto antes de aceptar.
+- **Backoffice:** Trazabilidad de transferencias entre cuentas para investigación.
+
 ## Restricciones aplicables
 
 `R-BIL-01` · `R-BIL-02` · `R-BIL-06` · `R-GRP-03` · `R-LIM-01` · `R-AUD-01` ·

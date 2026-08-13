@@ -69,6 +69,65 @@ normas: [ASFI transparencia, SIN facturación, contabilidad]
 - Un turno = una entrega. El beneficiario puede explicar cada deducción.
 - El ingreso de la plataforma quedó devengado, cobrado y contabilizado.
 
+## Contrato · `packages/contratos/CU-22.ts`
+
+```ts
+export const EntradaCU22 = z.object({
+  claveIdempotencia: z.string().uuid(),
+  turnoId: z.string().uuid(),
+  autorizadaPor: z.string().uuid(),
+  ejecutadaPor: z.string().uuid(),
+}).strict()
+
+export const SalidaCU22 = z.object({
+  entregaId: z.string().uuid(),
+  montoBolsaBruto: MontoSchema,
+  deducciones: z.array(z.object({ tipo: z.string(), monto: MontoSchema, referencia: z.string() })),
+  montoNeto: MontoSchema,
+  constanciaUrl: z.string().url(),
+}).strict()
+
+export const ErroresCU22 = {
+  BOLSA_INCOMPLETA: 'AP-CU22-01',
+  VALIDACION_BLOQUEANTE: 'AP-CU22-02',
+  ENTREGA_DUPLICADA: 'AP-CU22-03',
+  SEGREGACION_INCUMPLIDA: 'AP-CU22-04',
+  NETO_NEGATIVO: 'AP-CU22-05',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `BOLSA_INCOMPLETA` | Falta plata del período y el fondo no cubre |
+| `VALIDACION_BLOQUEANTE` | Una regla de entrega bloqueante quedó en rechazada |
+| `ENTREGA_DUPLICADA` | Ese turno ya fue entregado (R-GRP-01) |
+| `SEGREGACION_INCUMPLIDA` | Quien autoriza no puede ejecutar (R-SEG-04) |
+| `NETO_NEGATIVO` | Las deducciones superan la bolsa (R-GRP-02) |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `calcularDeducciones` | Arma las líneas en orden y devuelve el neto; puro y con pruebas de propiedad |
+| Átomo | `componerAsientoDeEntrega` | Partidas de bolsa, beneficiario, ingreso e impuesto |
+| Molécula | `EntregaRepositorio` | Alta y transiciones de la entrega |
+| Molécula | `ValidacionPreEntregaRepositorio` | Ejecuta y registra cada regla |
+| Molécula | `DevengoComisionRepositorio` | Devenga la comisión del tarifario congelado |
+| Organismo | `CU22LiquidarEntrega` | Transacción: liquidación completa, sin estados intermedios |
+| Página | `POST /entregas/:turnoId` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `entrega.autorizada` | Retención de la bolsa y validaciones previas | `ENTREGA_AUTORIZAR` |
+| `entrega.ejecutada` | Comisión, factura, asiento, bloque de transparencia y aviso | `ENTREGA_EJECUTAR` |
+
+## Interfaz
+
+- **App:** *Cobrar mi turno*: bolsa, cada deducción con su motivo, y el neto en grande.
+- **Backoffice:** Tablero de entregas del día con sus validaciones y el doble control.
+
 ## Restricciones aplicables
 
 `R-GRP-01` · `R-GRP-02` · `R-TAR-04` · `R-TAR-06` · `R-BIL-01` · `R-SEG-04` ·

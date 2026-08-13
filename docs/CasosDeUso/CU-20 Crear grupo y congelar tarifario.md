@@ -58,6 +58,65 @@ normas: [ASFI transparencia y consumidor financiero]
 - El grupo tiene cuenta propia y precio congelado con hash verificable.
 - Cada participante aceptó el reglamento y conoce el costo.
 
+## Contrato · `packages/contratos/CU-20.ts`
+
+```ts
+export const EntradaCU20 = z.object({
+  claveIdempotencia: z.string().uuid(),
+  nombre: z.string().min(3).max(80),
+  montoAporte: MontoSchema,
+  periodicidad: z.enum(['SEMANAL','QUINCENAL','MENSUAL','BIMENSUAL']),
+  cupos: z.number().int().min(2).max(40),
+  diaCobro: z.number().int().min(1).max(28),
+  modalidadTurnos: z.enum(['SORTEO_ALEATORIO','ORDEN_DE_INGRESO','ACUERDO_MANUAL']),
+}).strict()
+
+export const SalidaCU20 = z.object({
+  grupoId: z.string().uuid(),
+  codigoPublico: z.string(),
+  cuentaBilleteraGrupoId: z.string().uuid(),
+  tarifaCongelada: z.object({ tarifarioVersion: z.number().int(), hash: z.string().length(64) }),
+}).strict()
+
+export const ErroresCU20 = {
+  SIN_TARIFARIO_VIGENTE: 'AP-CU20-01',
+  ORGANIZADOR_NO_HABILITADO: 'AP-CU20-02',
+  TARIFA_YA_CONGELADA: 'AP-CU20-03',
+  SERVICIO_NO_AUTORIZADO: 'AP-CU20-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `SIN_TARIFARIO_VIGENTE` | No hay tarifario publicado que congelar (R-CON-07) |
+| `ORGANIZADOR_NO_HABILITADO` | El organizador no está habilitado o superó su límite |
+| `TARIFA_YA_CONGELADA` | El grupo ya tiene su snapshot (R-TAR-07) |
+| `SERVICIO_NO_AUTORIZADO` | La licencia no habilita grupos (R-LIC-01) |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `congelarConceptos` | Serializa el tarifario y calcula su hash; puro |
+| Átomo | `proyectarCalendario` | Genera períodos y fechas desde la periodicidad |
+| Molécula | `GrupoRepositorio` | Alta del grupo y su configuración |
+| Molécula | `TarifaCongeladaRepositorio` | Snapshot con hash |
+| Molécula | `CuentaBilleteraRepositorio` | Cuenta cuyo titular es el grupo |
+| Organismo | `CU20CrearGrupo` | Transacción: grupo, configuración, cuenta, snapshot y calendario |
+| Página | `POST /grupos` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `grupo.creado` | Invitaciones y apertura del primer período | `GRUPO_CREAR` |
+| `tarifa.congelada` | Publicación del costo en la ficha del grupo | — |
+
+## Interfaz
+
+- **App:** Asistente de creación que muestra el costo total del ciclo antes de confirmar.
+- **Backoffice:** Alta de grupos por organizador, con su límite de grupos simultáneos.
+
 ## Restricciones aplicables
 
 `R-TAR-07` · `R-GRP-04` · `R-BIL-04` · `R-BIL-05` · `R-CON-07` · `R-LIC-01`

@@ -6,7 +6,7 @@ tabla: sorteo_turnos
 clase: SorteoTurnos
 modulo: "02 — Grupos, Cupos, Turnos y Gobernanza"
 clave_primaria: [id]
-columnas: 10
+columnas: 14
 fk_salientes: 2
 fk_entrantes: 0
 append_only: false
@@ -23,7 +23,11 @@ append_only: false
 | `id` | UUID | PK | no | PK |
 | `grupo_id` | UUID | FK UQ | no | FK, UQ parcial |
 | `algoritmo` | VARCHAR(30) | — | no | — |
+| `estado` | VARCHAR(15) | IDX | no | CK, IDX |
 | `hash_semilla_previo` | VARCHAR(64) | — | no | — |
+| `aportes_entropia` | JSONB | — | sí | NULL |
+| `fecha_compromiso` | TIMESTAMPTZ | — | no | — |
+| `fecha_revelado_prevista` | TIMESTAMPTZ | — | sí | NULL |
 | `semilla_servidor` | VARCHAR(128) | — | sí | NULL hasta revelar |
 | `semilla_publica` | VARCHAR(128) | — | no | — |
 | `resultado` | JSONB | — | no | — |

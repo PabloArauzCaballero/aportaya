@@ -54,6 +54,57 @@ normas: [ASFI Res. 540/2025 — Reglamento para Empresas de Tecnología Financie
 - Todo servicio activo está respaldado por una autorización vigente y verificable
   en el propio sistema.
 
+## Contrato · `packages/contratos/CU-46.ts`
+
+```ts
+export const EntradaCU46 = z.object({
+  servicio: z.string().max(40),
+  usuarioId: z.string().uuid().optional(),
+}).strict()
+
+export const SalidaCU46 = z.object({
+  habilitado: z.boolean(),
+  via: z.enum(['LICENCIA','SANDBOX','NINGUNA']),
+  limitesSandbox: z.object({ usuarios: z.number().int(), montoOperacion: MontoSchema }).nullable(),
+  motivo: z.string().nullable(),
+}).strict()
+
+export const ErroresCU46 = {
+  LICENCIA_NO_OTORGADA: 'AP-CU46-01',
+  FUERA_DE_ALCANCE: 'AP-CU46-02',
+  SANDBOX_AGOTADO: 'AP-CU46-03',
+  LICENCIA_SUSPENDIDA: 'AP-CU46-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `LICENCIA_NO_OTORGADA` | El estado no es otorgada: ningún servicio financiero opera |
+| `FUERA_DE_ALCANCE` | El servicio no está en el alcance autorizado (R-LIC-01) |
+| `SANDBOX_AGOTADO` | Se alcanzó el cupo de usuarios del entorno de prueba |
+| `LICENCIA_SUSPENDIDA` | Solo se permite retirar saldo y cerrar cuentas |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `resolverHabilitacion` | Licencia o sandbox, con sus límites; puro |
+| Molécula | `LicenciaRepositorio` | Licencia y su alcance |
+| Molécula | `SandboxRepositorio` | Entorno de prueba y sus topes |
+| Organismo | `CU46VerificarAlcance` | Se consulta antes de habilitar cualquier servicio |
+| Página | — | Sin endpoint: lo dispara el planificador o un evento |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `servicio.rechazado_por_alcance` | Registro en bitácora para auditoría | Interno |
+
+## Interfaz
+
+- **App:** Si el servicio no está habilitado, la app lo explica sin jerga.
+- **Backoffice:** Ficha de licencia con su alcance y el estado del sandbox.
+
 ## Restricciones aplicables
 
 `R-LIC-01` · `R-LIC-02` · `R-LIC-03`

@@ -49,6 +49,58 @@ normas: [Ley 393 (libros y conservación), plan de cuentas, NIIF]
 - El mayor refleja exactamente la posición de dinero del sistema.
 - La suma de saldos de billetera reconcilia contra las cuentas del mayor.
 
+## Contrato · `packages/contratos/CU-24.ts`
+
+```ts
+export const EntradaCU24 = z.object({
+  origenTipo: z.enum(['PAGO','ENTREGA','COBERTURA','COMISION','BILLETERA','AJUSTE']),
+  origenId: z.string().uuid(),
+  partidas: z.array(z.object({ cuentaCodigo: z.string(), debe: MontoSchema, haber: MontoSchema })).min(2),
+  glosa: z.string().max(200),
+}).strict()
+
+export const SalidaCU24 = z.object({
+  asientoId: z.string().uuid(),
+  numero: z.number().int(),
+  totalDebe: MontoSchema,
+  totalHaber: MontoSchema,
+}).strict()
+
+export const ErroresCU24 = {
+  ASIENTO_DESCUADRADO: 'AP-CU24-01',
+  CUENTA_INEXISTENTE: 'AP-CU24-02',
+  PERIODO_CERRADO: 'AP-CU24-03',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `ASIENTO_DESCUADRADO` | Debe y haber no coinciden (R-AUD-05) |
+| `CUENTA_INEXISTENTE` | El código de cuenta no está en el plan |
+| `PERIODO_CERRADO` | El período contable ya se cerró |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `cuadrarPartidas` | Verifica la igualdad y normaliza signos; puro con pruebas de propiedad |
+| Molécula | `AsientoRepositorio` | Alta del asiento y sus movimientos, append-only |
+| Molécula | `CuentaContableRepositorio` | Resuelve el código a la cuenta |
+| Organismo | `CU24RegistrarAsiento` | Se ejecuta dentro de la transacción del hecho económico |
+| Página | — | Sin endpoint: lo dispara el planificador o un evento |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `asiento.registrado` | Actualiza saldos de cuenta y alimenta el cierre diario | Interno |
+| `asiento.reversado` | Asiento inverso enlazado al original | `CONTABILIDAD` |
+
+## Interfaz
+
+- **App:** No tiene pantalla: sostiene lo que el usuario ve en el panel de transparencia.
+- **Backoffice:** Libro mayor con filtro por cuenta, período y origen.
+
 ## Restricciones aplicables
 
 `R-AUD-01` · `R-AUD-05` · `R-AUD-06` · `R-BIL-11`

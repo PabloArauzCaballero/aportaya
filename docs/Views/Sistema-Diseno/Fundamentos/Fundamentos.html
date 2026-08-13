@@ -1,0 +1,99 @@
+<title>AportaYa — Fundamentos</title>
+<link rel="stylesheet" href="../estilos.css">
+<svg width="0" height="0" style="position:absolute"><defs>
+  <g id="mark"><path d="M92 30 C74 66 52 108 40 168" fill="none" stroke="#7CBE9C" stroke-width="13" stroke-linecap="round"/><path d="M108 30 C126 66 148 108 160 168" fill="none" stroke="#7CBE9C" stroke-width="13" stroke-linecap="round"/><path d="M100 58 C84 92 68 130 62 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/><path d="M100 58 C116 92 132 130 138 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/></g>
+</defs></svg>
+
+<div class="topbar"><div class="topbar-in">
+  <a class="brandmark" href="Fundamentos.html"><svg width="26" height="26" viewBox="0 0 200 200"><use href="#mark"/></svg><span>Aporta<span class="ya">Ya</span></span></a>
+  <nav class="navlinks">
+    <a class="on" href="../Fundamentos/Fundamentos.html">Fundamentos</a>
+    <a href="../Atomos/Atomos.html">Átomos</a>
+    <a href="../Moleculas/Moleculas.html">Moléculas</a>
+    <a href="../Organismos/Organismos.html">Organismos</a>
+    <a href="../Moviles/Moviles.html">Móviles</a>
+  </nav>
+  <button class="theme-btn" onclick="toggleTheme()">◐ Tema</button>
+</div></div>
+
+<main>
+<section>
+  <div class="sec-head"><span class="lvl base">Base</span><p class="eyebrow">Nivel 0</p><h1>Fundamentos (tokens)</h1>
+  <p>Todo componente se construye con estas variables y sus <strong>códigos hex</strong>. Cambiar un token actualiza el sistema completo. Nunca uses un hex suelto dentro de un componente.</p></div>
+
+  <div class="clabel">Verde Pasanaku · primario <span class="hex">base = --g600 #1C5A3A</span></div>
+  <div class="scale g9">
+    <div class="sw" style="background:#0C2C1D;color:#BCDFCC">900<br>#0C2C1D</div>
+    <div class="sw" style="background:#123A26;color:#BCDFCC">800<br>#123A26</div>
+    <div class="sw" style="background:#164A30;color:#BCDFCC">700<br>#164A30</div>
+    <div class="sw" style="background:#1C5A3A;color:#E7F2EB">600<br>#1C5A3A</div>
+    <div class="sw" style="background:#237349;color:#E7F2EB">500<br>#237349</div>
+    <div class="sw" style="background:#3C9366;color:#08130D">400<br>#3C9366</div>
+    <div class="sw" style="background:#7CBE9C;color:#08130D">300<br>#7CBE9C</div>
+    <div class="sw" style="background:#BCDFCC;color:#0C2C1D">200<br>#BCDFCC</div>
+    <div class="sw" style="background:#E7F2EB;color:#0C2C1D">100<br>#E7F2EB</div>
+  </div>
+
+  <div class="clabel">Naranja Aporte · acción <span class="hex">base = --o500 #E5852B</span></div>
+  <div class="scale o7">
+    <div class="sw" style="background:#BC6217;color:#FDF0DF">700<br>#BC6217</div>
+    <div class="sw" style="background:#D6741C;color:#FDF0DF">600<br>#D6741C</div>
+    <div class="sw" style="background:#E5852B;color:#3A1E02">500<br>#E5852B</div>
+    <div class="sw" style="background:#EF9E4E;color:#3A1E02">400<br>#EF9E4E</div>
+    <div class="sw" style="background:#F6BE85;color:#3A1E02">300<br>#F6BE85</div>
+    <div class="sw" style="background:#FBDBB8;color:#7A3D08">200<br>#FBDBB8</div>
+    <div class="sw" style="background:#FDF0DF;color:#7A3D08">100<br>#FDF0DF</div>
+  </div>
+
+  <div class="clabel">Neutros · sesgo verde</div>
+  <div class="neu-grid">
+    <div class="tok"><div class="fill" style="background:#10231A"></div><div class="m"><div class="n">Tinta · text</div><div class="h">#10231A</div></div></div>
+    <div class="tok"><div class="fill" style="background:#38473F"></div><div class="m"><div class="n">Pizarra · text-2</div><div class="h">#38473F</div></div></div>
+    <div class="tok"><div class="fill" style="background:#6C7B72"></div><div class="m"><div class="n">Musgo · text-3</div><div class="h">#6C7B72</div></div></div>
+    <div class="tok"><div class="fill" style="background:#DCE4DE"></div><div class="m"><div class="n">Línea · border</div><div class="h">#DCE4DE</div></div></div>
+    <div class="tok"><div class="fill" style="background:#C9D4CD"></div><div class="m"><div class="n">Borde campo</div><div class="h">#C9D4CD</div></div></div>
+    <div class="tok"><div class="fill" style="background:#F3F6F2"></div><div class="m"><div class="n">Nube · surface-2</div><div class="h">#F3F6F2</div></div></div>
+    <div class="tok"><div class="fill" style="background:#F6F4EC"></div><div class="m"><div class="n">Crema · bg</div><div class="h">#F6F4EC</div></div></div>
+    <div class="tok"><div class="fill" style="background:#FFFFFF;border-bottom:1px solid var(--border)"></div><div class="m"><div class="n">Blanco · surface</div><div class="h">#FFFFFF</div></div></div>
+  </div>
+
+  <div class="clabel">Semánticos · solo estados</div>
+  <div class="sem-grid">
+    <div class="tok"><div class="fill" style="background:#1F9D57"></div><div class="m"><div class="n">Éxito · ok</div><div class="h">#1F9D57 / bg #E7F5EC</div></div></div>
+    <div class="tok"><div class="fill" style="background:#F0B429"></div><div class="m"><div class="n">Aviso · warn</div><div class="h">#F0B429 / bg #FEF4DA</div></div></div>
+    <div class="tok"><div class="fill" style="background:#D64545"></div><div class="m"><div class="n">Error · err</div><div class="h">#D64545 / bg #FBECEC</div></div></div>
+    <div class="tok"><div class="fill" style="background:#2E7FB8"></div><div class="m"><div class="n">Info</div><div class="h">#2E7FB8 / bg #E7F1F8</div></div></div>
+  </div>
+
+  <div class="subgrid cols2">
+    <div><div class="clabel">Espaciado · base 4</div><div class="demo"><div class="space-demo">
+      <div><div class="b2" style="width:4px;height:4px"></div><div class="lab">4</div></div>
+      <div><div class="b2" style="width:8px;height:8px"></div><div class="lab">8</div></div>
+      <div><div class="b2" style="width:12px;height:12px"></div><div class="lab">12</div></div>
+      <div><div class="b2" style="width:16px;height:16px"></div><div class="lab">16</div></div>
+      <div><div class="b2" style="width:24px;height:24px"></div><div class="lab">24</div></div>
+      <div><div class="b2" style="width:32px;height:32px"></div><div class="lab">32</div></div>
+      <div><div class="b2" style="width:48px;height:48px"></div><div class="lab">48</div></div>
+    </div></div></div>
+    <div><div class="clabel">Radio &amp; sombra</div><div class="demo"><div class="demo-row">
+      <div style="width:52px;height:44px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;display:grid;place-items:center;font-size:11px;font-family:var(--mono)">8</div>
+      <div style="width:52px;height:44px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;display:grid;place-items:center;font-size:11px;font-family:var(--mono)">12</div>
+      <div style="width:52px;height:44px;background:var(--surface-2);border:1px solid var(--border);border-radius:16px;display:grid;place-items:center;font-size:11px;font-family:var(--mono)">16</div>
+      <div style="width:52px;height:44px;background:var(--surface-2);border:1px solid var(--border);border-radius:24px;display:grid;place-items:center;font-size:11px;font-family:var(--mono)">24</div>
+      <div style="width:52px;height:44px;background:var(--surface);box-shadow:var(--sh-2);border-radius:12px;display:grid;place-items:center;font-size:10px;font-family:var(--mono)">sh-2</div>
+      <div style="width:52px;height:44px;background:var(--surface);box-shadow:var(--sh-3);border-radius:12px;display:grid;place-items:center;font-size:10px;font-family:var(--mono)">sh-3</div>
+    </div></div></div>
+  </div>
+
+  <div class="clabel">Tipografía</div>
+  <div class="demo">
+    <div class="type-row"><span style="font-family:var(--font-d);font-weight:700;font-size:32px;color:var(--brand-ink)">Título de pantalla</span><span class="val">Poppins 700 · 32/1.15</span></div>
+    <div class="type-row"><span style="font-family:var(--font-d);font-weight:600;font-size:22px">Encabezado de sección</span><span class="val">Poppins 600 · 22</span></div>
+    <div class="type-row"><span style="font-size:15px">Cuerpo de texto normal</span><span class="val">Inter 400 · 15/1.55</span></div>
+    <div class="type-row"><span style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)">Etiqueta · label</span><span class="val">Inter 600 · 12 · +8%</span></div>
+    <div class="type-row" style="border:0"><span style="font-family:var(--font-d);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums">Bs 1.240,00</span><span class="val">Poppins · tabular-nums</span></div>
+  </div>
+</section>
+</main>
+<footer><span>AportaYa · Sistema de Diseño — <strong>Fundamentos</strong></span><a href="../Atomos/Atomos.html">Siguiente: Átomos →</a></footer>
+<script src="../script.js"></script>

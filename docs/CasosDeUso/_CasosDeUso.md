@@ -2,8 +2,8 @@
 tags:
   - moc
   - caso-uso
-titulo: "Casos de uso — Pasanaku Digital"
-total_casos: 40
+titulo: "Casos de uso — AportaYa"
+total_casos: 55
 fecha: 2026-08-11
 ---
 
@@ -36,6 +36,10 @@ Norma (docs/Cumplimiento.md)  →  Caso de uso (esta carpeta)  →  Restricción
 | **Postcondiciones** | Estado final garantizado |
 | **Restricciones aplicables** | Códigos `R-XXX-nn` de [[Restricciones]] que el motor de base de datos hace cumplir |
 | **Evidencia que deja** | Qué filas quedan escritas para poder demostrarlo después |
+| **Contrato** | El esquema Zod de entrada, salida y códigos de error, en `packages/contratos/CU-NN.ts` |
+| **Descomposición atómica** | Qué es átomo, molécula, organismo y página ([[ADR-009 Composición atómica]]) |
+| **Eventos, trabajos y permisos** | Qué evento emite, qué trabajo dispara y qué permiso exige |
+| **Interfaz** | Qué pantalla de la app o del backoffice lo consume |
 | **Criterios de aceptación** | Pruebas verificables, en formato dado/cuando/entonces |
 
 ## Convenciones
@@ -123,16 +127,41 @@ Norma (docs/Cumplimiento.md)  →  Caso de uso (esta carpeta)  →  Restricción
 | [[CU-55 Gestionar un incidente de seguridad]] | Contener, reportar y notificar | Seguridad | ASFI Seguridad de la Información |
 | [[CU-56 Ejecutar una prueba de continuidad]] | RTO/RPO probados y documentados | TI · Riesgos | ASFI · ISO 22301 |
 
+### Gobernanza, turnos y ciclo de vida del grupo
+
+| Código | Caso de uso | Actor | Normativa que lo obliga |
+| --- | --- | --- | --- |
+| [[CU-60 Sortear los turnos]] | Orden de cobro verificable con commit-reveal | Sistema · Participantes | Transparencia · RF-19 |
+| [[CU-61 Verificar públicamente el sorteo]] | Que cualquiera recompute el orden | Cualquier tercero | Transparencia |
+| [[CU-62 Permutar turnos entre participantes]] | Intercambio con acuerdo de ambas partes | Participantes | Gobernanza del grupo |
+| [[CU-63 Proponer y votar un acuerdo]] | Decisiones colectivas con quórum | Participantes | Gobernanza · debido proceso |
+| [[CU-64 Traspasar un cupo]] | Entra otra persona conservando la posición | Saliente · Entrante | UIF (alta) · gobernanza |
+| [[CU-65 Retirarse de un grupo]] | Salida ordenada con liquidación | Participante | Consumidor financiero |
+| [[CU-66 Reemplazar a un participante moroso]] | El grupo sigue; la deuda no se perdona | Sistema · Grupo | Debido proceso |
+| [[CU-67 Disolver el grupo anticipadamente]] | Cierre con prelación y cuadre al centavo | Grupo · Contabilidad | Consumidor financiero · contabilidad |
+
+### Reputación y transparencia
+
+| Código | Caso de uso | Actor | Normativa que lo obliga |
+| --- | --- | --- | --- |
+| [[CU-70 Registrar un evento de reputación]] | Cada punto tiene un hecho detrás | Sistema | Transparencia · trazabilidad |
+| [[CU-71 Recalcular el puntaje de reputación]] | Un número explicable, no una opinión | Sistema | No discriminación arbitraria |
+| [[CU-72 Sellar el bloque de transparencia]] | La historia del grupo, encadenada por hash | Sistema | Integridad de la evidencia |
+| [[CU-73 Verificar la cadena de transparencia]] | Auditar sin depender de nosotros | Auditor · tercero | Evidencia auditable |
+
+### Notificaciones y comunicaciones
+
+| Código | Caso de uso | Actor | Normativa que lo obliga |
+| --- | --- | --- | --- |
+| [[CU-80 Despachar una notificación]] | Un hecho, un mensaje, con acuse | Sistema | Consumidor financiero · datos |
+| [[CU-81 Programar recordatorios de aporte]] | Cobrar avisando bien, no persiguiendo | Sistema | Buenas prácticas de cobranza |
+| [[CU-82 Procesar una respuesta entrante]] | Que contestar sirva de algo | Participante · Soporte | Consumidor financiero |
+
 ## Casos de uso todavía no escritos
 
-Estos son de negocio, no de cumplimiento, y quedan pendientes. Se listan para que
-la ausencia sea explícita y no se confunda con "no hacen falta":
-
-- Sorteo de turnos con esquema *commit-reveal* y verificación pública (M2).
-- Gobernanza del grupo: acuerdos, votación ponderada, permutas y traspasos (M2).
-- Reemplazo de participante moroso y disolución anticipada (M8).
-- Motor de reputación y bloques de transparencia (M6).
-- Notificaciones, plantillas y control de spam (M5).
+Ninguno. Las cinco familias que estaban pendientes —sorteo, gobernanza, reemplazo y
+disolución, reputación y notificaciones— se escribieron en los rangos CU-60, CU-70 y
+CU-80.
 
 ## Ver también
 

@@ -66,6 +66,66 @@ normas: [BCB RD 079/2022, UIF art. 52 inc. i, encaje 100%]
 - El saldo del usuario aumentó exactamente en `monto_acreditado`.
 - Existe contrapartida contable y de custodia por el mismo importe.
 
+## Contrato · `packages/contratos/CU-10.ts`
+
+```ts
+export const EntradaCU10 = z.object({
+  claveIdempotencia: z.string().uuid(),
+  cuentaBilleteraId: z.string().uuid(),
+  monto:             MontoSchema,
+  moneda:            MonedaSchema,
+  medio:             z.enum(['QR','TARJETA','AGENTE','TRANSFERENCIA']),
+  instrumentoFondeoId: z.string().uuid().optional(),
+}).strict()
+
+export const SalidaCU10 = z.object({
+  ordenRecargaId: z.string().uuid(),
+  estado:         z.enum(['PENDIENTE','ACREDITADA','RECHAZADA','EXPIRADA']),
+  qr:             z.object({ payloadEmv: z.string(), expiraEn: z.string().datetime() }).nullable(),
+  saldoDespues:   MontoSchema.nullable(),
+}).strict()
+
+export const ErroresCU10 = {
+  LIMITE_EXCEDIDO: 'AP-CU10-01',
+  SALDO_MAXIMO_ALCANZADO: 'AP-CU10-02',
+  INSTRUMENTO_NO_VERIFICADO: 'AP-CU10-03',
+  CUENTA_NO_OPERATIVA: 'AP-CU10-04',
+  ORDEN_EXPIRADA: 'AP-CU10-05',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `LIMITE_EXCEDIDO` | Supera el techo del nivel de diligencia (R-LIM-01) |
+| `SALDO_MAXIMO_ALCANZADO` | El saldo resultante excede el máximo del nivel |
+| `INSTRUMENTO_NO_VERIFICADO` | El medio de fondeo no está verificado |
+| `CUENTA_NO_OPERATIVA` | La cuenta está congelada o cerrada |
+| `ORDEN_EXPIRADA` | Se intentó acreditar sobre una orden vencida |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `calcularAcreditacion` | Bruto menos costo del proveedor; devuelve el neto; puro |
+| Átomo | `resolverConceptoUif` | Traduce el tipo de operación al concepto del instructivo |
+| Molécula | `OrdenRecargaRepositorio` | Alta y cambio de estado de la orden |
+| Molécula | `PasarelaAdaptador` | Genera el QR y consulta estado; idempotente por referencia |
+| Molécula | `MovimientoBilleteraRepositorio` | Inserta el par de movimientos con contrapartida |
+| Organismo | `CU10RecargarSaldo` | Transacción: pago, transacción de billetera, asiento y umbrales |
+| Página | `POST /billetera/recargas` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `recarga.acreditada` | Evaluación de umbrales UIF, asiento contable y aviso | `BILLETERA_OPERAR` |
+| `recarga.rechazada` | Aviso con el motivo en lenguaje llano | — |
+
+## Interfaz
+
+- **App:** *Cargar saldo*: monto, medio y QR a pantalla completa con la cuenta regresiva.
+- **Backoffice:** Monitor de recargas por proveedor, con tasa de acreditación y tiempo medio.
+
 ## Restricciones aplicables
 
 `R-BIL-01` · `R-BIL-02` · `R-BIL-06` · `R-BIL-10` · `R-LIM-01` · `R-LIM-02` ·

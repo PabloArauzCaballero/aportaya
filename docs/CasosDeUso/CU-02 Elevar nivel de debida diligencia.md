@@ -59,6 +59,61 @@ normas: [UIF EBR, límites BCB]
 - Una sola calificación vigente por usuario (`R-UIF-11`).
 - El histórico de calificaciones y diligencias queda intacto y consultable.
 
+## Contrato · `packages/contratos/CU-02.ts`
+
+```ts
+export const EntradaCU02 = z.object({
+  claveIdempotencia: z.string().uuid(),
+  usuarioId:         z.string().uuid(),
+  nivelDestino:      z.enum(['ESTANDAR','AMPLIADA','REFORZADA']),
+  documentos:        z.array(z.object({ tipo: z.string(), url: z.string().url(), hash: z.string().length(64) })),
+}).strict()
+
+export const SalidaCU02 = z.object({
+  diligenciaId:      z.string().uuid(),
+  estado:            z.enum(['EN_PROCESO','COMPLETA','OBSERVADA']),
+  faltantes:         z.array(z.string()),
+  limitesNuevos:     z.array(z.object({ concepto: z.string(), monto: MontoSchema })),
+}).strict()
+
+export const ErroresCU02 = {
+  DOCUMENTACION_INSUFICIENTE: 'AP-CU02-01',
+  REQUIERE_SEGUNDA_REVISION: 'AP-CU02-02',
+  COINCIDENCIA_PENDIENTE: 'AP-CU02-03',
+  NIVEL_NO_ASCENDENTE: 'AP-CU02-04',
+} as const
+```
+
+| Error | Cuándo se devuelve |
+| --- | --- |
+| `DOCUMENTACION_INSUFICIENTE` | Faltan documentos del nivel destino |
+| `REQUIERE_SEGUNDA_REVISION` | Es PEP y falta la revisión independiente (R-UIF-10) |
+| `COINCIDENCIA_PENDIENTE` | Hay coincidencia de lista sin resolver |
+| `NIVEL_NO_ASCENDENTE` | El destino no es superior al actual |
+
+## Descomposición atómica
+
+| Nivel | Pieza | Responsabilidad |
+| --- | --- | --- |
+| Átomo | `faltantesDeNivel` | Compara requeridos contra recibidos; puro |
+| Átomo | `calcularProximaRevision` | Periodicidad según el nivel de riesgo |
+| Molécula | `DebidaDiligenciaRepositorio` | Expediente y estado |
+| Molécula | `CalificacionRiesgoRepositorio` | Cierra la vigencia anterior e inserta la nueva |
+| Organismo | `CU02ElevarDiligencia` | Transacción: diligencia, calificación y nivel de la cuenta |
+| Página | `POST /usuarios/:id/diligencia` | Traduce y delega, sin lógica |
+
+## Eventos, trabajos y permisos
+
+| Emite | Dispara | Exige |
+| --- | --- | --- |
+| `diligencia.elevada` | Recalcula límites y notifica los topes nuevos | `PARTICIPANTE` o `ANALISTA_CUMPLIMIENTO` |
+| `diligencia.observada` | Aviso con lo que falta | — |
+
+## Interfaz
+
+- **App:** *Aumentá tu límite*: muestra qué desbloquea cada nivel antes de pedir papeles.
+- **Backoffice:** Bandeja de diligencias por aprobar, con doble revisión obligatoria para PEP.
+
 ## Restricciones aplicables
 
 `R-UIF-09` · `R-UIF-10` · `R-UIF-11` · `R-LIM-01` · `R-LIM-03` · `R-SEG-04` · `R-AUD-08`

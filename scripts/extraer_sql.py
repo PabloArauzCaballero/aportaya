@@ -21,7 +21,7 @@ DESTINO_VERIF = pathlib.Path("sql/50_verificacion/verificaciones.sql")
 SECCION_VERIF = "Consultas de verificación"
 
 CABECERA = """-- =====================================================================
---  Pasanaku Digital — restricciones normativas
+--  AportaYa — restricciones normativas
 --  GENERADO desde docs/Restricciones.md por scripts/extraer_sql.py
 --  No edite este archivo a mano: edite el documento y regenere.
 --
