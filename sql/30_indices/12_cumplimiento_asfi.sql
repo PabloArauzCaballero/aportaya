@@ -103,7 +103,7 @@ CREATE INDEX IF NOT EXISTS ix_caso_investigacion_lft_estado
 CREATE INDEX IF NOT EXISTS ix_caso_investigacion_lft_plazo_limite
   ON caso_investigacion_lft (plazo_limite);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_umbral_reporte_uif_concepto_operacion_es_acumulado__10c63b
+CREATE UNIQUE INDEX IF NOT EXISTS uq_umbral_reporte_uif_concepto_operacion_es_acumulado__7def6f
   ON umbral_reporte_uif (concepto_operacion, es_acumulado, vigente_desde, formulario);
 
 CREATE INDEX IF NOT EXISTS ix_umbral_reporte_uif_activo
