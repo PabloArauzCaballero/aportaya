@@ -116,7 +116,7 @@ El acceso a datos es **Kysely**, un constructor de consultas tipado, no un ORM
 real, así que la base sigue siendo la fuente de verdad:
 
 ```bash
-npx kysely-codegen --dialect postgres --out-file packages/datos/src/esquema.d.ts
+yarn kysely-codegen --dialect postgres --out-file packages/datos/src/esquema.d.ts
 ```
 
 Lo que el esquema aporta a esa generación:

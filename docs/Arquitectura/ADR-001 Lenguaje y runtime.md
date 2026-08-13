@@ -63,7 +63,7 @@ tocar el dominio. Fastify por rendimiento y por su validación por esquema.
 
 **A favor**
 
-- Un `pnpm test` corre backend, app y backoffice contra los mismos tipos.
+- Un `yarn test` corre backend, app y backoffice contra los mismos tipos.
 - Un cambio de tarifario o de umbral se refleja en los tres artefactos de una vez.
 - Contratar es más fácil y más barato que para Spring.
 

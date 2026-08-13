@@ -103,7 +103,7 @@ generadores de la bóveda y del DDL (`scripts/*.py`).
 | Cola / outbox / cron | **Graphile Worker** o pg-boss (cola en la misma Postgres) |
 | Validación | Zod en el borde; el mismo esquema se comparte con el frontend |
 | Pruebas | Vitest + **Testcontainers** con Postgres 16 real |
-| Monorepo | pnpm + Turborepo (`api`, `app`, `backoffice`, `contratos`) |
+| Monorepo | yarn (workspaces) + Turborepo (`api`, `app`, `backoffice`, `contratos`) |
 
 **Por qué encaja.** Un solo lenguaje para backend, app móvil y backoffice: los
 contratos y las validaciones se escriben una vez y se comparten como paquete. Es

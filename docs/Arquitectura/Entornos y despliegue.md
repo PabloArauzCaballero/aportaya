@@ -44,7 +44,7 @@ python3 scripts/generar_ddl.py                        # el DDL sale de la bóved
 psql -v ON_ERROR_STOP=1 -f sql/aplicar.sql            # tablas → claves → índices → sellos → reglas
 psql -v ON_ERROR_STOP=1 -f sql/60_semillas/sembrar.sql
 psql -f sql/50_verificacion/prueba_humo.sql           # 69 comprobaciones
-pnpm datos:tipos                                      # introspección → tipos de Kysely
+yarn datos:tipos                                      # introspección → tipos de Kysely
 ```
 
 Reglas:
