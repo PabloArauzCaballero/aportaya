@@ -1,0 +1,42 @@
+<!doctype html><meta charset="utf-8"><title>contraste</title>
+<style>html,body{margin:0}#c{overflow:hidden;height:40px}iframe{border:0}</style>
+<div id="c"></div><pre id="r">pendiente</pre>
+<script>
+var TEMAS=['light','dark'], pend=TEMAS.length, out=[];
+function lum(c){var m=c.match(/[\d.]+/g).map(Number);
+  var esc = c.indexOf('color(')===0 || c.indexOf('oklab')===0 || c.indexOf('lab(')===0;
+  var f=function(x){x=esc?x:x/255;return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4)};
+  return .2126*f(m[0])+.7152*f(m[1])+.0722*f(m[2])}
+function cr(a,b){var x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
+/* Los degradados se saltan: se verifican aparte contra sus dos extremos. */
+function sobreDegradado(el,win,doc){for(var p=el;p&&p!==doc.documentElement;p=p.parentElement){
+  if(win.getComputedStyle(p).backgroundImage.indexOf('gradient')>=0)return true}return false}
+function fondo(el,win,doc){for(var p=el;p&&p!==doc.documentElement;p=p.parentElement){
+  var b=win.getComputedStyle(p).backgroundColor;var m=b.match(/[\d.]+/g);
+  if(m&&(m.length<4||+m[3]>.85))return b}return 'rgb(255,255,255)'}
+TEMAS.forEach(function(tema){
+  var f=document.createElement('iframe');f.width=1200;f.height=12000;f.src='../index.html';
+  f.addEventListener('load',function(){
+    var d=f.contentDocument,w=f.contentWindow;
+    d.documentElement.setAttribute('data-theme',tema);
+    d.querySelectorAll('[data-anim]').forEach(function(e){e.classList.add('in')});
+    var malos={},n=0;
+    d.querySelectorAll('body *').forEach(function(el){
+      var t=[].slice.call(el.childNodes).filter(function(x){return x.nodeType===3&&x.textContent.trim()});
+      if(!t.length)return;
+      var s=w.getComputedStyle(el);
+      if(s.visibility==='hidden'||s.display==='none')return;
+      if(sobreDegradado(el,w,d))return;
+      var px=parseFloat(s.fontSize),bold=parseInt(s.fontWeight,10)>=700;
+      var min=(px>=24||(px>=18.66&&bold))?3:4.5;
+      var v=cr(s.color,fondo(el,w,d));n++;
+      if(v<min){var k=el.tagName.toLowerCase()+'.'+String(el.className.baseVal!==undefined?el.className.baseVal:el.className).split(' ')[0];
+        if(!malos[k]||malos[k].v>v)malos[k]={v:v.toFixed(2),min:min,px:px,txt:t[0].textContent.trim().slice(0,28)}}
+    });
+    var l=Object.keys(malos).map(function(k){return '  ✗ '+malos[k].v+':1 (min '+malos[k].min+') '+k+' · '+malos[k].px+'px · "'+malos[k].txt+'"'});
+    out.push('=== '+tema+' === '+n+' nodos con texto · '+(l.length?l.length+' fallan':'todos pasan')+'\n'+l.join('\n'));
+    if(--pend===0)document.getElementById('r').textContent=out.join('\n');
+  });
+  document.getElementById('c').appendChild(f);
+});
+</script>

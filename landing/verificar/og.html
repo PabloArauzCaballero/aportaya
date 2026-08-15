@@ -1,0 +1,73 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>og</title>
+<!-- FUENTE ÚNICA de assets/img/og.png. No editar el PNG a mano: regenerarlo.
+     Comando en landing/README.md § Imagen para redes. -->
+<link rel="stylesheet" href="../assets/css/fuentes.css">
+<link rel="stylesheet" href="../assets/css/tokens.css">
+<style>
+  html,body{margin:0}
+  .tarjeta{
+    width:1200px;height:630px;position:relative;overflow:hidden;
+    background:linear-gradient(150deg,var(--g600),var(--g900));
+    color:var(--sobre-verde);font-family:var(--font-b);
+    display:flex;flex-direction:column;justify-content:center;
+    padding:0 88px;box-sizing:border-box;
+  }
+  .trama{position:absolute;inset:auto 0 -10px 0;height:220px;opacity:.13}
+  .agua{position:absolute;right:-90px;top:50%;transform:translateY(-50%);
+    width:620px;height:620px;opacity:.09}
+  .halo{position:absolute;width:820px;height:820px;right:-300px;bottom:-420px;border-radius:50%;
+    background:radial-gradient(circle,rgba(var(--g300-rgb),.22),transparent 64%)}
+  .marca{display:flex;align-items:center;gap:18px;position:relative;z-index:1}
+  .marca svg{width:78px;height:78px}
+  .marca span{font-family:var(--font-d);font-weight:700;font-size:50px;letter-spacing:-.02em}
+  .marca .ya{color:var(--o400)}
+  h1{font-family:var(--font-d);font-weight:700;font-size:76px;line-height:1.06;
+    letter-spacing:-.03em;margin:44px 0 0;position:relative;z-index:1}
+  h1 .p{color:var(--o400)}
+  p{font-size:27px;color:rgba(var(--sobre-verde-rgb),.84);margin:22px 0 0;
+    max-width:24ch;position:relative;z-index:1}
+  .pie{position:absolute;left:88px;bottom:52px;display:flex;gap:14px;align-items:center;
+    font-family:var(--font-d);font-weight:600;font-size:19px;
+    color:rgba(var(--sobre-verde-rgb),.72);z-index:1}
+  .pie i{width:6px;height:6px;border-radius:50%;background:var(--o400);display:block}
+</style>
+<div class="tarjeta">
+  <div class="halo"></div>
+  <svg class="agua" viewBox="0 0 200 200" aria-hidden="true">
+    <g fill="none" stroke-linecap="round" stroke="#EAF7EF">
+      <path d="M92 30 C74 66 52 108 40 168" stroke-width="13"/>
+      <path d="M108 30 C126 66 148 108 160 168" stroke-width="13"/>
+      <path d="M46 158 C86 140 114 140 154 158" stroke-width="12"/>
+      <path d="M100 58 C84 92 68 130 62 170" stroke-width="12"/>
+      <path d="M100 58 C116 92 132 130 138 170" stroke-width="12"/>
+      <path d="M70 150 C100 134 100 134 130 150" stroke-width="10"/>
+    </g>
+  </svg>
+  <svg class="trama" viewBox="0 0 400 100" preserveAspectRatio="none" aria-hidden="true">
+    <g fill="none" stroke="#FFFFFF" stroke-width="1.6">
+      <path d="M0 60 L20 40 L40 60 L60 40 L80 60 L100 40 L120 60 L140 40 L160 60 L180 40 L200 60 L220 40 L240 60 L260 40 L280 60 L300 40 L320 60 L340 40 L360 60 L380 40 L400 60"/>
+      <path d="M0 80 L20 60 L40 80 L60 60 L80 80 L100 60 L120 80 L140 60 L160 80 L180 60 L200 80 L220 60 L240 80 L260 60 L280 80 L300 60 L320 80 L340 60 L360 80 L380 60 L400 80"/>
+    </g>
+  </svg>
+
+  <div class="marca">
+    <svg viewBox="0 0 200 200" aria-hidden="true">
+      <g fill="none" stroke-linecap="round">
+        <path d="M92 30 C74 66 52 108 40 168" stroke="#EAF7EF" stroke-width="13"/>
+        <path d="M108 30 C126 66 148 108 160 168" stroke="#EAF7EF" stroke-width="13"/>
+        <path d="M46 158 C86 140 114 140 154 158" stroke="#EAF7EF" stroke-width="12"/>
+        <path d="M100 58 C84 92 68 130 62 170" stroke="#EF9E4E" stroke-width="12"/>
+        <path d="M100 58 C116 92 132 130 138 170" stroke="#EF9E4E" stroke-width="12"/>
+        <path d="M70 150 C100 134 100 134 130 150" stroke="#EF9E4E" stroke-width="10"/>
+      </g>
+    </svg>
+    <span>Aporta<span class="ya">Ya</span></span>
+  </div>
+
+  <h1>El pasanaku,<br>en tu bolsillo<span class="p">.</span></h1>
+  <p>Aportá hoy. Recibí tu turno. Retirá cuando quieras.</p>
+
+  <div class="pie"><i></i>Billetera de pasanaku · Bolivia</div>
+</div>

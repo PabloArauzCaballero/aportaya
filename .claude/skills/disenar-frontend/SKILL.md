@@ -94,6 +94,16 @@ Personalidad: **cercana al hablar, impecable con el dinero.**
 ### Dark mode (redefinir SOLO tokens)
 `--brand #3C9366` · `--accent #EF9E4E` · `--text #EAF3ED` · `--text-2 #B7CCC0` · `--text-3 #89998E` · `--bg #0A1F15` · `--surface #0F2B1D` · `--surface-2 #0C2418` · `--border #1C3A2A` · `--field #0C2418` · `--field-border #2A4A38`.
 
+### Texto: usá el rol `-texto`, no el tono de marca directo
+`--accent`, `--muted`, `--ok` y `--brand` (en oscuro) **no llegan a AA como texto chico**
+sobre su fondo habitual (medido: 2.47:1, 4.05:1, 3.10:1 y 4.02:1 — todos necesitan 4.5:1).
+`estilos.css` ya define los derivados que sí pasan, con el mismo matiz: `--text-3`,
+`--brand-texto`, `--accent-texto`, `--ok-texto`, `--aviso-texto`, `--err-texto`,
+`--info-texto`. **Para texto usá siempre el rol `-texto`** (eyebrows, badges, montos en
+verde/rojo, links, tabs activos). Los tonos de marca sin sufijo siguen siendo correctos
+para superficies, iconos, bordes y el logotipo (ahí el mínimo es 3:1 o no aplica). Detalle
+completo: `docs/Views/Sistema-Diseno/README.md`.
+
 ### Escalas de sistema
 - **Espaciado** (múltiplos de 4): `--s1 4` · `--s2 8` · `--s3 12` · `--s4 16` · `--s5 24` · `--s6 32` · `--s7 48`.
 - **Radio**: `--r-sm 8` (chips pequeños) · `--r-md 12` (campos/botones) · `--r-lg 16` (tarjetas) · `--r-xl 24` (bottom sheet/móvil) · `--r-pill 999`.

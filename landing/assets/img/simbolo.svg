@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Símbolo de AportaYa">
+  <title>AportaYa</title>
+  <!-- Patas exteriores: la apacheta, la "A", las manos que se unen -->
+  <path d="M92 30 C74 66 52 108 40 168" fill="none" stroke="#1C5A3A" stroke-width="13" stroke-linecap="round"/>
+  <path d="M108 30 C126 66 148 108 160 168" fill="none" stroke="#1C5A3A" stroke-width="13" stroke-linecap="round"/>
+  <!-- Arco inferior: la base que sostiene al grupo -->
+  <path d="M46 158 C86 140 114 140 154 158" fill="none" stroke="#1C5A3A" stroke-width="12" stroke-linecap="round"/>
+  <!-- Vértice naranja: el aporte activo, el "Ya" -->
+  <path d="M100 58 C84 92 68 130 62 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/>
+  <path d="M100 58 C116 92 132 130 138 170" fill="none" stroke="#E5852B" stroke-width="12" stroke-linecap="round"/>
+  <path d="M70 150 C100 134 100 134 130 150" fill="none" stroke="#E5852B" stroke-width="10" stroke-linecap="round"/>
+</svg>

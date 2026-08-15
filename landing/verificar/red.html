@@ -1,0 +1,21 @@
+<!doctype html><meta charset="utf-8"><title>red</title>
+<style>html,body{margin:0}#c{overflow:hidden;height:60px}iframe{border:0}</style>
+<div id="c"><iframe id="f" src="../index.html" width="390" height="12000"></iframe></div>
+<pre id="r">pendiente</pre>
+<script>
+document.getElementById('f').addEventListener('load', function () {
+  var w = this.contentWindow;
+  setTimeout(function () {
+    var e = w.performance.getEntriesByType('resource'), t = 0, l = [];
+    e.forEach(function (x) {
+      var kb = (x.transferSize || x.encodedBodySize || 0) / 1024; t += kb;
+      l.push(kb.toFixed(1).padStart(7) + ' KB  ' + x.name.replace(/^https?:\/\/[^/]+\//, ''));
+    });
+    var doc = w.performance.getEntriesByType('navigation')[0];
+    var dkb = (doc ? (doc.transferSize || doc.encodedBodySize || 0) : 0) / 1024;
+    l.unshift(dkb.toFixed(1).padStart(7) + ' KB  index.html (documento)');
+    l.push('-------\n' + (t + dkb).toFixed(1) + ' KB en ' + (e.length + 1) + ' peticiones · ancho 390px');
+    document.getElementById('r').textContent = l.join('\n');
+  }, 300);
+});
+</script>
