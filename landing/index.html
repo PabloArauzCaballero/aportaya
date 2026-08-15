@@ -398,51 +398,74 @@
       <span class="etiqueta">Transparencia verificable</span>
       <h2>Comprobalo. No hace falta que nos creas.</h2>
       <p class="texto-guia">
-        Digitalizar un pasanaku concentra la confianza en nosotros, y eso es un
-        problema. Por eso la historia de cada grupo se sella en bloques
-        encadenados que cualquiera puede recorrer.
+        En el pasanaku de cuaderno, todo depende de que una persona anote bien
+        y no se le pierda la hoja. Acá cada período queda registrado, a la vista
+        de todos y sin que nadie —nosotros incluidos— pueda cambiarlo después.
       </p>
 
       <ul class="lista-marcas">
-        <li><span class="tic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Sorteo con compromiso y revelación.</b> El hash de la semilla se publica antes; la semilla, después. Un solo sorteo por grupo, y el compromiso no se puede editar.</span></li>
-        <li><span class="tic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Una cadena por grupo.</b> Cada período se sella con el hash del bloque anterior. Alterar uno rompe todos los que siguen.</span></li>
-        <li><span class="tic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Verificación desde la app.</b> Si la cadena falla, el sistema te dice desde qué bloque y qué componente no cuadra. No lo esconde.</span></li>
-        <li><span class="tic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Formato canónico publicado.</b> El algoritmo y la estructura están escritos: podés verificar fuera de la plataforma, con el paquete en JSON.</span></li>
+        <li><span class="tic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>El sorteo no se puede arreglar.</b> El orden de los turnos queda fijado antes de conocerse, y después se publica cómo salió. Un solo sorteo por grupo: no se repite hasta que a alguien le convenga.</span></li>
+        <li><span class="tic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Lo que ya pasó, no se toca.</b> Cuando un período cierra, queda sellado. Modificar un dato viejo rompe el sello de todos los períodos siguientes, así que no se puede corregir el pasado en silencio.</span></li>
+        <li><span class="tic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Si algo no cuadra, te lo decimos.</b> El sistema revisa la historia del grupo todos los días y avisa exactamente qué período falla. No lo esconde ni espera a que alguien reclame.</span></li>
+        <li><span class="tic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Podés comprobarlo sin nosotros.</b> Publicamos cómo se hace la cuenta y te llevás el historial completo en un archivo. Cualquiera con conocimientos técnicos puede rehacerla por su lado y llegar al mismo resultado.</span></li>
       </ul>
     </div>
 
     <div>
-      <div class="cadena" role="img" aria-label="Cadena de bloques de transparencia del grupo Las Comadres: tres bloques encadenados, cadena íntegra con 12 bloques verificados.">
-        <div class="cadena-cab">
-          <span class="tt">Cadena del grupo</span>
-          <span class="grupo">Las Comadres · 12 bloques</span>
+      <div class="historial">
+        <div class="historial-cab">
+          <span class="tt">Historial de Las Comadres</span>
+          <span class="sub">Bs 250 por período · 10 cupos</span>
         </div>
 
-        <div class="cadena-cuerpo">
-          <div class="bloque">
-            <span class="nb">Bloque 10 · Período de junio</span>
-            <div class="hash">7f3c9e2b…a91d</div>
-            <div class="contenido">10 aportes de <span class="monto monto--sm"><span class="moneda">Bs</span>250,00</span> · entrega a Rocío G.</div>
-          </div>
-          <div class="enlace">hash_anterior = 7f3c9e2b…a91d</div>
+        <div class="periodo">
+          <span class="mes">Junio</span>
+          <span class="estado"><span class="insignia insignia--ok"><span class="punto"></span>Sellado</span></span>
+          <span class="detalle">Aportaron <b>10 de 10</b> · recibió <b>Rocío G.</b> <span class="monto monto--sm"><span class="moneda">Bs</span>2.500,00</span></span>
+          <span class="cupos" role="img" aria-label="10 de 10 cupos aportaron">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+        </div>
 
-          <div class="bloque">
-            <span class="nb">Bloque 11 · Período de julio</span>
-            <div class="hash">c204af71…5be8</div>
-            <div class="contenido">9 aportes al día · 1 en mora cubierta por el fondo</div>
-          </div>
-          <div class="enlace">hash_anterior = c204af71…5be8</div>
+        <div class="periodo">
+          <span class="mes">Julio</span>
+          <span class="estado"><span class="insignia insignia--ok"><span class="punto"></span>Sellado</span></span>
+          <span class="detalle">Aportaron <b>9 de 10</b> · el fondo de garantía cubrió el que faltó · recibió <b>Juan C.</b> <span class="monto monto--sm"><span class="moneda">Bs</span>2.500,00</span></span>
+          <span class="cupos" role="img" aria-label="9 de 10 cupos aportaron, 1 cubierto por el fondo">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="falta"></i>
+          </span>
+        </div>
 
-          <div class="bloque bloque--sellado">
-            <span class="nb">Bloque 12 · Período de agosto</span>
-            <div class="hash">e8a0d5c3…31f7</div>
-            <div class="contenido">
-              10 aportes de <span class="monto monto--sm"><span class="moneda">Bs</span>250,00</span> · entrega a Marisol C.
-              <div class="veredicto">
-                <span class="insignia insignia--ok"><span class="punto"></span>Cadena íntegra · 12 bloques verificados</span>
-              </div>
+        <div class="periodo">
+          <span class="mes">Agosto</span>
+          <span class="estado"><span class="insignia insignia--ok"><span class="punto"></span>Sellado</span></span>
+          <span class="detalle">Aportaron <b>10 de 10</b> · recibió <b>Marisol C.</b> <span class="monto monto--sm"><span class="moneda">Bs</span>2.500,00</span></span>
+          <span class="cupos" role="img" aria-label="10 de 10 cupos aportaron">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+        </div>
+
+        <div class="historial-pie">
+          <p class="garantia">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
+            <span>Una vez sellado un período, <b>nadie lo puede modificar</b> — ni el organizador, ni nosotros. Y no tenés que creernos: podés comprobarlo por tu cuenta.</span>
+          </p>
+
+          <details class="tecnico">
+            <summary>Ver la comprobación técnica</summary>
+            <div class="cuerpo">
+              <div class="fila"><span class="k">agosto</span><span class="v">e8a0d5c3…31f7</span></div>
+              <div class="fila"><span class="k">viene&nbsp;de</span><span class="v">c204af71…5be8</span></div>
+              <div class="fila"><span class="k">julio</span><span class="v">c204af71…5be8</span></div>
+              <div class="fila"><span class="k">viene&nbsp;de</span><span class="v">7f3c9e2b…a91d</span></div>
             </div>
-          </div>
+            <p class="nota">
+              Cada período se sella con una huella que incluye la del período anterior.
+              Cambiar un solo dato de junio rompe la huella de julio y la de agosto, y
+              el sistema señala exactamente dónde. El algoritmo está publicado: podés
+              recalcularlo fuera de la plataforma con el paquete en JSON.
+            </p>
+          </details>
         </div>
       </div>
     </div>
