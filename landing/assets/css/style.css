@@ -245,21 +245,84 @@ img,svg{max-width:100%}
 .movimiento .monto{font-size:14px;flex:none}
 .movimiento .monto--entra{color:var(--ok-texto)}
 
-/* --- Bloque de la cadena de transparencia --- */
-.bloque{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);
-  padding:var(--s3) var(--s4);
+/* --- Cadena de transparencia -----------------------------------------
+   Panel de verificación, no una lista de tarjetas. Es la sección donde
+   el producto dice "no nos creas, comprobalo": tiene que LEERSE técnica.
+   Fondo oscuro fijo (no depende del tema), espina con nodos que conecta
+   los bloques, y el hash tratado como dato criptográfico —mono, con
+   fondo propio y sin partirse a la mitad. --------------------------- */
+.cadena{
+  background:linear-gradient(170deg,var(--tinta-900),var(--tinta-800));
+  border:1px solid var(--tinta-linea);border-radius:var(--r-lg);
+  padding:var(--s5) var(--s5) var(--s4);position:relative;overflow:hidden;
+  box-shadow:0 20px 50px -24px rgba(var(--ink-rgb),.55);
 }
-.bloque .nb{display:block;font-family:var(--font-d);font-weight:700;font-size:12px;
-  color:var(--brand-texto);letter-spacing:.06em;text-transform:uppercase}
-.bloque .hash{font-family:var(--mono);font-size:11.5px;color:var(--text-3);word-break:break-all;margin-top:2px}
-.bloque .contenido{font-size:13.5px;color:var(--text-2);margin-top:var(--s2)}
+.cadena-cab{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--s3);
+  padding-bottom:var(--s4);margin-bottom:var(--s2);
+  border-bottom:1px solid var(--tinta-linea);
+}
+.cadena-cab .tt{
+  font-family:var(--font-d);font-weight:700;font-size:12px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--sobre-tinta-2);
+}
+.cadena-cab .grupo{font-size:12px;color:var(--sobre-tinta-3);font-variant-numeric:tabular-nums}
+/* Angosto: el rótulo y el grupo se pisaban partiéndose en dos líneas cada uno */
+@media (max-width:460px){
+  .cadena{padding:var(--s4) var(--s4) var(--s3)}
+  .cadena-cab{flex-direction:column;align-items:flex-start;gap:3px}
+  .cadena-cuerpo{padding-left:26px}
+}
+
+/* La espina: una sola línea vertical detrás de todos los nodos */
+.cadena-cuerpo{position:relative;padding-left:30px}
+.cadena-cuerpo:before{
+  content:"";position:absolute;left:9px;top:14px;bottom:26px;width:2px;
+  background:linear-gradient(180deg,var(--tinta-linea),rgba(124,190,156,.5));
+  border-radius:2px;
+}
+
+.bloque{position:relative;padding:var(--s3) 0 var(--s4)}
+.bloque+.bloque{border-top:1px solid rgba(var(--blanco-rgb),.05)}
+/* Nodo sobre la espina */
+.bloque:before{
+  content:"";position:absolute;left:-27px;top:19px;width:12px;height:12px;
+  border-radius:50%;background:var(--tinta-800);
+  border:2px solid var(--sobre-tinta-3);box-sizing:border-box;
+}
+.bloque--sellado:before{
+  background:var(--g300);border-color:var(--g300);
+  box-shadow:0 0 0 4px rgba(var(--g300-rgb),.18);
+}
+.bloque .nb{
+  display:block;font-family:var(--font-d);font-weight:700;font-size:12.5px;
+  color:var(--sobre-tinta);letter-spacing:.02em;
+}
+.bloque .hash{
+  display:inline-block;font-family:var(--mono);font-size:11px;line-height:1.5;
+  color:var(--g300);background:rgba(var(--blanco-rgb),.055);
+  border:1px solid rgba(var(--blanco-rgb),.07);border-radius:6px;
+  padding:3px 8px;margin-top:7px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:100%;
+}
+.bloque .contenido{font-size:13px;color:var(--sobre-tinta-2);margin-top:var(--s2);line-height:1.55}
+.bloque .contenido .monto{color:var(--sobre-tinta)}
 .bloque .veredicto{margin-top:var(--s3)}
-.bloque--sellado{border-color:rgba(31,157,87,.45)}
-.cadena{display:grid;gap:var(--s2)}
-.cadena .enlace{display:flex;align-items:center;gap:var(--s2);color:var(--text-3);
-  font-size:11.5px;font-family:var(--mono);padding-left:var(--s4)}
-.cadena .enlace:before{content:"";width:2px;height:20px;background:var(--border);border-radius:2px;flex:none}
+.bloque .veredicto .insignia{
+  background:rgba(var(--g300-rgb),.16);color:var(--g300);
+}
+
+/* El enlace entre bloques: dice explícitamente que el hash del anterior
+   entra en el siguiente. Es la mecánica, no un adorno. */
+.cadena .enlace{
+  display:flex;align-items:center;gap:7px;color:var(--sobre-tinta-3);
+  font-size:10.5px;font-family:var(--mono);padding:0 0 var(--s3);
+  position:relative;
+}
+.cadena .enlace:before{
+  content:"";position:absolute;left:-24px;top:50%;width:8px;height:1px;
+  background:var(--tinta-linea);
+}
 
 /* --- Pregunta frecuente (details nativo: teclado y lector gratis) --- */
 .pregunta{border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);overflow:hidden}
