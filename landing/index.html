@@ -82,7 +82,7 @@
   <div class="contenedor hero-in">
     <div>
       <div class="eyebrow-marca">
-        <span class="ic" aria-hidden="true">✓</span>
+        <span class="ic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
         <span>Billetera de pasanaku · Bolivia</span>
       </div>
       <h1>El pasanaku,<br>en tu bolsillo<span class="ya">.</span></h1>
@@ -120,26 +120,39 @@
 
       <div class="telefono" role="img" aria-label="Pantalla de inicio de AportaYa: saldo disponible de 1.240 bolivianos, el grupo Las Comadres al día y los últimos movimientos.">
         <div class="flotante flotante--turno" data-anim="fade" aria-hidden="true">
-          <span class="ic ic--ok">✓</span>
+          <span class="ic ic--ok">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </span>
           <span class="txt"><span class="tt">Aporte confirmado</span><span class="st">Las Comadres · hoy</span></span>
         </div>
         <div class="flotante flotante--cadena" data-anim="fade" aria-hidden="true">
-          <span class="ic ic--naranja">⛓</span>
+          <span class="ic ic--naranja">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
+          </span>
           <span class="txt"><span class="tt">Cadena íntegra</span><span class="st">12 bloques verificados</span></span>
         </div>
 
         <div class="pantalla">
           <div class="cabecera-verde">
             <div class="estado-barra">
-              <span>9:41</span>
-              <span aria-hidden="true">▮▮▮ ▮</span>
+              <span class="hora">9:41</span>
+              <span class="iconos-sistema" aria-hidden="true">
+                <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><rect x="0" y="7.5" width="2.6" height="3.5" rx=".6"/><rect x="4.4" y="5" width="2.6" height="6" rx=".6"/><rect x="8.8" y="2.5" width="2.6" height="8.5" rx=".6"/><rect x="13.2" y="0" width="2.6" height="11" rx=".6" opacity=".35"/></svg>
+                <svg width="22" height="11" viewBox="0 0 25 12" fill="none"><rect x=".6" y=".6" width="20" height="10.8" rx="3" stroke="currentColor" stroke-opacity=".5" stroke-width="1.1"/><rect x="2.2" y="2.2" width="14" height="7.6" rx="1.8" fill="currentColor"/><path d="M22.4 4.3v3.4a2.6 2.6 0 0 0 0-3.4z" fill="currentColor" fill-opacity=".5"/></svg>
+              </span>
             </div>
-            <div class="saludo">Hola, Marisol 👋</div>
+            <div class="saludo">Hola, Marisol</div>
             <div class="rotulo">Saldo disponible</div>
             <div class="monto saldo"><span class="moneda">Bs</span>1.240,00</div>
             <div class="acciones-rapidas">
-              <span class="b b--accion">Recargar</span>
-              <span class="b b--fantasma">Retirar</span>
+              <span class="b b--accion">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                Recargar
+              </span>
+              <span class="b b--fantasma">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                Retirar
+              </span>
             </div>
           </div>
 
@@ -156,29 +169,85 @@
 
             <div class="rotulo-lista">Últimos movimientos</div>
             <div class="movimiento">
-              <span class="ic ic--sale" aria-hidden="true">↑</span>
+              <span class="ic ic--sale" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+              </span>
               <span class="txt"><span class="tn">Aporte · Las Comadres</span><span class="td">Hoy, 09:12</span></span>
               <span class="monto"><span class="moneda">Bs</span>250,00</span>
             </div>
             <div class="movimiento">
-              <span class="ic ic--entra" aria-hidden="true">↓</span>
+              <span class="ic ic--entra" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 7 7 17M15 17H7V9"/></svg>
+              </span>
               <span class="txt"><span class="tn">Recarga con QR</span><span class="td">Ayer, 18:40</span></span>
               <span class="monto monto--entra"><span class="moneda">Bs</span>500,00</span>
             </div>
             <div class="movimiento">
-              <span class="ic ic--entra" aria-hidden="true">↓</span>
+              <span class="ic ic--entra" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 7 7 17M15 17H7V9"/></svg>
+              </span>
               <span class="txt"><span class="tn">Entrega recibida</span><span class="td">3 de julio</span></span>
               <span class="monto monto--entra"><span class="moneda">Bs</span>2.500,00</span>
             </div>
           </div>
 
           <nav class="tabbar" aria-hidden="true">
-            <span class="on"><span class="ic">⌂</span>Inicio</span>
-            <span><span class="ic">◎</span>Grupos</span>
-            <span><span class="ic">≡</span>Movimientos</span>
-            <span><span class="ic">☺</span>Perfil</span>
+            <span class="on">
+              <svg class="ic" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 21v-7h6v7"/></svg>
+              Inicio
+            </span>
+            <span>
+              <svg class="ic" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="3.2"/><path d="M22 20v-2a4 4 0 0 0-3-3.8"/><path d="M16 4.2a4 4 0 0 1 0 7.6"/></svg>
+              Grupos
+            </span>
+            <span>
+              <svg class="ic" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h13l-3-3M21 17H8l3 3"/></svg>
+              Movimientos
+            </span>
+            <span>
+              <svg class="ic" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a5 5 0 0 0-5-5H9a5 5 0 0 0-5 5v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Perfil
+            </span>
           </nav>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     MARCO NORMATIVO
+     Las normas contra las que está diseñado el sistema, con su número.
+     Salen de docs/Cumplimiento.md — no es decoración, es el contraste
+     requisito por requisito que ya está hecho.
+     ============================================================ -->
+<section class="marco-normativo" aria-label="Marco normativo">
+  <div class="contenedor">
+    <p class="mn-rotulo">Diseñado contra</p>
+    <div class="mn-lista">
+      <div class="mn-item">
+        <span class="mn-sigla">ASFI</span>
+        <span class="mn-norma">Reglamento ETF · Res. 540/2025</span>
+      </div>
+      <div class="mn-item">
+        <span class="mn-sigla">UIF</span>
+        <span class="mn-norma">Instructivo de billetera móvil</span>
+      </div>
+      <div class="mn-item">
+        <span class="mn-sigla">BCB</span>
+        <span class="mn-norma">RD 079/2022</span>
+      </div>
+      <div class="mn-item">
+        <span class="mn-sigla">SIN</span>
+        <span class="mn-norma">Facturación electrónica</span>
+      </div>
+      <div class="mn-item">
+        <span class="mn-sigla">ISO/IEC 27001</span>
+        <span class="mn-norma">Seguridad de la información</span>
+      </div>
+      <div class="mn-item">
+        <span class="mn-sigla">ISO 22301</span>
+        <span class="mn-norma">Continuidad del negocio</span>
       </div>
     </div>
   </div>
@@ -335,10 +404,10 @@
       </p>
 
       <ul class="lista-marcas">
-        <li><span class="tic" aria-hidden="true">✓</span><span><b>Sorteo con compromiso y revelación.</b> El hash de la semilla se publica antes; la semilla, después. Un solo sorteo por grupo, y el compromiso no se puede editar.</span></li>
-        <li><span class="tic" aria-hidden="true">✓</span><span><b>Una cadena por grupo.</b> Cada período se sella con el hash del bloque anterior. Alterar uno rompe todos los que siguen.</span></li>
-        <li><span class="tic" aria-hidden="true">✓</span><span><b>Verificación desde la app.</b> Si la cadena falla, el sistema te dice desde qué bloque y qué componente no cuadra. No lo esconde.</span></li>
-        <li><span class="tic" aria-hidden="true">✓</span><span><b>Formato canónico publicado.</b> El algoritmo y la estructura están escritos: podés verificar fuera de la plataforma, con el paquete en JSON.</span></li>
+        <li><span class="tic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Sorteo con compromiso y revelación.</b> El hash de la semilla se publica antes; la semilla, después. Un solo sorteo por grupo, y el compromiso no se puede editar.</span></li>
+        <li><span class="tic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Una cadena por grupo.</b> Cada período se sella con el hash del bloque anterior. Alterar uno rompe todos los que siguen.</span></li>
+        <li><span class="tic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Verificación desde la app.</b> Si la cadena falla, el sistema te dice desde qué bloque y qué componente no cuadra. No lo esconde.</span></li>
+        <li><span class="tic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Formato canónico publicado.</b> El algoritmo y la estructura están escritos: podés verificar fuera de la plataforma, con el paquete en JSON.</span></li>
       </ul>
     </div>
 
@@ -386,9 +455,9 @@
     </div>
 
     <div class="mini-flujo" role="img" aria-label="Proceso: aviso, descargo, decisión motivada, apelación.">
-      <span class="mf-paso">Aviso y plazo</span><span class="mf-flecha" aria-hidden="true">→</span>
-      <span class="mf-paso">Descargo</span><span class="mf-flecha" aria-hidden="true">→</span>
-      <span class="mf-paso">Decisión motivada</span><span class="mf-flecha" aria-hidden="true">→</span>
+      <span class="mf-paso">Aviso y plazo</span><span class="mf-flecha" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      <span class="mf-paso">Descargo</span><span class="mf-flecha" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      <span class="mf-paso">Decisión motivada</span><span class="mf-flecha" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       <span class="mf-paso mf-paso--final">Apelación</span>
     </div>
 
@@ -458,7 +527,7 @@
     </div>
 
     <div class="aviso">
-      <span class="signo" aria-hidden="true">!</span>
+      <span class="signo" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>
       <div>
         <div class="t">AportaYa está en construcción</div>
         <div class="m">
