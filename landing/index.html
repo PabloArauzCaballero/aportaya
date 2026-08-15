@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="es-BO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AportaYa — El pasanaku, en tu bolsillo</title>
+<meta name="description" content="AportaYa es la billetera móvil del pasanaku boliviano: armá tu grupo, aportá desde el celular, recibí tu turno completo y comprobá cada movimiento. Recargá y retirá cuando quieras.">
+<meta name="theme-color" content="#1C5A3A">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="AportaYa — El pasanaku, en tu bolsillo">
+<meta property="og:description" content="Ahorro rotativo comunitario con la calidez de la comunidad y el rigor de una fintech. Tu plata, tu grupo, tu confianza.">
+<meta property="og:image" content="assets/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="AportaYa — El pasanaku, en tu bolsillo. Aportá hoy, recibí tu turno, retirá cuando quieras.">
+<meta property="og:locale" content="es_BO">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AportaYa — El pasanaku, en tu bolsillo">
+<meta name="twitter:description" content="Ahorro rotativo comunitario con la calidez de la comunidad y el rigor de una fintech. Tu plata, tu grupo, tu confianza.">
+<meta name="twitter:image" content="assets/img/og.png">
+
+<!-- Fuentes vendorizadas: sin CDN en runtime. Se precargan solo los dos
+     archivos que la primera pantalla usa de verdad. -->
+<link rel="preload" href="assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/poppins-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/fuentes.css">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<!-- Marca que hay JS antes del primer pintado: sin esto, o parpadean las
+     entradas, o sin JS la página se queda invisible. -->
+<script>document.documentElement.className+=" js"</script>
+</head>
+<body>
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+
+<!-- ============================================================
+     BARRA SUPERIOR
+     ============================================================ -->
+<header class="barra">
+  <div class="barra-in">
+    <a class="marca" href="#inicio" aria-label="AportaYa, inicio">
+      <svg class="simbolo" viewBox="0 0 200 200" aria-hidden="true">
+        <g fill="none" stroke-linecap="round">
+          <path d="M92 30 C74 66 52 108 40 168" stroke="currentColor" stroke-width="13"/>
+          <path d="M108 30 C126 66 148 108 160 168" stroke="currentColor" stroke-width="13"/>
+          <path d="M46 158 C86 140 114 140 154 158" stroke="currentColor" stroke-width="12"/>
+          <path d="M100 58 C84 92 68 130 62 170" stroke="#E5852B" stroke-width="12"/>
+          <path d="M100 58 C116 92 132 130 138 170" stroke="#E5852B" stroke-width="12"/>
+          <path d="M70 150 C100 134 100 134 130 150" stroke="#E5852B" stroke-width="10"/>
+        </g>
+      </svg>
+      <span class="palabra">Aporta<span class="ya">Ya</span></span>
+    </a>
+
+    <nav aria-label="Secciones">
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#billetera">La billetera</a>
+      <a href="#transparencia">Transparencia</a>
+      <a href="#seguridad">Seguridad</a>
+      <a href="#preguntas">Preguntas</a>
+    </nav>
+
+    <div class="acciones">
+      <button class="tema-btn" type="button" data-tema aria-label="Cambiar entre tema claro y oscuro">
+        <span aria-hidden="true" data-tema-icono>◐</span>
+      </button>
+      <a class="boton boton--fantasma boton--sm" href="#empezar">Crear mi grupo</a>
+    </div>
+  </div>
+</header>
+
+<main id="contenido">
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<section class="hero grano" id="inicio">
+  <div class="contenedor hero-in">
+    <div>
+      <div class="eyebrow-marca">
+        <span class="ic" aria-hidden="true">✓</span>
+        <span>Billetera de pasanaku · Bolivia</span>
+      </div>
+      <h1>El pasanaku,<br>en tu bolsillo<span class="ya">.</span></h1>
+      <p class="bajada">
+        Armá tu grupo, aportá desde el celular y recibí tu turno completo.
+        Sin cuadernos que se pierden, sin planillas de WhatsApp y sin que
+        alguien tenga que “guardar la plata”.
+      </p>
+
+      <div class="acciones">
+        <a class="boton boton--principal" href="#empezar">Crear mi grupo</a>
+        <a class="boton boton--fantasma" href="#como-funciona">Ver cómo funciona</a>
+      </div>
+
+      <div class="confianza">
+        <span class="pastilla">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M5 10l7-7 7 7"/></svg>
+          Recargá y retirá cuando quieras
+        </span>
+        <span class="pastilla">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+          Cada movimiento, comprobable
+        </span>
+        <span class="pastilla">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9V6z"/></svg>
+          Fondo de garantía
+        </span>
+      </div>
+    </div>
+
+    <!-- Marco de teléfono: pantalla de inicio de la billetera -->
+    <div class="figura" data-sp>
+      <div class="orbe orbe--verde" style="width:420px;height:420px;top:-8%;right:-14%" aria-hidden="true"></div>
+      <div class="orbe orbe--naranja" style="width:280px;height:280px;bottom:-4%;left:-10%" aria-hidden="true"></div>
+
+      <div class="telefono" role="img" aria-label="Pantalla de inicio de AportaYa: saldo disponible de 1.240 bolivianos, el grupo Las Comadres al día y los últimos movimientos.">
+        <div class="flotante flotante--turno" data-anim="fade" aria-hidden="true">
+          <span class="ic ic--ok">✓</span>
+          <span class="txt"><span class="tt">Aporte confirmado</span><span class="st">Las Comadres · hoy</span></span>
+        </div>
+        <div class="flotante flotante--cadena" data-anim="fade" aria-hidden="true">
+          <span class="ic ic--naranja">⛓</span>
+          <span class="txt"><span class="tt">Cadena íntegra</span><span class="st">12 bloques verificados</span></span>
+        </div>
+
+        <div class="pantalla">
+          <div class="cabecera-verde">
+            <div class="estado-barra">
+              <span>9:41</span>
+              <span aria-hidden="true">▮▮▮ ▮</span>
+            </div>
+            <div class="saludo">Hola, Marisol 👋</div>
+            <div class="rotulo">Saldo disponible</div>
+            <div class="monto saldo"><span class="moneda">Bs</span>1.240,00</div>
+            <div class="acciones-rapidas">
+              <span class="b b--accion">Recargar</span>
+              <span class="b b--fantasma">Retirar</span>
+            </div>
+          </div>
+
+          <div class="cuerpo-app">
+            <div class="grupo-app">
+              <span class="avatar avatar--verde" aria-hidden="true">LC</span>
+              <span class="info">
+                <span class="nm">Las Comadres</span>
+                <span class="sub">Turno 4 de 10 · aportás el 15</span>
+                <span class="progreso"><i style="width:40%"></i></span>
+              </span>
+              <span class="insignia insignia--ok"><span class="punto"></span>Al día</span>
+            </div>
+
+            <div class="rotulo-lista">Últimos movimientos</div>
+            <div class="movimiento">
+              <span class="ic ic--sale" aria-hidden="true">↑</span>
+              <span class="txt"><span class="tn">Aporte · Las Comadres</span><span class="td">Hoy, 09:12</span></span>
+              <span class="monto"><span class="moneda">Bs</span>250,00</span>
+            </div>
+            <div class="movimiento">
+              <span class="ic ic--entra" aria-hidden="true">↓</span>
+              <span class="txt"><span class="tn">Recarga con QR</span><span class="td">Ayer, 18:40</span></span>
+              <span class="monto monto--entra"><span class="moneda">Bs</span>500,00</span>
+            </div>
+            <div class="movimiento">
+              <span class="ic ic--entra" aria-hidden="true">↓</span>
+              <span class="txt"><span class="tn">Entrega recibida</span><span class="td">3 de julio</span></span>
+              <span class="monto monto--entra"><span class="moneda">Bs</span>2.500,00</span>
+            </div>
+          </div>
+
+          <nav class="tabbar" aria-hidden="true">
+            <span class="on"><span class="ic">⌂</span>Inicio</span>
+            <span><span class="ic">◎</span>Grupos</span>
+            <span><span class="ic">≡</span>Movimientos</span>
+            <span><span class="ic">☺</span>Perfil</span>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CÓMO FUNCIONA
+     ============================================================ -->
+<section class="seccion seccion--tenue" id="como-funciona">
+  <div class="contenedor">
+    <div class="cabecera">
+      <span class="etiqueta">Cómo funciona</span>
+      <h2>El pasanaku de siempre, con las cuentas claras.</h2>
+      <p>
+        Un grupo, un monto y un turno para cada uno. Lo que cambia es que ahora
+        todo queda registrado: quién aportó, cuándo, y a quién le tocó.
+      </p>
+    </div>
+
+    <div class="rejilla rejilla--4 flujo">
+      <article class="paso" data-anim="rise">
+        <div class="paso-marca">
+          <div class="icono" aria-hidden="true">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <span class="paso-num" aria-hidden="true">1</span>
+        </div>
+        <h3>Armá el grupo</h3>
+        <p>Elegís el monto del aporte, cada cuánto se aporta y cuántos cupos hay. El reglamento queda escrito y todos lo aceptan antes de que entre el primer boliviano.</p>
+      </article>
+      <article class="paso" data-anim="rise">
+        <div class="paso-marca">
+          <div class="icono" aria-hidden="true">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>
+          </div>
+          <span class="paso-num" aria-hidden="true">2</span>
+        </div>
+        <h3>Se sortea el orden</h3>
+        <p>Publicamos el hash de la semilla antes del sorteo y la semilla después. Cualquiera puede recomputar el orden y comprobar que salió así.</p>
+      </article>
+      <article class="paso" data-anim="rise">
+        <div class="paso-marca">
+          <div class="icono" aria-hidden="true">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="m9 15 2 2 4-4"/></svg>
+          </div>
+          <span class="paso-num" aria-hidden="true">3</span>
+        </div>
+        <h3>Aportá cada período</h3>
+        <p>Desde tu saldo, con QR o en efectivo en un punto de atención. Te avisamos antes de que venza, no después.</p>
+      </article>
+      <article class="paso" data-anim="rise">
+        <div class="paso-marca">
+          <div class="icono" aria-hidden="true">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2zM12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+          </div>
+          <span class="paso-num" aria-hidden="true">4</span>
+        </div>
+        <h3>Recibí tu entrega</h3>
+        <p>Cuando te toca, el fondo del período completo entra a tu billetera. De ahí lo retirás a tu cuenta cuando quieras.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     LA BILLETERA
+     ============================================================ -->
+<section class="seccion" id="billetera">
+  <div class="contenedor">
+    <div class="cabecera">
+      <span class="etiqueta">La billetera</span>
+      <h2>Tu plata, a tu alcance.</h2>
+      <p>
+        No es una app para anotar quién debe. Es una billetera: el dinero entra,
+        se mueve y sale, y cada paso deja rastro.
+      </p>
+    </div>
+
+    <div class="rejilla rejilla--3">
+      <article class="tarjeta" data-anim="rise">
+        <div class="icono" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M16 12.5h2"/></svg>
+        </div>
+        <h3>Recargá y retirá</h3>
+        <p>Recargás por QR, transferencia o efectivo, y retirás a tu cuenta bancaria cuando quieras. Retirar es un derecho, no un favor.</p>
+      </article>
+
+      <article class="tarjeta" data-anim="rise">
+        <div class="icono icono--naranja" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/></svg>
+        </div>
+        <h3>Aportá con QR</h3>
+        <p>Escaneás y aportás en segundos. El pago se concilia contra el extracto del banco, no contra una captura de pantalla en el grupo.</p>
+      </article>
+
+      <article class="tarjeta" data-anim="rise">
+        <div class="icono" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.7 8.7 0 0 1-4-1L3 20l1.2-4.8A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg>
+        </div>
+        <h3>Te avisamos a tiempo</h3>
+        <p>Recordatorio antes del vencimiento y confirmación cuando el aporte entra, por WhatsApp o notificación. Vos elegís qué te llega.</p>
+      </article>
+
+      <article class="tarjeta" data-anim="rise">
+        <div class="icono" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        </div>
+        <h3>Custodia separada</h3>
+        <p>El dinero de los participantes no se mezcla con el de la plataforma. El encaje se verifica todos los días: si no cuadra, salta.</p>
+        <div class="diagrama-custodia" role="img" aria-label="Las cuentas de los participantes y la cuenta de la plataforma están separadas, sin mezclarse.">
+          <div class="dc-caja dc-caja--tuyo">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Cuentas de participantes
+          </div>
+          <div class="dc-muro" aria-hidden="true"></div>
+          <div class="dc-caja">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="10" rx="1"/><path d="M3 10 12 3l9 7M7 14v3M12 14v3M17 14v3"/></svg>
+            Cuenta de la plataforma
+          </div>
+        </div>
+      </article>
+
+      <article class="tarjeta" data-anim="rise">
+        <div class="icono" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9V6z"/><path d="M9.5 12l1.8 1.8L15 10"/></svg>
+        </div>
+        <h3>Fondo de garantía</h3>
+        <p>Si alguien no aporta, el fondo cubre la entrega de quien tenía el turno. El grupo no se cae por uno, y la deuda se gestiona aparte.</p>
+      </article>
+
+      <article class="tarjeta" data-anim="rise">
+        <div class="icono" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+        </div>
+        <h3>Organizador automático</h3>
+        <p>Los cobros, los recordatorios y el cierre de cada período los hace el sistema. Si preferís un organizador de carne y hueso, no cobra comisión.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     TRANSPARENCIA
+     ============================================================ -->
+<section class="seccion seccion--tenue" id="transparencia">
+  <div class="contenedor dupla">
+    <div>
+      <span class="etiqueta">Transparencia verificable</span>
+      <h2>Comprobalo. No hace falta que nos creas.</h2>
+      <p class="texto-guia">
+        Digitalizar un pasanaku concentra la confianza en nosotros, y eso es un
+        problema. Por eso la historia de cada grupo se sella en bloques
+        encadenados que cualquiera puede recorrer.
+      </p>
+
+      <ul class="lista-marcas">
+        <li><span class="tic" aria-hidden="true">✓</span><span><b>Sorteo con compromiso y revelación.</b> El hash de la semilla se publica antes; la semilla, después. Un solo sorteo por grupo, y el compromiso no se puede editar.</span></li>
+        <li><span class="tic" aria-hidden="true">✓</span><span><b>Una cadena por grupo.</b> Cada período se sella con el hash del bloque anterior. Alterar uno rompe todos los que siguen.</span></li>
+        <li><span class="tic" aria-hidden="true">✓</span><span><b>Verificación desde la app.</b> Si la cadena falla, el sistema te dice desde qué bloque y qué componente no cuadra. No lo esconde.</span></li>
+        <li><span class="tic" aria-hidden="true">✓</span><span><b>Formato canónico publicado.</b> El algoritmo y la estructura están escritos: podés verificar fuera de la plataforma, con el paquete en JSON.</span></li>
+      </ul>
+    </div>
+
+    <div>
+      <div class="cadena" role="img" aria-label="Cadena de bloques de transparencia: tres bloques encadenados, cadena íntegra con 12 bloques verificados.">
+        <div class="bloque">
+          <span class="nb">Bloque 10 · Período de junio</span>
+          <div class="hash">hash 7f3c…a91d</div>
+          <div class="contenido">10 aportes de <span class="monto monto--sm"><span class="moneda">Bs</span>250,00</span> · entrega a Rocío G.</div>
+        </div>
+        <div class="enlace">hash_anterior = 7f3c…a91d</div>
+        <div class="bloque">
+          <span class="nb">Bloque 11 · Período de julio</span>
+          <div class="hash">hash c204…5be8</div>
+          <div class="contenido">9 aportes al día · 1 en mora cubierta por el fondo</div>
+        </div>
+        <div class="enlace">hash_anterior = c204…5be8</div>
+        <div class="bloque bloque--sellado">
+          <span class="nb">Bloque 12 · Período de agosto</span>
+          <div class="hash">hash e8a0…31f7</div>
+          <div class="contenido">
+            10 aportes de <span class="monto monto--sm"><span class="moneda">Bs</span>250,00</span> · entrega a Marisol C.
+            <div class="veredicto">
+              <span class="insignia insignia--ok"><span class="punto"></span>Cadena íntegra · 12 bloques verificados</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CUANDO ALGO SALE MAL
+     ============================================================ -->
+<section class="seccion">
+  <div class="contenedor">
+    <div class="cabecera">
+      <span class="etiqueta">Cuando algo sale mal</span>
+      <h2>Nadie queda afuera sin poder decir lo suyo.</h2>
+      <p>
+        En un pasanaku, el problema no es el software: es qué pasa cuando alguien
+        no aporta. Está resuelto con procedimiento, no con improvisación.
+      </p>
+    </div>
+
+    <div class="mini-flujo" role="img" aria-label="Proceso: aviso, descargo, decisión motivada, apelación.">
+      <span class="mf-paso">Aviso y plazo</span><span class="mf-flecha" aria-hidden="true">→</span>
+      <span class="mf-paso">Descargo</span><span class="mf-flecha" aria-hidden="true">→</span>
+      <span class="mf-paso">Decisión motivada</span><span class="mf-flecha" aria-hidden="true">→</span>
+      <span class="mf-paso mf-paso--final">Apelación</span>
+    </div>
+
+    <div class="rejilla rejilla--3">
+      <article class="tarjeta" data-anim="rise">
+        <span class="insignia insignia--aviso">Mora</span>
+        <h3>Primero el recordatorio</h3>
+        <p>Antes de declarar nada, el sistema avisa y da plazo. Los días son hábiles y se calculan una sola vez, al inicio: no se recalculan para que te queden peor.</p>
+      </article>
+      <article class="tarjeta" data-anim="rise">
+        <span class="insignia insignia--neutral">Descargo</span>
+        <h3>Tu versión cuenta</h3>
+        <p>Un incumplimiento es un expediente, no una banderita roja: causal escrita, notificación probada, descargo con evidencia y decisión motivada. Y una apelación, resuelta por otra persona.</p>
+      </article>
+      <article class="tarjeta" data-anim="rise">
+        <span class="insignia insignia--ok">Reputación</span>
+        <h3>Un historial que se explica</h3>
+        <p>Tu puntaje se calcula con criterios publicados y se puede reproducir. Si mejorás, sube; si prescribe, deja de pesar. Nada de castigos por pronóstico.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SEGURIDAD Y CUMPLIMIENTO
+     ============================================================ -->
+<section class="seccion seccion--tenue" id="seguridad">
+  <div class="contenedor">
+    <div class="cabecera">
+      <span class="etiqueta">Seguridad y cumplimiento</span>
+      <h2>Cercanos al hablar, impecables con la plata.</h2>
+      <p>
+        Manejar dinero de terceros tiene reglas. Las tomamos como requisito de
+        diseño, no como un trámite posterior.
+      </p>
+    </div>
+
+    <div class="rejilla rejilla--4">
+      <article class="tarjeta" data-anim="rise">
+        <div class="icono" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <h3>Doble factor</h3>
+        <p>Segundo factor y dispositivo de confianza para entrar y para cada operación sensible. El PIN nunca se guarda en claro.</p>
+      </article>
+      <article class="tarjeta" data-anim="rise">
+        <div class="icono" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.6" fill="currentColor" stroke="none"/></svg>
+        </div>
+        <h3>Cada dato, su dueño</h3>
+        <p>La base decide qué puede ver cada sesión. Si un permiso falla, la consulta no devuelve de más: no devuelve nada.</p>
+      </article>
+      <article class="tarjeta" data-anim="rise">
+        <div class="icono" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M9 2v6h6"/><path d="m9 15 2 2 4-4"/></svg>
+        </div>
+        <h3>Contra la norma</h3>
+        <p>Diseñado contra el reglamento de ASFI, el instructivo de la UIF, la normativa del BCB y la facturación del SIN, requisito por requisito.</p>
+      </article>
+      <article class="tarjeta" data-anim="rise">
+        <div class="icono" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5M12 8v4l3 2"/></svg>
+        </div>
+        <h3>Respaldos probados</h3>
+        <p>Respaldo cifrado con recuperación a un punto en el tiempo, y ensayo de restauración: un backup que nunca se restauró no es un backup.</p>
+      </article>
+    </div>
+
+    <div class="aviso">
+      <span class="signo" aria-hidden="true">!</span>
+      <div>
+        <div class="t">AportaYa está en construcción</div>
+        <div class="m">
+          Operar con dinero electrónico del público requiere autorización previa de
+          ASFI. Hasta obtenerla, la plataforma no custodia fondos de terceros y lo
+          que ves acá es el producto en desarrollo, no un servicio financiero
+          disponible.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     LO QUE HAY DEBAJO
+     ============================================================ -->
+<section class="seccion seccion--oscura grano">
+  <div class="orbe orbe--verde" style="width:640px;height:640px;top:-30%;left:-14%" aria-hidden="true"></div>
+  <div class="orbe orbe--naranja" style="width:420px;height:420px;bottom:-30%;right:-8%" aria-hidden="true"></div>
+  <div class="contenedor" style="position:relative;z-index:1">
+    <div class="cabecera cabecera--centrada" style="margin-inline:auto">
+      <span class="etiqueta">Lo que hay debajo</span>
+      <h2>Esto no se diseñó a ojo.</h2>
+      <p>
+        Antes de la primera pantalla se escribió la especificación completa: cada
+        flujo, cada regla y cada dato, con las restricciones que hacen imposible
+        violarlas desde la base.
+      </p>
+    </div>
+
+    <div class="rejilla rejilla--4">
+      <div class="cifra cifra--oscura" data-anim="rise"><div class="v">87</div><div class="k">casos de uso especificados</div></div>
+      <div class="cifra cifra--oscura" data-anim="rise"><div class="v">274</div><div class="k">tablas en el modelo</div></div>
+      <div class="cifra cifra--oscura" data-anim="rise"><div class="v">119</div><div class="k">restricciones en la base</div></div>
+      <div class="cifra cifra--oscura" data-anim="rise"><div class="v">12</div><div class="k">módulos de dominio</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PREGUNTAS FRECUENTES
+     ============================================================ -->
+<section class="seccion seccion--tenue" id="preguntas">
+  <div class="contenedor contenedor--angosto">
+    <div class="cabecera cabecera--centrada">
+      <span class="etiqueta">Preguntas frecuentes</span>
+      <h2>Lo que todos preguntan primero.</h2>
+    </div>
+
+    <details class="pregunta">
+      <summary>¿Qué es un pasanaku?</summary>
+      <div class="respuesta">
+        <p>Es el ahorro rotativo de toda la vida: un grupo de personas aporta la misma cantidad cada período, y en cada vuelta el fondo completo va para uno, hasta que a todos les tocó. En otros países le dicen tanda, junta o cundina. Acá le decimos pasanaku, y funciona porque el grupo se sostiene por turnos.</p>
+      </div>
+    </details>
+
+    <details class="pregunta">
+      <summary>¿Puedo sacar mi plata cuando quiera?</summary>
+      <div class="respuesta">
+        <p>Tu <b>saldo disponible</b> es tuyo y lo retirás cuando quieras a tu cuenta bancaria. Lo que ya aportaste a un grupo es del fondo de ese período y le corresponde a quien tiene el turno: eso no se retira, se recibe cuando te toca.</p>
+      </div>
+    </details>
+
+    <details class="pregunta">
+      <summary>¿Qué pasa si alguien no aporta?</summary>
+      <div class="respuesta">
+        <p>Primero se le avisa y se le da plazo. Si igual no aporta, el fondo de garantía cubre la entrega para que quien tenía el turno cobre igual, y la deuda queda a nombre de quien incumplió, con su procedimiento: descargo, decisión motivada y una apelación.</p>
+        <p>El grupo no se rompe por uno, y el que quedó debiendo tampoco pierde el derecho a explicarse.</p>
+      </div>
+    </details>
+
+    <details class="pregunta">
+      <summary>¿Cómo sé que el sorteo no está arreglado?</summary>
+      <div class="respuesta">
+        <p>Porque podés recomputarlo. Antes del sorteo se publica el hash de la semilla —que ya no se puede cambiar— y cada participante puede sumar su propia entropía a ciegas. Después se revela la semilla y el método declarado, y cualquiera verifica que el orden sale de ahí.</p>
+        <p>Hay un solo sorteo por grupo. Repetirlo hasta que salga lindo es justamente el fraude que esto previene.</p>
+      </div>
+    </details>
+
+    <details class="pregunta">
+      <summary>¿Cuánto cuesta?</summary>
+      <div class="respuesta">
+        <p>La plataforma cobra una comisión pequeña por juego, con el tarifario publicado y la cotización congelada antes de que confirmes: el precio que viste es el precio que pagás. Si el grupo lo organiza una persona en vez del organizador automático, esa persona no cobra comisión.</p>
+      </div>
+    </details>
+
+    <details class="pregunta">
+      <summary>¿Está autorizado por ASFI?</summary>
+      <div class="respuesta">
+        <p>Todavía no, y no lo vamos a disimular. El producto está construido contra el reglamento de entidades de servicios de pago y el instructivo de la UIF, pero operar con dinero real exige la autorización previa de ASFI. Hasta tenerla, AportaYa no custodia fondos del público.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- ============================================================
+     LLAMADO FINAL
+     ============================================================ -->
+<section class="seccion" id="empezar">
+  <div class="contenedor">
+    <div class="banda">
+      <svg class="trama" viewBox="0 0 400 100" preserveAspectRatio="none" aria-hidden="true">
+        <g fill="none" stroke="#FFFFFF" stroke-width="2">
+          <path d="M0 60 L20 40 L40 60 L60 40 L80 60 L100 40 L120 60 L140 40 L160 60 L180 40 L200 60 L220 40 L240 60 L260 40 L280 60 L300 40 L320 60 L340 40 L360 60 L380 40 L400 60"/>
+          <path d="M0 80 L20 60 L40 80 L60 60 L80 80 L100 60 L120 80 L140 60 L160 80 L180 60 L200 80 L220 60 L240 80 L260 60 L280 80 L300 60 L320 80 L340 60 L360 80 L380 60 L400 80"/>
+        </g>
+      </svg>
+
+      <h2>¿Armamos tu primer pasanaku?</h2>
+      <p>Dejanos tu contacto y te avisamos apenas abramos los primeros grupos. Sin compromiso y sin letra chica.</p>
+
+      <div class="acciones">
+        <a class="boton boton--principal" href="mailto:hola@aportaya.bo?subject=Quiero%20crear%20mi%20grupo">Quiero mi cupo</a>
+        <a class="boton boton--claro" href="mailto:hola@aportaya.bo?subject=Consulta%20sobre%20AportaYa">Hablar con el equipo</a>
+      </div>
+
+      <p class="nota">Juntos ahorramos mejor.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================================================
+     PIE
+     ============================================================ -->
+<footer class="pie">
+  <div class="contenedor">
+    <div class="pie-cols">
+      <div>
+        <a class="marca" href="#inicio" aria-label="AportaYa, inicio">
+          <svg class="simbolo" viewBox="0 0 200 200" aria-hidden="true">
+            <g fill="none" stroke-linecap="round">
+              <path d="M92 30 C74 66 52 108 40 168" stroke="currentColor" stroke-width="13"/>
+              <path d="M108 30 C126 66 148 108 160 168" stroke="currentColor" stroke-width="13"/>
+              <path d="M46 158 C86 140 114 140 154 158" stroke="currentColor" stroke-width="12"/>
+              <path d="M100 58 C84 92 68 130 62 170" stroke="#E5852B" stroke-width="12"/>
+              <path d="M100 58 C116 92 132 130 138 170" stroke="#E5852B" stroke-width="12"/>
+              <path d="M70 150 C100 134 100 134 130 150" stroke="#E5852B" stroke-width="10"/>
+            </g>
+          </svg>
+          <span class="palabra">Aporta<span class="ya">Ya</span></span>
+        </a>
+        <p class="tagline">El pasanaku, en tu bolsillo. Tu plata, tu grupo, tu confianza.</p>
+      </div>
+
+      <div>
+        <h4>Producto</h4>
+        <ul>
+          <li><a href="#como-funciona">Cómo funciona</a></li>
+          <li><a href="#billetera">La billetera</a></li>
+          <li><a href="#preguntas">Preguntas frecuentes</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Confianza</h4>
+        <ul>
+          <li><a href="#transparencia">Transparencia verificable</a></li>
+          <li><a href="#seguridad">Seguridad y cumplimiento</a></li>
+          <li><a href="mailto:hola@aportaya.bo">Atención al cliente</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Proyecto</h4>
+        <ul>
+          <li><a href="https://github.com/richardparra99/Pasanaco_backendBO/blob/main/docs/Views/AportaYa-Identidad.html">Identidad de marca</a></li>
+          <li><a href="https://github.com/richardparra99/Pasanaco_backendBO/blob/main/docs/Views/Sistema-Diseno/README.md">Sistema de diseño</a></li>
+          <li><a href="https://github.com/richardparra99/Pasanaco_backendBO#readme">Modelo de datos</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="pie-abajo">
+      <span>© 2026 AportaYa · Hecho en Bolivia 🇧🇴</span>
+      <span>Producto en desarrollo. Requiere autorización de ASFI para operar con dinero real.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js" defer></script>
+</body>
+</html>

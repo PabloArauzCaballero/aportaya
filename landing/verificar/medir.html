@@ -1,0 +1,83 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>medición</title>
+<style>
+  html,body{margin:0}
+  .caja{overflow:hidden;height:60px}
+  iframe{border:0;display:block}
+</style>
+<div id="cajas"></div>
+<pre id="r">pendiente</pre>
+<script>
+/* Un iframe por ancho, todos a la vez y sin recargas: dentro de un iframe
+   las media queries evalúan el ancho del iframe, así que 360px es 360px
+   de verdad aunque Chrome headless no baje de ~500px de ventana. */
+var ANCHOS = (new URLSearchParams(location.search).get('w') || '360,390,414,768,1024,1440').split(',').map(Number);
+var pendientes = ANCHOS.length, salida = {};
+
+ANCHOS.forEach(function (w) {
+  var caja = document.createElement('div');
+  caja.className = 'caja';
+  var f = document.createElement('iframe');
+  f.width = w; f.height = 14000; f.src = '../index.html';
+  f.addEventListener('load', function () {
+    try { salida[w] = analizar(f, w); } catch (e) { salida[w] = '=== ' + w + 'px === ERROR ' + e.message; }
+    if (--pendientes === 0) {
+      document.getElementById('r').textContent = ANCHOS.map(function (x) { return salida[x]; }).join('\n');
+    }
+  });
+  caja.appendChild(f);
+  document.getElementById('cajas').appendChild(caja);
+});
+
+function analizar(f, w) {
+  var d = f.contentDocument, win = f.contentWindow;
+  var H = Math.ceil(d.body.getBoundingClientRect().height), STEP = 8;
+  var filas = new Uint8Array(Math.ceil(H / STEP));
+
+  d.querySelectorAll('body *').forEach(function (el) {
+    var s = win.getComputedStyle(el);
+    if (s.display === 'none' || s.position === 'fixed' || +s.opacity === 0) return;
+    var propio = [].slice.call(el.childNodes).some(function (n) {
+      return n.nodeType === 3 && n.textContent.trim();
+    });
+    if (!propio && el.firstElementChild) return;          // contenedores no cuentan
+    var r = el.getBoundingClientRect();
+    if (r.height < 2) return;
+    var top = r.top + win.scrollY, bot = r.bottom + win.scrollY;
+    for (var i = Math.floor(top / STEP); i <= Math.ceil(bot / STEP) && i < filas.length; i++) filas[i] = 1;
+  });
+
+  var bandas = [], inicio = -1, muertos = 0;
+  for (var i = 0; i < filas.length; i++) {
+    if (!filas[i] && inicio < 0) inicio = i;
+    if ((filas[i] || i === filas.length - 1) && inicio >= 0) {
+      var alto = (i - inicio) * STEP;
+      if (alto > 150) { bandas.push(inicio * STEP + '→' + i * STEP + ' (' + alto + 'px)'); muertos += alto; }
+      inicio = -1;
+    }
+  }
+
+  /* Desborde: el scroll real y los elementos fuera de cuadro, descartando
+     los que un ancestro ya recorta (si no, los carruseles son fantasmas). */
+  win.scrollTo(400, 0); var scrollReal = win.scrollX; win.scrollTo(0, 0);
+  var anchoDoc = d.documentElement.scrollWidth;
+  var fuera = [];
+  d.querySelectorAll('body *').forEach(function (el) {
+    var r = el.getBoundingClientRect();
+    if (r.right <= w + 1 && r.left >= -1) return;
+    for (var p = el.parentElement; p && p !== d.body; p = p.parentElement) {
+      var ps = win.getComputedStyle(p);
+      if (ps.overflowX !== 'visible' || ps.maskImage !== 'none') return;
+    }
+    var cls = (el.className.baseVal !== undefined ? el.className.baseVal : el.className) || '';
+    fuera.push(el.tagName.toLowerCase() + '.' + String(cls).split(' ')[0] + '[' + Math.round(r.left) + '→' + Math.round(r.right) + ']');
+  });
+
+  return '=== ' + w + 'px === alto ' + H + 'px · scrollWidth ' + anchoDoc
+    + '\n  scrollX tras scrollTo(400,0): ' + scrollReal
+    + '\n  desbordan: ' + (fuera.length ? fuera.slice(0, 6).join(', ') : 'ninguno')
+    + '\n  bandas >150px: ' + (bandas.length ? bandas.join(', ') : 'ninguna')
+    + '\n  muerto: ' + muertos + 'px (' + (100 * muertos / H).toFixed(1) + '%)';
+}
+</script>

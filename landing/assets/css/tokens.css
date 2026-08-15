@@ -1,0 +1,149 @@
+/* ============================================================
+   AportaYa — Tokens de marca
+   Fuente de verdad: docs/Views/Sistema-Diseno/estilos.css
+   y docs/Views/AportaYa-Identidad.md · skill `disenar-frontend`.
+   Regla de oro: verde = estructura, naranja = acción.
+   Ningún archivo de esta landing usa un hex suelto: todo sale de acá.
+   ============================================================ */
+
+:root{
+  /* ===== Verde Pasanaku (primario) ===== */
+  --g900:#0C2C1D;--g800:#123A26;--g700:#164A30;--g600:#1C5A3A;--g500:#237349;
+  --g400:#3C9366;--g300:#7CBE9C;--g200:#BCDFCC;--g100:#E7F2EB;
+
+  /* ===== Naranja Aporte (acción) ===== */
+  --o700:#BC6217;--o600:#D6741C;--o500:#E5852B;--o400:#EF9E4E;
+  --o300:#F6BE85;--o200:#FBDBB8;--o100:#FDF0DF;
+
+  /* ===== Neutros (sesgo verde) ===== */
+  --ink:#10231A;--slate:#38473F;--muted:#6C7B72;--line:#DCE4DE;
+  --cloud:#F3F6F2;--crema:#F6F4EC;--white:#FFF;
+
+  /* ===== Semánticos ===== */
+  --ok:#1F9D57;--okbg:#E7F5EC;--warn:#F0B429;--warnbg:#FEF4DA;
+  --err:#D64545;--errbg:#FBECEC;--info:#2E7FB8;--infobg:#E7F1F8;
+
+  /* ===== Los mismos, en RGB, para poder darles alpha =====
+     Sin esto terminás con rgba(28,90,58,.16) escrito a mano en
+     veinte lugares y la paleta deja de ser cambiable. */
+  --g600-rgb:28,90,58;
+  --g400-rgb:60,147,102;
+  --g300-rgb:124,190,156;
+  --o500-rgb:229,133,43;
+  --ink-rgb:16,35,26;
+  --blanco-rgb:255,255,255;
+  --sobre-verde-rgb:234,247,239;
+
+  /* ===== Escalas ===== */
+  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--s7:48px;
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:24px;--r-pill:999px;
+  --sh-1:0 1px 2px rgba(16,35,26,.06);
+  --sh-2:0 4px 16px rgba(16,35,26,.08);
+  --sh-3:0 18px 44px rgba(16,35,26,.16);
+
+  /* ===== Tipografía ===== */
+  --font-d:"Poppins","Sora",system-ui,"Segoe UI",Roboto,Arial,sans-serif;
+  --font-b:"Inter",system-ui,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+
+  /* Escala fluida: clamp(mínimo, preferido, máximo) */
+  --fs-h1:clamp(2.15rem,5.4vw,3.6rem);
+  --fs-h2:clamp(1.65rem,3.4vw,2.5rem);
+  --fs-h3:1.1875rem;
+  --fs-bajada:clamp(1.05rem,1.5vw,1.16rem);
+  --fs-cifra:clamp(1.75rem,3.2vw,2.375rem);
+
+  /* ===== Ritmo vertical ===== */
+  --pad-seccion:clamp(2.75rem,5vw,4.25rem);
+
+  /* ===== Movimiento: tres curvas y tres duraciones para todo =====
+     --spring  entradas: llega, se pasa apenas, se acomoda
+     --pop     micro-interacciones: rebote corto al tocar
+     --glide   recorridos largos y opacidades, sin rebote */
+  --spring:linear(0,.006,.025 2.8%,.101 6.1%,.539 18.9%,.721 25.3%,.849 31.5%,
+    .937 38.1%,.968 41.8%,.991 45.7%,1.006 50.1%,1.015 55%,1.017 63.9%,1.001 100%);
+  --pop:linear(0,.009,.035 2.1%,.141,.281 6.7%,.723 12.9%,.938 16.7%,1.017,
+    1.077 21%,1.121,1.149 26.6%,1.155,1.153 30.8%,1.129 33.8%,1.052 40%,
+    1.007 44.4%,.981 50.7%,.98 59.4%,1.002 78.5%,1);
+  --glide:cubic-bezier(.32,.72,0,1);
+  --t-fast:.28s;--t-base:.55s;--t-slow:.9s;
+
+  /* ===== Tema claro (rol → token) ===== */
+  --bg:var(--crema);--surface:var(--white);--surface-2:var(--cloud);
+  --text:var(--ink);--text-2:var(--slate);--border:var(--line);
+  --brand:var(--g600);--brand-ink:var(--g800);--accent:var(--o500);--accent-ink:#3A1E02;
+  --field:var(--white);--field-border:#C9D4CD;
+  --sobre-verde:#EAF7EF;
+  --brand-rgb:var(--g600-rgb);--accent-rgb:var(--o500-rgb);
+
+  /* ===== Superficie oscura fija (bandas de contraste, no depende del tema) =====
+     Para secciones que rompen el ritmo con un fondo oscuro deliberado —
+     franja de cifras, CTA final— sin importar si el visitante está en claro
+     u oscuro. Mismo criterio que --verde-solido: fijo en ambos temas. */
+  --tinta-900:#081A11;--tinta-800:#0C2418;--tinta-700:#123420;
+  --sobre-tinta:#EAF7EF;--sobre-tinta-2:#9FC2AC;--sobre-tinta-3:#6E9179;
+  --tinta-linea:#1E3D2A;
+
+  /* Grano sutil: una vez generado no cuesta nada en scroll (es una imagen
+     estática, no un filtro en vivo). Se usa a opacidad muy baja para dar
+     textura sin verse "con ruido". */
+  --grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  /* ===== Roles de TEXTO con contraste verificado (AA ≥ 4.5:1) =====
+     Los tonos de marca no siempre pasan como texto chico: el naranja de
+     acento da 2.47:1 sobre crema. Estos son los derivados medidos que sí
+     pasan, con el mismo matiz. El color de marca se sigue usando en
+     superficies y logotipo, donde el requisito es otro. */
+  --text-3:#647169;          /* 4.64:1 sobre crema (el #6C7B72 daba 4.05) */
+  --brand-texto:var(--g600); /* 8.16:1 sobre blanco */
+  --accent-texto:#A65B14;    /* 4.62:1 sobre crema */
+  --ok-texto:#197C45;        /* 4.66:1 sobre fondo de éxito */
+  --aviso-texto:#AA5915;     /* 4.62:1 sobre fondo de aviso */
+  --verde-solido:var(--g600);--sobre-verde-solido:#EAF7EF;
+}
+
+/* Preferencia del sistema — solo cuando no hay elección explícita */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A1F15;--surface:#0F2B1D;--surface-2:#0C2418;
+    --text:#EAF3ED;--text-2:#B7CCC0;--text-3:#89998E;--border:#1C3A2A;
+    --brand:var(--g400);--brand-ink:#EAF3ED;--accent:var(--o400);
+    --brand-rgb:60,147,102;--accent-rgb:239,158,78;
+    --brand-texto:#419F6E;--accent-texto:var(--o400);
+    --ok-texto:var(--g300);--aviso-texto:var(--warn);
+    --verde-solido:var(--g300);--sobre-verde-solido:var(--g900);
+    --field:#0C2418;--field-border:#2A4A38;--cloud:#0C2418;--crema:#0A1F15;
+    --okbg:rgba(31,157,87,.14);--warnbg:rgba(240,180,41,.14);
+    --errbg:rgba(214,69,69,.14);--infobg:rgba(46,127,184,.14);
+    --sh-1:0 1px 2px rgba(0,0,0,.3);
+    --sh-2:0 6px 20px rgba(0,0,0,.32);
+    --sh-3:0 20px 46px rgba(0,0,0,.4);
+  }
+}
+
+/* Elección explícita del visitante — gana en ambas direcciones */
+:root[data-theme="light"]{
+  --bg:#F6F4EC;--surface:#FFF;--surface-2:#F3F6F2;
+  --text:#10231A;--text-2:#38473F;--border:#DCE4DE;
+  --brand:#1C5A3A;--brand-ink:#123A26;--accent:#E5852B;
+  --brand-rgb:28,90,58;--accent-rgb:229,133,43;
+  --text-3:#647169;--brand-texto:#1C5A3A;--accent-texto:#A65B14;
+  --ok-texto:#197C45;--aviso-texto:#AA5915;--verde-solido:#1C5A3A;--sobre-verde-solido:#EAF7EF;
+  --field:#FFF;--field-border:#C9D4CD;--cloud:#F3F6F2;--crema:#F6F4EC;
+  --okbg:#E7F5EC;--warnbg:#FEF4DA;--errbg:#FBECEC;--infobg:#E7F1F8;
+}
+:root[data-theme="dark"]{
+  --bg:#0A1F15;--surface:#0F2B1D;--surface-2:#0C2418;
+  --text:#EAF3ED;--text-2:#B7CCC0;--text-3:#89998E;--border:#1C3A2A;
+  --brand:#3C9366;--brand-ink:#EAF3ED;--accent:#EF9E4E;
+  --brand-rgb:60,147,102;--accent-rgb:239,158,78;
+  --brand-texto:#419F6E;--accent-texto:var(--o400);
+  --ok-texto:var(--g300);--aviso-texto:var(--warn);
+  --verde-solido:var(--g300);--sobre-verde-solido:var(--g900);
+  --field:#0C2418;--field-border:#2A4A38;--cloud:#0C2418;--crema:#0A1F15;
+  --okbg:rgba(31,157,87,.14);--warnbg:rgba(240,180,41,.14);
+  --errbg:rgba(214,69,69,.14);--infobg:rgba(46,127,184,.14);
+  --sh-1:0 1px 2px rgba(0,0,0,.3);
+  --sh-2:0 6px 20px rgba(0,0,0,.32);
+  --sh-3:0 20px 46px rgba(0,0,0,.4);
+}

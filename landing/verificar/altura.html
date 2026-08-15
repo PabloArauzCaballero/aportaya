@@ -1,0 +1,10 @@
+<!doctype html><div id="c" style="overflow:hidden;height:10px"><iframe id="f" src="http://localhost:8899/index.html" width="1440" height="2000"></iframe></div><pre id="r">-</pre>
+<script>
+document.getElementById('f').addEventListener('load',function(){
+  var d=this.contentDocument;
+  var secciones=[].slice.call(d.querySelectorAll('section')).map(function(s){
+    return Math.round(s.getBoundingClientRect().top+scrollY)+'px  '+(s.id||s.className);
+  });
+  document.getElementById('r').textContent = 'altura total: '+d.documentElement.scrollHeight+'\n'+secciones.join('\n');
+});
+</script>

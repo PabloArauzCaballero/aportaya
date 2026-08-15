@@ -1,0 +1,25 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>toma</title>
+<style>
+  html,body{margin:0}
+  .marco{overflow:hidden;position:relative;background:#fff}
+  iframe{border:0;position:absolute;left:0;top:0}
+</style>
+<div id="m"></div>
+<script>
+var q = new URLSearchParams(location.search);
+var W = +(q.get('w') || 1400), H = +(q.get('h') || 900), OFF = +(q.get('off') || 0);
+var TEMA = q.get('tema') || 'light';
+var marco = document.createElement('div');
+marco.className = 'marco'; marco.style.width = W + 'px'; marco.style.height = H + 'px';
+var f = document.createElement('iframe');
+f.width = W; f.height = 20000; f.style.top = (-OFF) + 'px'; f.src = '../index.html';
+f.addEventListener('load', function () {
+  f.contentDocument.documentElement.setAttribute('data-theme', TEMA);
+  f.contentDocument.querySelectorAll('[data-anim]').forEach(function (e) { e.classList.add('in'); });
+  document.title = 'listo';
+});
+marco.appendChild(f);
+document.getElementById('m').appendChild(marco);
+</script>
