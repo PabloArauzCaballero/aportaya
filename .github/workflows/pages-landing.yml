@@ -13,7 +13,9 @@ name: Publicar landing en GitHub Pages
 
 on:
   push:
-    branches: [main]
+    # `dev` es la rama activa del repo (main va varios merges atrás), así que
+    # el despliegue tiene que escuchar ahí para llegar a correr alguna vez.
+    branches: [main, dev]
     paths:
       - "landing/**"
       - ".github/workflows/pages-landing.yml"

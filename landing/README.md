@@ -11,8 +11,11 @@ python3 -m http.server 8899     # o servido, si querés medir con el navegador
 ## Despliegue en GitHub Pages
 
 `.github/workflows/pages-landing.yml` publica esta carpeta (y nada más — es el artefacto
-completo, no un subdirectorio del sitio) en cada push a `main` que toque `landing/`, y
-también se puede disparar a mano desde la pestaña **Actions**.
+completo, no un subdirectorio del sitio) en cada push a `main` **o `dev`** que toque
+`landing/`, y también se puede disparar a mano desde la pestaña **Actions**.
+
+Escucha las dos ramas a propósito: `dev` es donde se integra el trabajo de este repo y
+`main` va varios merges atrás, así que un workflow que solo mirara `main` no correría nunca.
 
 **Falta un paso único que solo puede hacer alguien con permiso de administrador** del
 repositorio (verificado contra la API: esta cuenta tiene `push`, no `admin`, y GitHub
