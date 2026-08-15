@@ -83,7 +83,7 @@ Todo lo de esta tabla es **placeholder**. Nada de esto está confirmado por nadi
 
 | Dónde | Qué dice hoy | Qué necesita |
 | --- | --- | --- |
-| Hero · teléfono | «Marisol», grupo «Las Comadres», Bs 1.240,00 / 250,00 / 500,00 / 2.500,00 | Captura real de la app cuando exista, o consentimiento para usar nombres |
+| Hero · teléfono y tarjetas flotantes | «Marisol», grupo «Las Comadres», Bs 1.240,00 / 250,00 / 500,00 / 2.500,00. Las dos tarjetas flotantes repiten estos mismos datos de ejemplo («Aporte confirmado», «Cadena íntegra · 12 bloques»), no agregan cifras nuevas | Captura real de la app cuando exista, o consentimiento para usar nombres |
 | Transparencia · cadena | Hashes `7f3c…a91d`, `c204…5be8`, `e8a0…31f7` y sus contenidos | Bloques reales de un grupo de prueba |
 | Cierre y pie | `hola@aportaya.bo` | Casilla real de atención al cliente |
 | Cierre | «te avisamos apenas abramos los primeros grupos» | Confirmar que hay lista de espera y dónde se guarda |
@@ -112,6 +112,20 @@ repositorio](../README.md). Si cambia el modelo, cambian acá.
   primer pintado). Sin JS la página se ve entera.
 - **`<details>` para las preguntas**, no un acordeón a mano: teclado y lector de pantalla
   vienen gratis.
+- **Cada sección de texto tiene un ancla visual propia**, no solo tarjetas con párrafos:
+  el flujo conectado de "Cómo funciona" (línea + ícono + insignia de número), el diagrama
+  de "Cuentas de participantes / Cuenta de la plataforma" dentro de la tarjeta de custodia,
+  el mini-flujo de "Aviso → Descargo → Decisión → Apelación", y las dos tarjetas flotantes
+  del hero (que repiten afirmaciones ya dichas en el texto — "cadena íntegra", "aporte
+  confirmado" — nunca inventan una cifra nueva). El criterio: si una sección se explica
+  solo con prosa, algo se está pidiendo que el lector arme mentalmente y no debería.
+- **Los orbes de fondo son degradados radiales estáticos, no `filter:blur()` en vivo.**
+  Es la diferencia entre gratis y lo más caro que hay en una página con scroll (ver
+  playbook de rendimiento). El grano (`--grano` en `tokens.css`) es la misma idea: una
+  textura de una sola vez vía `feTurbulence`, no algo que se recalcula por cuadro.
+- **Una franja oscura fija rompe el ritmo crema/blanco a propósito** ("Lo que hay debajo"):
+  usa `--tinta-900/800/700`, que no se redefinen por tema — se ve igual en claro y en
+  oscuro, como una decisión de composición, no una variante de color.
 - **La pantalla del teléfono mide 644px** porque es lo que ocupan sus tres movimientos
   completos. Con 568px la última fila quedaba cortada bajo la tab bar.
 
@@ -126,16 +140,19 @@ repositorio](../README.md). Si cambia el modelo, cambian acá.
 
 ## Cómo se verifica
 
-Las cuatro páginas de `verificar/` cargan la landing dentro de un iframe: **dentro de un
+Las páginas de `verificar/` cargan la landing dentro de un iframe: **dentro de un
 iframe las media queries evalúan el ancho del iframe**, así que 360px es 360px de verdad
-aunque Chrome headless no baje de ~500px de ventana.
+aunque Chrome headless no baje de ~500px de ventana. Ninguna se versiona como parte del
+sitio publicado; son herramientas de desarrollo, no páginas de la landing.
 
 | Página | Qué contesta |
 | --- | --- |
 | `verificar/medir.html` | Bandas vacías >150px, desborde horizontal real y elementos fuera de cuadro, por ancho (`?w=360,390,…`) |
 | `verificar/contraste.html` | Contraste de cada nodo con texto, en claro y oscuro, con el mínimo que le toca por tamaño y peso |
 | `verificar/red.html` | Peso y número de peticiones de la primera carga |
-| `verificar/toma.html` | Captura a un ancho, tema y desplazamiento dados (`?w=&h=&off=&temas=`) |
+| `verificar/toma.html` | Captura a un ancho, alto, desplazamiento y tema dados (`?w=&h=&off=&tema=light\|dark`) — para revisar una sección puntual |
+| `verificar/altura.html` | Offset en píxeles de cada `<section>`, para saber qué `off=` pasarle a `toma.html` sin adivinar |
+| `verificar/og.html` | Fuente única de `assets/img/og.png` (la imagen para redes) — nunca se edita el PNG a mano, se regenera desde acá |
 
 ```bash
 python3 -m http.server 8899 --directory landing
@@ -149,10 +166,10 @@ python3 -m http.server 8899 --directory landing
 
 | Comprobación | Resultado |
 | --- | --- |
-| Desborde horizontal a 360 / 390 / 414 / 768 / 1024 / 1280 / 1440 | Ninguno; `scrollX` sigue en 0 tras `scrollTo(400,0)` |
-| Bandas vacías | 0px en todos los anchos salvo una de 152px a 1440 (frontera entre dos secciones, respiro intencional) |
-| Primera carga a 390px | **126 KB en 8 peticiones**, contra un presupuesto de 200 KB |
-| Contraste, 179 nodos con texto | Todos pasan en claro y en oscuro, salvo el logotipo (exento) |
+| Desborde horizontal a 360 / 390 / 414 / 768 / 1024 / 1440 | Ninguno; `scrollX` sigue en 0 tras `scrollTo(400,0)` |
+| Bandas vacías | 0px en todos los anchos medidos |
+| Primera carga a 390px | **142.9 KB en 8 peticiones**, contra un presupuesto de 200 KB |
+| Contraste, 183 nodos con texto | Todos pasan en claro y en oscuro, salvo el logotipo (exento) |
 
 Dos avisos sobre el método, por si alguien repite las mediciones:
 

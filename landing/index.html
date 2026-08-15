@@ -78,10 +78,13 @@
 <!-- ============================================================
      HERO
      ============================================================ -->
-<section class="hero" id="inicio">
+<section class="hero grano" id="inicio">
   <div class="contenedor hero-in">
     <div>
-      <span class="etiqueta">Billetera de pasanaku · Bolivia</span>
+      <div class="eyebrow-marca">
+        <span class="ic" aria-hidden="true">✓</span>
+        <span>Billetera de pasanaku · Bolivia</span>
+      </div>
       <h1>El pasanaku,<br>en tu bolsillo<span class="ya">.</span></h1>
       <p class="bajada">
         Armá tu grupo, aportá desde el celular y recibí tu turno completo.
@@ -112,7 +115,19 @@
 
     <!-- Marco de teléfono: pantalla de inicio de la billetera -->
     <div class="figura" data-sp>
+      <div class="orbe orbe--verde" style="width:420px;height:420px;top:-8%;right:-14%" aria-hidden="true"></div>
+      <div class="orbe orbe--naranja" style="width:280px;height:280px;bottom:-4%;left:-10%" aria-hidden="true"></div>
+
       <div class="telefono" role="img" aria-label="Pantalla de inicio de AportaYa: saldo disponible de 1.240 bolivianos, el grupo Las Comadres al día y los últimos movimientos.">
+        <div class="flotante flotante--turno" data-anim="fade" aria-hidden="true">
+          <span class="ic ic--ok">✓</span>
+          <span class="txt"><span class="tt">Aporte confirmado</span><span class="st">Las Comadres · hoy</span></span>
+        </div>
+        <div class="flotante flotante--cadena" data-anim="fade" aria-hidden="true">
+          <span class="ic ic--naranja">⛓</span>
+          <span class="txt"><span class="tt">Cadena íntegra</span><span class="st">12 bloques verificados</span></span>
+        </div>
+
         <div class="pantalla">
           <div class="cabecera-verde">
             <div class="estado-barra">
@@ -183,24 +198,44 @@
       </p>
     </div>
 
-    <div class="rejilla rejilla--4">
+    <div class="rejilla rejilla--4 flujo">
       <article class="paso" data-anim="rise">
-        <div class="n">1</div>
+        <div class="paso-marca">
+          <div class="icono" aria-hidden="true">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <span class="paso-num" aria-hidden="true">1</span>
+        </div>
         <h3>Armá el grupo</h3>
         <p>Elegís el monto del aporte, cada cuánto se aporta y cuántos cupos hay. El reglamento queda escrito y todos lo aceptan antes de que entre el primer boliviano.</p>
       </article>
       <article class="paso" data-anim="rise">
-        <div class="n">2</div>
+        <div class="paso-marca">
+          <div class="icono" aria-hidden="true">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>
+          </div>
+          <span class="paso-num" aria-hidden="true">2</span>
+        </div>
         <h3>Se sortea el orden</h3>
         <p>Publicamos el hash de la semilla antes del sorteo y la semilla después. Cualquiera puede recomputar el orden y comprobar que salió así.</p>
       </article>
       <article class="paso" data-anim="rise">
-        <div class="n">3</div>
+        <div class="paso-marca">
+          <div class="icono" aria-hidden="true">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="m9 15 2 2 4-4"/></svg>
+          </div>
+          <span class="paso-num" aria-hidden="true">3</span>
+        </div>
         <h3>Aportá cada período</h3>
         <p>Desde tu saldo, con QR o en efectivo en un punto de atención. Te avisamos antes de que venza, no después.</p>
       </article>
       <article class="paso" data-anim="rise">
-        <div class="n">4</div>
+        <div class="paso-marca">
+          <div class="icono" aria-hidden="true">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2zM12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+          </div>
+          <span class="paso-num" aria-hidden="true">4</span>
+        </div>
         <h3>Recibí tu entrega</h3>
         <p>Cuando te toca, el fondo del período completo entra a tu billetera. De ahí lo retirás a tu cuenta cuando quieras.</p>
       </article>
@@ -232,7 +267,7 @@
       </article>
 
       <article class="tarjeta" data-anim="rise">
-        <div class="icono" aria-hidden="true">
+        <div class="icono icono--naranja" aria-hidden="true">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/></svg>
         </div>
         <h3>Aportá con QR</h3>
@@ -253,6 +288,17 @@
         </div>
         <h3>Custodia separada</h3>
         <p>El dinero de los participantes no se mezcla con el de la plataforma. El encaje se verifica todos los días: si no cuadra, salta.</p>
+        <div class="diagrama-custodia" role="img" aria-label="Las cuentas de los participantes y la cuenta de la plataforma están separadas, sin mezclarse.">
+          <div class="dc-caja dc-caja--tuyo">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Cuentas de participantes
+          </div>
+          <div class="dc-muro" aria-hidden="true"></div>
+          <div class="dc-caja">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="10" rx="1"/><path d="M3 10 12 3l9 7M7 14v3M12 14v3M17 14v3"/></svg>
+            Cuenta de la plataforma
+          </div>
+        </div>
       </article>
 
       <article class="tarjeta" data-anim="rise">
@@ -339,6 +385,13 @@
       </p>
     </div>
 
+    <div class="mini-flujo" role="img" aria-label="Proceso: aviso, descargo, decisión motivada, apelación.">
+      <span class="mf-paso">Aviso y plazo</span><span class="mf-flecha" aria-hidden="true">→</span>
+      <span class="mf-paso">Descargo</span><span class="mf-flecha" aria-hidden="true">→</span>
+      <span class="mf-paso">Decisión motivada</span><span class="mf-flecha" aria-hidden="true">→</span>
+      <span class="mf-paso mf-paso--final">Apelación</span>
+    </div>
+
     <div class="rejilla rejilla--3">
       <article class="tarjeta" data-anim="rise">
         <span class="insignia insignia--aviso">Mora</span>
@@ -375,18 +428,30 @@
 
     <div class="rejilla rejilla--4">
       <article class="tarjeta" data-anim="rise">
+        <div class="icono" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
         <h3>Doble factor</h3>
         <p>Segundo factor y dispositivo de confianza para entrar y para cada operación sensible. El PIN nunca se guarda en claro.</p>
       </article>
       <article class="tarjeta" data-anim="rise">
+        <div class="icono" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.6" fill="currentColor" stroke="none"/></svg>
+        </div>
         <h3>Cada dato, su dueño</h3>
         <p>La base decide qué puede ver cada sesión. Si un permiso falla, la consulta no devuelve de más: no devuelve nada.</p>
       </article>
       <article class="tarjeta" data-anim="rise">
+        <div class="icono" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M9 2v6h6"/><path d="m9 15 2 2 4-4"/></svg>
+        </div>
         <h3>Contra la norma</h3>
         <p>Diseñado contra el reglamento de ASFI, el instructivo de la UIF, la normativa del BCB y la facturación del SIN, requisito por requisito.</p>
       </article>
       <article class="tarjeta" data-anim="rise">
+        <div class="icono" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5M12 8v4l3 2"/></svg>
+        </div>
         <h3>Respaldos probados</h3>
         <p>Respaldo cifrado con recuperación a un punto en el tiempo, y ensayo de restauración: un backup que nunca se restauró no es un backup.</p>
       </article>
@@ -410,9 +475,11 @@
 <!-- ============================================================
      LO QUE HAY DEBAJO
      ============================================================ -->
-<section class="seccion">
-  <div class="contenedor">
-    <div class="cabecera">
+<section class="seccion seccion--oscura grano">
+  <div class="orbe orbe--verde" style="width:640px;height:640px;top:-30%;left:-14%" aria-hidden="true"></div>
+  <div class="orbe orbe--naranja" style="width:420px;height:420px;bottom:-30%;right:-8%" aria-hidden="true"></div>
+  <div class="contenedor" style="position:relative;z-index:1">
+    <div class="cabecera cabecera--centrada" style="margin-inline:auto">
       <span class="etiqueta">Lo que hay debajo</span>
       <h2>Esto no se diseñó a ojo.</h2>
       <p>
@@ -423,10 +490,10 @@
     </div>
 
     <div class="rejilla rejilla--4">
-      <div class="cifra" data-anim="rise"><div class="v">87</div><div class="k">casos de uso especificados</div></div>
-      <div class="cifra" data-anim="rise"><div class="v">274</div><div class="k">tablas en el modelo</div></div>
-      <div class="cifra" data-anim="rise"><div class="v">119</div><div class="k">restricciones en la base</div></div>
-      <div class="cifra" data-anim="rise"><div class="v">12</div><div class="k">módulos de dominio</div></div>
+      <div class="cifra cifra--oscura" data-anim="rise"><div class="v">87</div><div class="k">casos de uso especificados</div></div>
+      <div class="cifra cifra--oscura" data-anim="rise"><div class="v">274</div><div class="k">tablas en el modelo</div></div>
+      <div class="cifra cifra--oscura" data-anim="rise"><div class="v">119</div><div class="k">restricciones en la base</div></div>
+      <div class="cifra cifra--oscura" data-anim="rise"><div class="v">12</div><div class="k">módulos de dominio</div></div>
     </div>
   </div>
 </section>

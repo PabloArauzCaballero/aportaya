@@ -1,26 +1,25 @@
-<!doctype html><meta charset="utf-8"><title>toma</title>
+<!doctype html>
+<meta charset="utf-8">
+<title>toma</title>
 <style>
- html,body{margin:0;background:#888;font:12px system-ui}
- .fila{display:flex;gap:12px;padding:12px}
- .marco{overflow:hidden;position:relative;background:#fff}
- iframe{border:0;position:absolute;left:0}
+  html,body{margin:0}
+  .marco{overflow:hidden;position:relative;background:#fff}
+  iframe{border:0;position:absolute;left:0;top:0}
 </style>
-<div class="fila" id="fila"></div>
+<div id="m"></div>
 <script>
 var q = new URLSearchParams(location.search);
 var W = +(q.get('w') || 1400), H = +(q.get('h') || 900), OFF = +(q.get('off') || 0);
-var TEMAS = (q.get('temas') || 'light,dark').split(',');
-var pend = TEMAS.length;
-TEMAS.forEach(function (tema) {
-  var m = document.createElement('div');
-  m.className = 'marco'; m.style.width = W + 'px'; m.style.height = H + 'px';
-  var f = document.createElement('iframe');
-  f.width = W; f.height = 12000; f.style.top = (-OFF) + 'px'; f.src = '../index.html';
-  f.addEventListener('load', function () {
-    f.contentDocument.documentElement.setAttribute('data-theme', tema);
-    f.contentDocument.querySelectorAll('[data-anim]').forEach(function (e) { e.classList.add('in'); });
-    if (--pend === 0) document.title = 'listo';
-  });
-  m.appendChild(f); document.getElementById('fila').appendChild(m);
+var TEMA = q.get('tema') || 'light';
+var marco = document.createElement('div');
+marco.className = 'marco'; marco.style.width = W + 'px'; marco.style.height = H + 'px';
+var f = document.createElement('iframe');
+f.width = W; f.height = 20000; f.style.top = (-OFF) + 'px'; f.src = '../index.html';
+f.addEventListener('load', function () {
+  f.contentDocument.documentElement.setAttribute('data-theme', TEMA);
+  f.contentDocument.querySelectorAll('[data-anim]').forEach(function (e) { e.classList.add('in'); });
+  document.title = 'listo';
 });
+marco.appendChild(f);
+document.getElementById('m').appendChild(marco);
 </script>

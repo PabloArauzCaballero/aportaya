@@ -116,30 +116,119 @@ img,svg{max-width:100%}
 /* --- Tarjeta --- */
 .tarjeta{
   background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
-  padding:var(--s5);box-shadow:var(--sh-1);
+  padding:var(--s5);box-shadow:var(--sh-1);position:relative;overflow:hidden;
+  transition:transform var(--t-base) var(--spring),
+             box-shadow var(--t-base) var(--glide),
+             border-color var(--t-base) var(--glide);
 }
+.tarjeta:hover{transform:translateY(-3px);box-shadow:var(--sh-2);border-color:rgba(var(--brand-rgb),.28)}
 .tarjeta h3{margin-bottom:var(--s2);color:var(--brand-ink)}
 .tarjeta p{color:var(--text-2);font-size:14.5px}
-.tarjeta .icono{
-  width:44px;height:44px;border-radius:var(--r-md);display:grid;place-items:center;
-  background:rgba(var(--brand-rgb),.12);color:var(--brand-texto);margin-bottom:var(--s4);
-}
 .tarjeta .insignia+h3{margin-top:var(--s3)}
 
-/* --- Paso numerado --- */
-.paso{position:relative}
-.paso .n{
-  font-family:var(--font-d);font-weight:700;font-size:13px;
-  width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
-  background:var(--verde-solido);color:var(--sobre-verde-solido);margin-bottom:var(--s3);
+/* Chip de icono: degradado de marca + halo de color a juego, no un tinte plano */
+.icono{
+  width:46px;height:46px;border-radius:var(--r-md);display:grid;place-items:center;
+  margin-bottom:var(--s4);flex:none;color:var(--sobre-verde-solido);
+  background:linear-gradient(150deg,var(--verde-solido),var(--g700));
+  box-shadow:0 8px 20px -8px rgba(var(--brand-rgb),.55),inset 0 1px 0 rgba(var(--blanco-rgb),.14);
 }
-.paso h3{color:var(--brand-ink);margin-bottom:var(--s1)}
+.icono--naranja{
+  background:linear-gradient(150deg,var(--o500),var(--o700));color:var(--accent-ink);
+  box-shadow:0 8px 20px -8px rgba(var(--accent-rgb),.55),inset 0 1px 0 rgba(var(--blanco-rgb),.16);
+}
+
+/* --- Orbes: manchas de degradado para dar profundidad sin costo de filtro
+     en vivo — son fondos radiales estáticos, no blur animado (ver playbook
+     de rendimiento: el blur grande y en movimiento es lo más caro que hay). --- */
+.orbe{position:absolute;border-radius:50%;pointer-events:none;z-index:0}
+.orbe--verde{background:radial-gradient(circle,rgba(var(--brand-rgb),.32),transparent 70%)}
+.orbe--naranja{background:radial-gradient(circle,rgba(var(--accent-rgb),.26),transparent 70%)}
+
+/* --- Grano: textura fija, muy sutil, sobre superficies grandes de marca --- */
+.grano{position:relative;isolation:isolate}
+.grano:before{
+  content:"";position:absolute;inset:0;background-image:var(--grano);
+  opacity:.05;mix-blend-mode:overlay;pointer-events:none;z-index:0;
+}
+
+/* --- Paso: icono como ancla visual, el número es una insignia secundaria --- */
+.paso{position:relative;z-index:1}
+.paso-marca{position:relative;display:inline-block}
+.paso-marca .icono{margin-bottom:0}
+.paso-num{
+  position:absolute;right:-7px;bottom:-7px;width:23px;height:23px;border-radius:50%;
+  background:var(--surface);border:2px solid var(--bg);box-shadow:var(--sh-1);
+  display:grid;place-items:center;font-family:var(--font-d);font-weight:700;font-size:11px;
+  color:var(--brand-texto);
+}
+.paso h3{color:var(--brand-ink);margin:var(--s4) 0 var(--s1)}
 .paso p{color:var(--text-2);font-size:14.5px}
+
+/* --- Flujo: línea que conecta los pasos, ancla visual del proceso completo --- */
+.flujo{position:relative}
+.flujo:before{
+  content:"";position:absolute;top:23px;left:12.5%;right:12.5%;height:2px;z-index:0;
+  background:linear-gradient(90deg,transparent,rgba(var(--brand-rgb),.32) 10%,rgba(var(--brand-rgb),.32) 90%,transparent);
+}
+@media (max-width:940px){.flujo:before{display:none}}
+
+/* --- Mini-flujo: proceso corto en línea (aviso → descargo → decisión → apelación) --- */
+.mini-flujo{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s2);margin-bottom:var(--s6)}
+.mf-paso{
+  font-family:var(--font-d);font-weight:600;font-size:13.5px;color:var(--text-2);
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-pill);
+  padding:9px 17px;white-space:nowrap;
+}
+.mf-paso--final{color:var(--sobre-verde-solido);background:var(--verde-solido);border-color:transparent}
+.mf-flecha{color:var(--text-3);font-size:14px;flex:none}
+
+/* --- Diagrama de custodia: separación de cuentas, para no dejarlo solo en texto --- */
+.diagrama-custodia{
+  display:flex;margin-top:var(--s4);border-radius:var(--r-md);overflow:hidden;
+  border:1px solid var(--border);
+}
+.dc-caja{
+  flex:1;padding:var(--s3) var(--s2);display:flex;flex-direction:column;align-items:center;
+  text-align:center;gap:5px;font-size:11px;font-weight:600;color:var(--text-2);
+  background:var(--surface-2);
+}
+.dc-caja svg{opacity:.85}
+.dc-caja--tuyo{background:var(--okbg);color:var(--ok-texto)}
+.dc-muro{
+  width:0;border-left:2px dashed var(--field-border);flex:none;
+  background:repeating-linear-gradient(180deg,var(--field-border) 0 6px,transparent 6px 12px);
+}
 
 /* --- Cifra del sistema --- */
 .cifra .v{font-family:var(--font-d);font-weight:700;font-size:var(--fs-cifra);
   letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:var(--brand-ink);line-height:1.1}
 .cifra .k{font-size:13.5px;color:var(--text-3);margin-top:var(--s1)}
+
+/* --- Sección oscura fija: rompe el ritmo cream/blanco a propósito --- */
+.seccion--oscura{
+  background:linear-gradient(165deg,var(--tinta-900),var(--tinta-800) 55%,var(--tinta-700));
+  color:var(--sobre-tinta);position:relative;overflow:hidden;isolation:isolate;
+}
+.seccion--oscura .etiqueta{color:var(--o400)}
+.seccion--oscura h2{color:var(--sobre-tinta)}
+.seccion--oscura .cabecera p{color:var(--sobre-tinta-2)}
+.seccion--oscura .orbe{opacity:.9}
+.cifra--oscura .v{
+  background:linear-gradient(120deg,var(--sobre-tinta),var(--g300) 130%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.cifra--oscura .k{color:var(--sobre-tinta-2)}
+.cifra--oscura{
+  border-left:1px solid var(--tinta-linea);padding:0 var(--s5);text-align:center;
+  position:relative;z-index:1;
+}
+.cifra--oscura:first-child{border-left:0;padding-left:0}
+.cifra--oscura:last-child{padding-right:0}
+@media (max-width:600px){
+  .cifra--oscura{border-left:0;padding:var(--s4) 0 0;border-top:1px solid var(--tinta-linea)}
+  .cifra--oscura:first-child{border-top:0;padding-top:0}
+}
 
 /* --- Fila de movimiento --- */
 .movimiento{display:flex;align-items:center;gap:var(--s3);padding:10px 0;border-bottom:1px solid var(--border)}
@@ -253,21 +342,75 @@ img,svg{max-width:100%}
 @media (max-width:940px){.rejilla--3,.rejilla--4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:600px){.rejilla--2,.rejilla--3,.rejilla--4{grid-template-columns:1fr}}
 
-/* --- Hero --- */
-.hero{position:relative;overflow:hidden;padding:var(--s6) 0 var(--pad-seccion)}
+/* --- Hero ---
+   Tres capas de fondo: malla de degradado (verde + un toque de naranja),
+   grano fijo encima para que no se vea "de vector", y una retícula tenue
+   para dar escala. Todo estático — ningún filtro corre en cada cuadro. */
+.hero{position:relative;overflow:hidden;padding:132px 0 var(--pad-seccion)}
 .hero:before{
-  content:"";position:absolute;inset:auto auto 0 50%;transform:translateX(-50%);
-  width:min(1200px,140vw);height:72%;pointer-events:none;z-index:0;
-  background:radial-gradient(ellipse at 50% 100%,rgba(var(--brand-rgb),.3),transparent 64%);
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(1100px 620px at 82% -8%,rgba(var(--accent-rgb),.16),transparent 60%),
+    radial-gradient(1000px 780px at 14% 8%,rgba(var(--brand-rgb),.24),transparent 58%),
+    radial-gradient(1400px 900px at 50% 118%,rgba(var(--brand-rgb),.30),transparent 62%);
 }
+.hero:after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(var(--brand-rgb),.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(var(--brand-rgb),.05) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(900px 520px at 50% 0%,#000,transparent 75%);
+}
+.hero .grano:before{opacity:.045}
 .hero-in{position:relative;z-index:1;display:grid;gap:var(--s7);align-items:center;
   grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
+.hero .eyebrow-marca{
+  display:inline-flex;align-items:center;gap:8px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r-pill);padding:7px 16px 7px 10px;
+  box-shadow:var(--sh-1);margin-bottom:var(--s5);
+}
+.hero .eyebrow-marca .ic{
+  width:22px;height:22px;border-radius:50%;display:grid;place-items:center;flex:none;
+  background:var(--okbg);color:var(--ok-texto);font-size:12px;
+}
+.hero .eyebrow-marca span{font-family:var(--font-d);font-weight:600;font-size:13px;color:var(--text-2)}
 .hero h1{color:var(--brand-ink)}
-.hero h1 .ya{color:var(--accent)}
+.hero h1 .ya{
+  background:linear-gradient(100deg,var(--accent),var(--o600) 65%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  padding-bottom:.06em;margin-bottom:-.06em;display:inline-block;
+}
 .hero .bajada{font-size:calc(var(--fs-bajada) + 1px);color:var(--text-2);margin-top:var(--s4);max-width:52ch}
 .hero .acciones{display:flex;gap:var(--s3);flex-wrap:wrap;margin-top:var(--s5)}
 .hero .confianza{display:flex;gap:var(--s2);flex-wrap:wrap;margin-top:var(--s5)}
-.hero .figura{display:flex;justify-content:center;perspective:1200px}
+.hero .figura{display:flex;justify-content:center;perspective:1200px;position:relative}
+
+/* Tarjetas flotantes: refuerzan afirmaciones ya dichas en el texto (no
+   inventan cifras), dan profundidad a la composición del teléfono.
+   Ancladas al propio .telefono (no a .figura) con offsets en px: el ancho
+   del teléfono es fijo (292px), así que el porcentaje del contenedor grid
+   —que cambia con el viewport— nunca es una referencia confiable acá. */
+.flotante{
+  position:absolute;z-index:3;display:flex;align-items:center;gap:9px;
+  background:color-mix(in srgb,var(--surface) 94%,transparent);
+  backdrop-filter:blur(10px);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:10px 14px;box-shadow:var(--sh-2);
+  width:max-content;max-width:188px;
+}
+.flotante .ic{
+  width:32px;height:32px;border-radius:var(--r-md);display:grid;place-items:center;
+  flex:none;font-size:15px;
+}
+.flotante .ic--ok{background:var(--okbg);color:var(--ok-texto)}
+.flotante .ic--naranja{background:var(--o100);color:#A65B14}
+.flotante .txt{display:flex;flex-direction:column;min-width:0}
+.flotante .tt{font-family:var(--font-d);font-weight:600;font-size:12px;line-height:1.3;color:var(--text);white-space:nowrap}
+.flotante .st{font-size:10.5px;color:var(--text-3);margin-top:1px;white-space:nowrap}
+.flotante--turno{top:-46px;left:-60px}
+.flotante--cadena{bottom:-16px;right:-64px}
+@media (max-width:1180px){.flotante--turno{left:-38px}.flotante--cadena{right:-40px}}
+@media (max-width:940px){.flotante{display:none}}
 /* El teléfono no cabe junto al texto por debajo de ~940px */
 @media (max-width:940px){
   .hero-in{grid-template-columns:1fr;gap:var(--s6)}
@@ -283,7 +426,9 @@ img,svg{max-width:100%}
 /* --- Teléfono (marco del sistema de diseño) --- */
 .telefono{
   width:292px;background:var(--g900);border-radius:42px;padding:11px;flex:none;
-  box-shadow:var(--sh-3);border:1px solid rgba(var(--blanco-rgb),.07);
+  position:relative;z-index:1;
+  box-shadow:var(--sh-3),0 50px 90px -30px rgba(var(--brand-rgb),.45);
+  border:1px solid rgba(var(--blanco-rgb),.07);
   /* --sp lo escribe main.js: progreso 0→1 de la sección, suavizado por cuadro */
   transform:rotateY(calc((var(--sp,.5) - .5) * -14deg)) rotateX(calc((var(--sp,.5) - .5) * 5deg));
   transform-style:preserve-3d;will-change:transform;
@@ -339,16 +484,22 @@ img,svg{max-width:100%}
 
 /* --- Banda de llamado a la acción --- */
 .banda{
-  background:linear-gradient(150deg,var(--g600),var(--g800));
+  background:linear-gradient(150deg,var(--g600),var(--g900) 130%);
   color:var(--sobre-verde);border-radius:var(--r-xl);
-  padding:var(--s7) var(--s5);text-align:center;position:relative;overflow:hidden;
+  padding:76px var(--s5);text-align:center;position:relative;overflow:hidden;isolation:isolate;
 }
-.banda h2{color:var(--sobre-verde)}
-.banda p{color:rgba(var(--sobre-verde-rgb),.82);margin:var(--s3) auto 0;max-width:52ch;font-size:var(--fs-bajada)}
+.banda:before{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(560px 340px at 12% 8%,rgba(var(--accent-rgb),.22),transparent 65%),
+    radial-gradient(680px 420px at 88% 100%,rgba(var(--g300-rgb),.28),transparent 60%);
+}
+.banda h2{color:var(--sobre-verde);position:relative}
+.banda p{color:rgba(var(--sobre-verde-rgb),.82);margin:var(--s3) auto 0;max-width:52ch;font-size:var(--fs-bajada);position:relative}
 .banda .acciones{display:flex;gap:var(--s3);justify-content:center;flex-wrap:wrap;
-  margin-top:var(--s5);position:relative;z-index:1}
+  margin-top:var(--s6);position:relative;z-index:1}
 .banda .trama{position:absolute;inset:auto 0 0 0;height:120px;opacity:.14;pointer-events:none}
-.banda .nota{font-size:13.5px;color:rgba(var(--sobre-verde-rgb),.7);margin-top:var(--s5)}
+.banda .nota{font-size:13.5px;color:rgba(var(--sobre-verde-rgb),.7);margin-top:var(--s5);position:relative}
 
 /* --- Aviso --- */
 .aviso{

@@ -76,6 +76,19 @@
   --sobre-verde:#EAF7EF;
   --brand-rgb:var(--g600-rgb);--accent-rgb:var(--o500-rgb);
 
+  /* ===== Superficie oscura fija (bandas de contraste, no depende del tema) =====
+     Para secciones que rompen el ritmo con un fondo oscuro deliberado —
+     franja de cifras, CTA final— sin importar si el visitante está en claro
+     u oscuro. Mismo criterio que --verde-solido: fijo en ambos temas. */
+  --tinta-900:#081A11;--tinta-800:#0C2418;--tinta-700:#123420;
+  --sobre-tinta:#EAF7EF;--sobre-tinta-2:#9FC2AC;--sobre-tinta-3:#6E9179;
+  --tinta-linea:#1E3D2A;
+
+  /* Grano sutil: una vez generado no cuesta nada en scroll (es una imagen
+     estática, no un filtro en vivo). Se usa a opacidad muy baja para dar
+     textura sin verse "con ruido". */
+  --grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
   /* ===== Roles de TEXTO con contraste verificado (AA ≥ 4.5:1) =====
      Los tonos de marca no siempre pasan como texto chico: el naranja de
      acento da 2.47:1 sobre crema. Estos son los derivados medidos que sí
