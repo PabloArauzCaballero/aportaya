@@ -1,8 +1,8 @@
 -- Índices y restricciones de unicidad del módulo 09 — Auditoría, Reportes y Cumplimiento
 -- Generado por scripts/generar_ddl.py — no editar a mano.
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_bitacora_evento_secuencia
-  ON bitacora_evento (secuencia);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_bitacora_evento_secuencia_fecha_hora
+  ON bitacora_evento (secuencia, fecha_hora);
 
 CREATE INDEX IF NOT EXISTS ix_bitacora_evento_entidad
   ON bitacora_evento (entidad);
@@ -22,8 +22,8 @@ CREATE INDEX IF NOT EXISTS ix_bitacora_evento_correlation_id
 CREATE INDEX IF NOT EXISTS ix_bitacora_evento_grupo_id
   ON bitacora_evento (grupo_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_bitacora_evento_hash_registro
-  ON bitacora_evento (hash_registro);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_bitacora_evento_hash_registro_fecha_hora
+  ON bitacora_evento (hash_registro, fecha_hora);
 
 CREATE INDEX IF NOT EXISTS ix_bitacora_evento_fecha_hora
   ON bitacora_evento (fecha_hora);

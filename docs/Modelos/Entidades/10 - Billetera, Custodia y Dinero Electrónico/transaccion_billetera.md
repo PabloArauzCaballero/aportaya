@@ -37,7 +37,7 @@ append_only: true
 | `origen_id` | UUID | IDX | no | IDX, polimorfica |
 | `canal` | VARCHAR(15) | — | no | CK |
 | `ip_origen` | INET | — | sí | NULL |
-| `clave_idempotencia` | VARCHAR(100) | UQ | no | UQ |
+| `clave_idempotencia` | VARCHAR(100) | — | no | — |
 | `hash_registro` | VARCHAR(64) | — | no | — |
 | `hash_anterior` | VARCHAR(64) | — | sí | NULL |
 | `ocurrida_en` | TIMESTAMPTZ | IDX | no | IDX |

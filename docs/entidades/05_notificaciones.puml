@@ -581,7 +581,7 @@ entity "envio_notificacion" as envio {
   # canal_vinculado_id : UUID <<FK, NULL>>
   canal : VARCHAR(15) <<CK>>
   destinatario : VARCHAR(150)
-  clave_idempotencia : VARCHAR(120) <<UQ>>
+  clave_idempotencia : VARCHAR(120)
   encolado_en : TIMESTAMPTZ
   contenido_enviado : TEXT
   estado : VARCHAR(25) <<CK, IDX>>
@@ -607,7 +607,7 @@ entity "evento_entrega_mensaje" as evtent {
   recibido_en : TIMESTAMPTZ
   payload_crudo : JSONB
   codigo_error : VARCHAR(40) <<NULL>>
-  clave_idempotencia : VARCHAR(120) <<UQ>>
+  clave_idempotencia : VARCHAR(120)
 }
 
 entity "cola_envio" as cola {

@@ -1,0 +1,90 @@
+{
+  "descripcion": "Modelo de reputación versionado: pesos por factor, impacto de cada evento e insignias con criterio publicado. El puntaje no se escribe a mano en ningún lado: se recalcula a partir de estas filas y de eventos que ya ocurrieron.",
+  "entorno": "minimo",
+  "estado": "⚠ PROVISIONAL — pesos e impactos por calibrar contra desenlaces reales antes de exponer el puntaje al usuario",
+  "advertencia": "El puntaje puede restringir el acceso a un grupo. Mientras no esté calibrado (skill `alertas-riesgo-temprano`), se calcula y se guarda pero NO se usa como causal de rechazo: la fila que rechaza es un límite o una regla, nunca una probabilidad.",
+  "nota": "Cambiar un peso es publicar un modelo v2 y cerrar el v1, nunca editar la fila: un puntaje histórico tiene que poder explicarse con el modelo que regía ese día.",
+  "bloques": [
+    {
+      "tabla": "modelo_scoring",
+      "conflicto": [
+        "version"
+      ],
+      "filas": [
+        {
+          "version": "v1",
+          "descripcion": "Modelo inicial de reputación de participante — escala 0 a 1000, base 500",
+          "puntaje_base": 500.0,
+          "puntaje_minimo": 0.0,
+          "puntaje_maximo": 1000.0,
+          "factor_decaimiento_mensual": 0.98,
+          "ventana_historica_meses": 36,
+          "min_eventos_para_score": 3,
+          "vigente_desde": "2026-01-01T00:00:00-04:00",
+          "vigente_hasta": null,
+          "es_produccion": true
+        }
+      ]
+    },
+    {
+      "tabla": "peso_factor",
+      "conflicto": [
+        "modelo_id",
+        "codigo_factor"
+      ],
+      "comentario": "Los pesos suman 1,0000. El tope por factor impide que un solo comportamiento domine el puntaje entero.",
+      "filas": [
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "codigo_factor": "PUNTUALIDAD_DE_APORTE", "descripcion": "Proporción de aportes pagados antes del vencimiento", "peso": 0.3, "tope_aporte_al_score": 250.0, "es_penalizador": false },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "codigo_factor": "CICLOS_COMPLETADOS", "descripcion": "Ciclos de pasanaku terminados sin incumplir", "peso": 0.15, "tope_aporte_al_score": 120.0, "es_penalizador": false },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "codigo_factor": "ANTIGUEDAD_EN_PLATAFORMA", "descripcion": "Meses de permanencia con la cuenta activa y verificada", "peso": 0.1, "tope_aporte_al_score": 80.0, "es_penalizador": false },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "codigo_factor": "COMPORTAMIENTO_COMO_ORGANIZADOR", "descripcion": "Desempeño en los grupos administrados, si administró alguno", "peso": 0.05, "tope_aporte_al_score": 50.0, "es_penalizador": false },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "codigo_factor": "MORA_ACUMULADA", "descripcion": "Días de mora acumulados en la ventana histórica", "peso": 0.2, "tope_aporte_al_score": 200.0, "es_penalizador": true },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "codigo_factor": "INCUMPLIMIENTOS_DECLARADOS", "descripcion": "Incumplimientos con resolución firme, después del descargo", "peso": 0.2, "tope_aporte_al_score": 250.0, "es_penalizador": true }
+      ]
+    },
+    {
+      "tabla": "regla_impacto_evento",
+      "conflicto": [
+        "modelo_id",
+        "tipo_evento"
+      ],
+      "comentario": "Todo lo que mueve el puntaje pasa por acá. `requiere_confirmacion` marca los eventos que no se aplican solos: primero hay resolución firme, después impacto.",
+      "filas": [
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "APORTE_PUNTUAL", "codigo_factor": "PUNTUALIDAD_DE_APORTE", "impacto_base": 5.0, "multiplicador_por_reincidencia": 1.0, "impacto_maximo": 250.0, "requiere_confirmacion": false },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "APORTE_ANTICIPADO", "codigo_factor": "PUNTUALIDAD_DE_APORTE", "impacto_base": 7.0, "multiplicador_por_reincidencia": 1.0, "impacto_maximo": 250.0, "requiere_confirmacion": false },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "APORTE_TARDIO", "codigo_factor": "MORA_ACUMULADA", "impacto_base": -10.0, "multiplicador_por_reincidencia": 1.25, "impacto_maximo": 200.0, "requiere_confirmacion": false },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "MORA_MAYOR_15_DIAS", "codigo_factor": "MORA_ACUMULADA", "impacto_base": -25.0, "multiplicador_por_reincidencia": 1.5, "impacto_maximo": 200.0, "requiere_confirmacion": false },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "COBERTURA_APLICADA", "codigo_factor": "INCUMPLIMIENTOS_DECLARADOS", "impacto_base": -60.0, "multiplicador_por_reincidencia": 1.5, "impacto_maximo": 250.0, "requiere_confirmacion": true },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "INCUMPLIMIENTO_FIRME", "codigo_factor": "INCUMPLIMIENTOS_DECLARADOS", "impacto_base": -90.0, "multiplicador_por_reincidencia": 1.5, "impacto_maximo": 250.0, "requiere_confirmacion": true },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "SANCION_FIRME", "codigo_factor": "INCUMPLIMIENTOS_DECLARADOS", "impacto_base": -80.0, "multiplicador_por_reincidencia": 1.5, "impacto_maximo": 250.0, "requiere_confirmacion": true },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "EXPULSION_DEL_GRUPO", "codigo_factor": "INCUMPLIMIENTOS_DECLARADOS", "impacto_base": -200.0, "multiplicador_por_reincidencia": 1.0, "impacto_maximo": 250.0, "requiere_confirmacion": true },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "DEUDA_CASTIGADA", "codigo_factor": "INCUMPLIMIENTOS_DECLARADOS", "impacto_base": -150.0, "multiplicador_por_reincidencia": 1.0, "impacto_maximo": 250.0, "requiere_confirmacion": true },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "PROMESA_INCUMPLIDA", "codigo_factor": "MORA_ACUMULADA", "impacto_base": -15.0, "multiplicador_por_reincidencia": 1.25, "impacto_maximo": 200.0, "requiere_confirmacion": false },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "DEUDA_REGULARIZADA", "codigo_factor": "INCUMPLIMIENTOS_DECLARADOS", "impacto_base": 30.0, "multiplicador_por_reincidencia": 1.0, "impacto_maximo": 250.0, "requiere_confirmacion": false },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "PLAN_REGULARIZACION_CUMPLIDO", "codigo_factor": "INCUMPLIMIENTOS_DECLARADOS", "impacto_base": 25.0, "multiplicador_por_reincidencia": 1.0, "impacto_maximo": 250.0, "requiere_confirmacion": false },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "CICLO_COMPLETADO", "codigo_factor": "CICLOS_COMPLETADOS", "impacto_base": 40.0, "multiplicador_por_reincidencia": 1.0, "impacto_maximo": 120.0, "requiere_confirmacion": false },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "MES_DE_ANTIGUEDAD", "codigo_factor": "ANTIGUEDAD_EN_PLATAFORMA", "impacto_base": 2.0, "multiplicador_por_reincidencia": 1.0, "impacto_maximo": 80.0, "requiere_confirmacion": false },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "GRUPO_ADMINISTRADO_SIN_INCIDENCIAS", "codigo_factor": "COMPORTAMIENTO_COMO_ORGANIZADOR", "impacto_base": 15.0, "multiplicador_por_reincidencia": 1.0, "impacto_maximo": 50.0, "requiere_confirmacion": false },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "SANCION_ORGANIZADOR_FIRME", "codigo_factor": "COMPORTAMIENTO_COMO_ORGANIZADOR", "impacto_base": -50.0, "multiplicador_por_reincidencia": 1.5, "impacto_maximo": 50.0, "requiere_confirmacion": true },
+        { "modelo_id": { "$ref": "modelo_scoring", "version": "v1" }, "tipo_evento": "RETIRO_ACORDADO", "codigo_factor": "INCUMPLIMIENTOS_DECLARADOS", "impacto_base": 0.0, "multiplicador_por_reincidencia": 1.0, "impacto_maximo": 0.0, "requiere_confirmacion": false }
+      ]
+    },
+    {
+      "tabla": "insignia_logro",
+      "conflicto": [
+        "codigo"
+      ],
+      "comentario": "El criterio se publica junto con la insignia: si no se puede explicar cómo se gana, no se otorga.",
+      "filas": [
+        { "codigo": "PRIMER_PASANAKU", "nombre": "Primer pasanaku", "descripcion": "Completaste tu primer ciclo de principio a fin", "criterio": "Un ciclo con todos los aportes acreditados y la entrega cobrada, sin cobertura del fondo de garantía en el medio.", "icono_url": "https://cdn.pasanaku.bo/insignias/primer-pasanaku.svg" },
+        { "codigo": "PAGADOR_PUNTUAL", "nombre": "Pagador puntual", "descripcion": "Doce aportes seguidos antes del vencimiento", "criterio": "12 obligaciones consecutivas acreditadas en fecha o antes, sin ningún día de mora entre medio.", "icono_url": "https://cdn.pasanaku.bo/insignias/pagador-puntual.svg" },
+        { "codigo": "SIN_MORA_12_MESES", "nombre": "Doce meses sin mora", "descripcion": "Un año calendario sin un solo día de atraso", "criterio": "365 días corridos sin ninguna obligación en estado vencido y sin recargo por mora aplicado.", "icono_url": "https://cdn.pasanaku.bo/insignias/sin-mora.svg" },
+        { "codigo": "TRES_CICLOS", "nombre": "Tres ciclos completos", "descripcion": "Tres pasanakus terminados", "criterio": "3 ciclos con estado COMPLETADO en los que participaste desde el inicio hasta el cierre.", "icono_url": "https://cdn.pasanaku.bo/insignias/tres-ciclos.svg" },
+        { "codigo": "REGULARIZADOR", "nombre": "Palabra cumplida", "descripcion": "Regularizaste una deuda dentro del plazo comprometido", "criterio": "Un plan de regularización cumplido en su totalidad dentro de las fechas acordadas, o una deuda cancelada antes del vencimiento de la promesa de pago.", "icono_url": "https://cdn.pasanaku.bo/insignias/regularizador.svg" },
+        { "codigo": "ORGANIZADOR_CONFIABLE", "nombre": "Organizador confiable", "descripcion": "Administraste grupos sin una sola incidencia", "criterio": "2 grupos cerrados como organizador, sin sanción firme, sin entrega fuera de plazo y con evaluación de desempeño igual o mayor a 80 puntos.", "icono_url": "https://cdn.pasanaku.bo/insignias/organizador-confiable.svg" },
+        { "codigo": "REFERENTE", "nombre": "Referente", "descripcion": "Invitaste a personas que después cumplieron", "criterio": "5 invitaciones aceptadas cuyos titulares completaron al menos un ciclo sin incumplimientos declarados.", "icono_url": "https://cdn.pasanaku.bo/insignias/referente.svg" },
+        { "codigo": "VETERANO", "nombre": "Veterano", "descripcion": "Dos años en la plataforma con la cuenta al día", "criterio": "24 meses corridos con la cuenta activa, la verificación de identidad vigente y sin deuda castigada.", "icono_url": "https://cdn.pasanaku.bo/insignias/veterano.svg" }
+      ]
+    }
+  ]
+}

@@ -43,9 +43,6 @@ CREATE INDEX IF NOT EXISTS ix_orden_desembolso_estado
 CREATE UNIQUE INDEX IF NOT EXISTS uq_orden_desembolso_referencia_proveedor
   ON orden_desembolso (referencia_proveedor);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_orden_desembolso_clave_idempotencia
-  ON orden_desembolso (clave_idempotencia);
-
 CREATE INDEX IF NOT EXISTS ix_intento_desembolso_orden_desembolso_id
   ON intento_desembolso (orden_desembolso_id);
 

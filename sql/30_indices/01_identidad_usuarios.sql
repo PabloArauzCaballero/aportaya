@@ -46,9 +46,6 @@ CREATE INDEX IF NOT EXISTS ix_token_verificacion_expira_en
 CREATE INDEX IF NOT EXISTS ix_token_verificacion_correlation_id
   ON token_verificacion (correlation_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_token_verificacion_clave_idempotencia
-  ON token_verificacion (clave_idempotencia);
-
 CREATE INDEX IF NOT EXISTS ix_intento_validacion_token_token_id
   ON intento_validacion_token (token_id);
 

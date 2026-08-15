@@ -8,6 +8,9 @@ CREATE TABLE IF NOT EXISTS cuenta_contable (
   nombre                             VARCHAR(80) NOT NULL,
   tipo                               VARCHAR(15) NOT NULL,
   naturaleza                         VARCHAR(12) NOT NULL,
+  cuenta_padre_id                    UUID,
+  nivel                              SMALLINT NOT NULL,
+  es_cuenta_de_movimiento            BOOLEAN DEFAULT FALSE NOT NULL,
   grupo_id                           UUID,
   participante_id                    UUID,
   saldo                              NUMERIC(16,2) NOT NULL,
@@ -21,5 +24,6 @@ COMMENT ON COLUMN cuenta_contable.id IS 'PK';
 COMMENT ON COLUMN cuenta_contable.codigo IS 'UQ';
 COMMENT ON COLUMN cuenta_contable.tipo IS 'CK';
 COMMENT ON COLUMN cuenta_contable.naturaleza IS 'CK';
+COMMENT ON COLUMN cuenta_contable.cuenta_padre_id IS 'FK, NULL, IDX';
 COMMENT ON COLUMN cuenta_contable.grupo_id IS 'FK, NULL';
 COMMENT ON COLUMN cuenta_contable.participante_id IS 'FK, NULL';

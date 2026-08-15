@@ -7,7 +7,7 @@ clase: CuentaCustodia
 modulo: "10 — Billetera, Custodia y Dinero Electrónico"
 estereotipo: Raíz de agregado
 clave_primaria: [id]
-columnas: 13
+columnas: 14
 fk_salientes: 0
 fk_entrantes: 2
 append_only: false
@@ -25,6 +25,7 @@ append_only: false
 | `tipo` | VARCHAR(25) | — | no | CK |
 | `entidad_financiera` | VARCHAR(60) | — | no | — |
 | `numero_cuenta_cifrado` | VARCHAR(255) | — | no | — |
+| `version_llave` | SMALLINT | — | no | — |
 | `numero_enmascarado` | VARCHAR(30) | — | no | — |
 | `moneda` | CHAR(3) | — | no | — |
 | `saldo_segun_banco` | DECIMAL(18,2) | — | no | — |

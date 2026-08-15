@@ -2,13 +2,13 @@
 tags:
   - moc
   - indice
-relaciones_fk: 566
-cross_modulo: 298
+relaciones_fk: 633
+cross_modulo: 328
 ---
 
 # Índice de relaciones (claves foráneas)
 
-Las **566 claves foráneas** del modelo. **298** cruzan módulos.
+Las **633 claves foráneas** del modelo. **328** cruzan módulos.
 
 [[Index|← Índice general]] · [[_Entidades|Entidades →]]
 
@@ -35,6 +35,7 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[solicitud_retiro]] | `plan_regularizacion_id` | [[plan_regularizacion]] | 02 → 03 | sí | [[solicitud_retiro.plan_regularizacion_id → plan_regularizacion\|ver]] |
 | [[sorteo_turnos]] | `ejecutado_por` | [[usuario]] | 02 → 01 | no | [[sorteo_turnos.ejecutado_por → usuario\|ver]] |
 | [[asiento_contable]] | `grupo_id` | [[grupo]] | 03 → 02 | sí | [[asiento_contable.grupo_id → grupo\|ver]] |
+| [[asiento_contable]] | `periodo_contable_id` | [[periodo_contable]] | 03 → 13 | sí | [[asiento_contable.periodo_contable_id → periodo_contable\|ver]] |
 | [[asiento_contable]] | `registrado_por` | [[usuario]] | 03 → 01 | sí | [[asiento_contable.registrado_por → usuario\|ver]] |
 | [[cierre_diario]] | `cerrado_por` | [[usuario]] | 03 → 01 | no | [[cierre_diario.cerrado_por → usuario\|ver]] |
 | [[comprobante_manual]] | `revisado_por` | [[usuario]] | 03 → 01 | sí | [[comprobante_manual.revisado_por → usuario\|ver]] |
@@ -200,9 +201,11 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[orden_recarga]] | `proveedor_id` | [[proveedor_pago]] | 10 → 03 | sí | [[orden_recarga.proveedor_id → proveedor_pago\|ver]] |
 | [[orden_retiro]] | `aprobada_por` | [[usuario]] | 10 → 01 | sí | [[orden_retiro.aprobada_por → usuario\|ver]] |
 | [[orden_retiro]] | `proveedor_id` | [[proveedor_pago]] | 10 → 03 | sí | [[orden_retiro.proveedor_id → proveedor_pago\|ver]] |
+| [[orden_retiro]] | `solicitada_por` | [[usuario]] | 10 → 01 | no | [[orden_retiro.solicitada_por → usuario\|ver]] |
 | [[politica_billetera]] | `aprobada_por` | [[usuario]] | 10 → 01 | sí | [[politica_billetera.aprobada_por → usuario\|ver]] |
 | [[punto_atencion]] | `responsable_usuario_id` | [[usuario]] | 10 → 01 | sí | [[punto_atencion.responsable_usuario_id → usuario\|ver]] |
 | [[regla_antifraude]] | `aprobada_por` | [[usuario]] | 10 → 01 | sí | [[regla_antifraude.aprobada_por → usuario\|ver]] |
+| [[respuesta_idempotente]] | `usuario_id` | [[usuario]] | 10 → 01 | no | [[respuesta_idempotente.usuario_id → usuario\|ver]] |
 | [[retencion_saldo]] | `liberada_por` | [[usuario]] | 10 → 01 | sí | [[retencion_saldo.liberada_por → usuario\|ver]] |
 | [[reverso_transaccion]] | `autorizada_por` | [[usuario]] | 10 → 01 | no | [[reverso_transaccion.autorizada_por → usuario\|ver]] |
 | [[solicitud_cierre_billetera]] | `aprobada_por` | [[usuario]] | 10 → 01 | sí | [[solicitud_cierre_billetera.aprobada_por → usuario\|ver]] |
@@ -316,6 +319,33 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[requerimiento_autoridad]] | `usuario_afectado_id` | [[usuario]] | 12 → 01 | sí | [[requerimiento_autoridad.usuario_afectado_id → usuario\|ver]] |
 | [[revision_periodica_kyc]] | `ejecutada_por` | [[usuario]] | 12 → 01 | sí | [[revision_periodica_kyc.ejecutada_por → usuario\|ver]] |
 | [[revision_periodica_kyc]] | `usuario_id` | [[usuario]] | 12 → 01 | no | [[revision_periodica_kyc.usuario_id → usuario\|ver]] |
+| [[asiento_plantilla]] | `creada_por` | [[usuario]] | 13 → 01 | no | [[asiento_plantilla.creada_por → usuario\|ver]] |
+| [[categoria_activo_fijo]] | `cuenta_activo_id` | [[cuenta_contable]] | 13 → 03 | no | [[categoria_activo_fijo.cuenta_activo_id → cuenta_contable\|ver]] |
+| [[categoria_activo_fijo]] | `cuenta_depreciacion_id` | [[cuenta_contable]] | 13 → 03 | no | [[categoria_activo_fijo.cuenta_depreciacion_id → cuenta_contable\|ver]] |
+| [[categoria_activo_fijo]] | `cuenta_gasto_depreciacion_id` | [[cuenta_contable]] | 13 → 03 | no | [[categoria_activo_fijo.cuenta_gasto_depreciacion_id → cuenta_contable\|ver]] |
+| [[cierre_periodo_contable]] | `cerrado_por` | [[usuario]] | 13 → 01 | no | [[cierre_periodo_contable.cerrado_por → usuario\|ver]] |
+| [[cobro_cuenta_por_cobrar]] | `asiento_contable_id` | [[asiento_contable]] | 13 → 03 | sí | [[cobro_cuenta_por_cobrar.asiento_contable_id → asiento_contable\|ver]] |
+| [[depreciacion_activo]] | `asiento_contable_id` | [[asiento_contable]] | 13 → 03 | sí | [[depreciacion_activo.asiento_contable_id → asiento_contable\|ver]] |
+| [[ejercicio_fiscal]] | `cerrado_por` | [[usuario]] | 13 → 01 | sí | [[ejercicio_fiscal.cerrado_por → usuario\|ver]] |
+| [[estado_financiero_generado]] | `generado_por` | [[usuario]] | 13 → 01 | no | [[estado_financiero_generado.generado_por → usuario\|ver]] |
+| [[factura_proveedor]] | `aprobada_por` | [[usuario]] | 13 → 01 | sí | [[factura_proveedor.aprobada_por → usuario\|ver]] |
+| [[factura_proveedor]] | `asiento_contable_id` | [[asiento_contable]] | 13 → 03 | sí | [[factura_proveedor.asiento_contable_id → asiento_contable\|ver]] |
+| [[linea_plantilla_asiento]] | `cuenta_contable_id` | [[cuenta_contable]] | 13 → 03 | no | [[linea_plantilla_asiento.cuenta_contable_id → cuenta_contable\|ver]] |
+| [[orden_compra]] | `aprobada_por` | [[usuario]] | 13 → 01 | sí | [[orden_compra.aprobada_por → usuario\|ver]] |
+| [[pago_a_proveedor]] | `asiento_contable_id` | [[asiento_contable]] | 13 → 03 | sí | [[pago_a_proveedor.asiento_contable_id → asiento_contable\|ver]] |
+| [[pago_a_proveedor]] | `autorizado_por` | [[usuario]] | 13 → 01 | no | [[pago_a_proveedor.autorizado_por → usuario\|ver]] |
+| [[partida_presupuestaria]] | `cuenta_contable_id` | [[cuenta_contable]] | 13 → 03 | no | [[partida_presupuestaria.cuenta_contable_id → cuenta_contable\|ver]] |
+| [[presupuesto]] | `aprobado_por` | [[usuario]] | 13 → 01 | sí | [[presupuesto.aprobado_por → usuario\|ver]] |
+| [[tercero_comercial]] | `cuenta_contable_id` | [[cuenta_contable]] | 13 → 03 | sí | [[tercero_comercial.cuenta_contable_id → cuenta_contable\|ver]] |
+| [[anunciante]] | `organizador_id` | [[organizador]] | 14 → 07 | sí | [[anunciante.organizador_id → organizador\|ver]] |
+| [[campana_publicitaria]] | `aprobada_por` | [[usuario]] | 14 → 01 | sí | [[campana_publicitaria.aprobada_por → usuario\|ver]] |
+| [[clic_anuncio]] | `usuario_id` | [[usuario]] | 14 → 01 | sí | [[clic_anuncio.usuario_id → usuario\|ver]] |
+| [[factura_publicidad]] | `cuenta_por_cobrar_id` | [[cuenta_por_cobrar]] | 14 → 13 | sí | [[factura_publicidad.cuenta_por_cobrar_id → cuenta_por_cobrar\|ver]] |
+| [[factura_publicidad]] | `factura_electronica_id` | [[factura_electronica]] | 14 → 11 | sí | [[factura_publicidad.factura_electronica_id → factura_electronica\|ver]] |
+| [[impresion_anuncio]] | `usuario_id` | [[usuario]] | 14 → 01 | sí | [[impresion_anuncio.usuario_id → usuario\|ver]] |
+| [[revision_creativa]] | `revisada_por` | [[usuario]] | 14 → 01 | no | [[revision_creativa.revisada_por → usuario\|ver]] |
+| [[segmento_audiencia]] | `creado_por` | [[usuario]] | 14 → 01 | no | [[segmento_audiencia.creado_por → usuario\|ver]] |
+| [[socio_comercial]] | `verificado_por` | [[usuario]] | 14 → 01 | sí | [[socio_comercial.verificado_por → usuario\|ver]] |
 
 ## 01 — Identidad, Usuarios y Seguridad
 
@@ -420,6 +450,7 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | --- | --- | :-: | :-: |
 | [[asiento_contable.asiento_reversa_id → asiento_contable]] | [[asiento_contable]] | — | sí |
 | [[asiento_contable.grupo_id → grupo]] | [[grupo]] | ↗ | sí |
+| [[asiento_contable.periodo_contable_id → periodo_contable]] | [[periodo_contable]] | ↗ | sí |
 | [[asiento_contable.registrado_por → usuario]] | [[usuario]] | ↗ | sí |
 | [[cierre_diario.cerrado_por → usuario]] | [[usuario]] | ↗ | no |
 | [[comprobante_manual.pago_id → pago]] | [[pago]] | — | no |
@@ -429,6 +460,7 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[conciliacion.movimiento_bancario_id → movimiento_bancario]] | [[movimiento_bancario]] | — | sí |
 | [[conciliacion.pago_id → pago]] | [[pago]] | — | no |
 | [[constancia_pago.pago_id → pago]] | [[pago]] | — | no |
+| [[cuenta_contable.cuenta_padre_id → cuenta_contable]] | [[cuenta_contable]] | — | sí |
 | [[cuenta_contable.grupo_id → grupo]] | [[grupo]] | ↗ | sí |
 | [[cuenta_contable.participante_id → participante]] | [[participante]] | ↗ | sí |
 | [[disputa_pago.pago_id → pago]] | [[pago]] | — | no |
@@ -761,10 +793,12 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[orden_retiro.instrumento_destino_id → instrumento_fondeo]] | [[instrumento_fondeo]] | — | no |
 | [[orden_retiro.proveedor_id → proveedor_pago]] | [[proveedor_pago]] | ↗ | sí |
 | [[orden_retiro.retencion_id → retencion_saldo]] | [[retencion_saldo]] | — | sí |
+| [[orden_retiro.solicitada_por → usuario]] | [[usuario]] | ↗ | no |
 | [[orden_retiro.transaccion_id → transaccion_billetera]] | [[transaccion_billetera]] | — | sí |
 | [[politica_billetera.aprobada_por → usuario]] | [[usuario]] | ↗ | sí |
 | [[punto_atencion.responsable_usuario_id → usuario]] | [[usuario]] | ↗ | sí |
 | [[regla_antifraude.aprobada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[respuesta_idempotente.usuario_id → usuario]] | [[usuario]] | ↗ | no |
 | [[retencion_saldo.cuenta_billetera_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
 | [[retencion_saldo.liberada_por → usuario]] | [[usuario]] | ↗ | sí |
 | [[retencion_saldo.transaccion_origen_id → transaccion_billetera]] | [[transaccion_billetera]] | — | sí |
@@ -966,4 +1000,81 @@ Son las que acoplan el sistema: conviene revisarlas antes de tocar un módulo.
 | [[revision_periodica_kyc.calificacion_riesgo_id → calificacion_riesgo_cliente]] | [[calificacion_riesgo_cliente]] | — | sí |
 | [[revision_periodica_kyc.ejecutada_por → usuario]] | [[usuario]] | ↗ | sí |
 | [[revision_periodica_kyc.usuario_id → usuario]] | [[usuario]] | ↗ | no |
+
+## 13 — Contabilidad Financiera y ERP
+
+> [[_Relaciones 13|índice del módulo]]
+
+| Relación | Destino | Cruza | Opcional |
+| --- | --- | :-: | :-: |
+| [[activo_fijo.categoria_activo_fijo_id → categoria_activo_fijo]] | [[categoria_activo_fijo]] | — | no |
+| [[activo_fijo.centro_costo_id → centro_costo]] | [[centro_costo]] | — | sí |
+| [[activo_fijo.factura_proveedor_id → factura_proveedor]] | [[factura_proveedor]] | — | sí |
+| [[asiento_plantilla.creada_por → usuario]] | [[usuario]] | ↗ | no |
+| [[categoria_activo_fijo.cuenta_activo_id → cuenta_contable]] | [[cuenta_contable]] | ↗ | no |
+| [[categoria_activo_fijo.cuenta_depreciacion_id → cuenta_contable]] | [[cuenta_contable]] | ↗ | no |
+| [[categoria_activo_fijo.cuenta_gasto_depreciacion_id → cuenta_contable]] | [[cuenta_contable]] | ↗ | no |
+| [[cierre_periodo_contable.cerrado_por → usuario]] | [[usuario]] | ↗ | no |
+| [[cierre_periodo_contable.periodo_contable_id → periodo_contable]] | [[periodo_contable]] | — | no |
+| [[cobro_cuenta_por_cobrar.asiento_contable_id → asiento_contable]] | [[asiento_contable]] | ↗ | sí |
+| [[cobro_cuenta_por_cobrar.cuenta_por_cobrar_id → cuenta_por_cobrar]] | [[cuenta_por_cobrar]] | — | no |
+| [[cuenta_por_cobrar.tercero_comercial_id → tercero_comercial]] | [[tercero_comercial]] | — | sí |
+| [[depreciacion_activo.activo_fijo_id → activo_fijo]] | [[activo_fijo]] | — | no |
+| [[depreciacion_activo.asiento_contable_id → asiento_contable]] | [[asiento_contable]] | ↗ | sí |
+| [[depreciacion_activo.periodo_contable_id → periodo_contable]] | [[periodo_contable]] | — | no |
+| [[ejercicio_fiscal.cerrado_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[estado_financiero_generado.generado_por → usuario]] | [[usuario]] | ↗ | no |
+| [[estado_financiero_generado.periodo_contable_id → periodo_contable]] | [[periodo_contable]] | — | no |
+| [[factura_proveedor.aprobada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[factura_proveedor.asiento_contable_id → asiento_contable]] | [[asiento_contable]] | ↗ | sí |
+| [[factura_proveedor.centro_costo_id → centro_costo]] | [[centro_costo]] | — | sí |
+| [[factura_proveedor.orden_compra_id → orden_compra]] | [[orden_compra]] | — | sí |
+| [[factura_proveedor.tercero_comercial_id → tercero_comercial]] | [[tercero_comercial]] | — | no |
+| [[linea_plantilla_asiento.cuenta_contable_id → cuenta_contable]] | [[cuenta_contable]] | ↗ | no |
+| [[linea_plantilla_asiento.plantilla_id → asiento_plantilla]] | [[asiento_plantilla]] | — | no |
+| [[orden_compra.aprobada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[orden_compra.centro_costo_id → centro_costo]] | [[centro_costo]] | — | sí |
+| [[orden_compra.tercero_comercial_id → tercero_comercial]] | [[tercero_comercial]] | — | no |
+| [[pago_a_proveedor.asiento_contable_id → asiento_contable]] | [[asiento_contable]] | ↗ | sí |
+| [[pago_a_proveedor.autorizado_por → usuario]] | [[usuario]] | ↗ | no |
+| [[pago_a_proveedor.factura_proveedor_id → factura_proveedor]] | [[factura_proveedor]] | — | no |
+| [[partida_presupuestaria.cuenta_contable_id → cuenta_contable]] | [[cuenta_contable]] | ↗ | no |
+| [[partida_presupuestaria.periodo_contable_id → periodo_contable]] | [[periodo_contable]] | — | no |
+| [[partida_presupuestaria.presupuesto_id → presupuesto]] | [[presupuesto]] | — | no |
+| [[periodo_contable.ejercicio_fiscal_id → ejercicio_fiscal]] | [[ejercicio_fiscal]] | — | no |
+| [[presupuesto.aprobado_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[presupuesto.centro_costo_id → centro_costo]] | [[centro_costo]] | — | no |
+| [[presupuesto.ejercicio_fiscal_id → ejercicio_fiscal]] | [[ejercicio_fiscal]] | — | no |
+| [[tercero_comercial.cuenta_contable_id → cuenta_contable]] | [[cuenta_contable]] | ↗ | sí |
+
+## 14 — Publicidad y Campañas
+
+> [[_Relaciones 14|índice del módulo]]
+
+| Relación | Destino | Cruza | Opcional |
+| --- | --- | :-: | :-: |
+| [[anunciante.organizador_id → organizador]] | [[organizador]] | ↗ | sí |
+| [[anunciante.socio_comercial_id → socio_comercial]] | [[socio_comercial]] | — | sí |
+| [[anuncio.conjunto_anuncios_id → conjunto_anuncios]] | [[conjunto_anuncios]] | — | no |
+| [[anuncio.pieza_creativa_id → pieza_creativa]] | [[pieza_creativa]] | — | no |
+| [[campana_publicitaria.aprobada_por → usuario]] | [[usuario]] | ↗ | sí |
+| [[campana_publicitaria.cuenta_publicitaria_id → cuenta_publicitaria]] | [[cuenta_publicitaria]] | — | no |
+| [[clic_anuncio.impresion_id → impresion_anuncio]] | [[impresion_anuncio]] | — | no |
+| [[clic_anuncio.usuario_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[conjunto_anuncios.campana_publicitaria_id → campana_publicitaria]] | [[campana_publicitaria]] | — | no |
+| [[conjunto_anuncios.espacio_publicitario_id → espacio_publicitario]] | [[espacio_publicitario]] | — | no |
+| [[conjunto_anuncios.segmento_audiencia_id → segmento_audiencia]] | [[segmento_audiencia]] | — | no |
+| [[conversion_anuncio.clic_id → clic_anuncio]] | [[clic_anuncio]] | — | sí |
+| [[conversion_anuncio.impresion_id → impresion_anuncio]] | [[impresion_anuncio]] | — | sí |
+| [[cuenta_publicitaria.anunciante_id → anunciante]] | [[anunciante]] | — | no |
+| [[factura_publicidad.cuenta_por_cobrar_id → cuenta_por_cobrar]] | [[cuenta_por_cobrar]] | ↗ | sí |
+| [[factura_publicidad.cuenta_publicitaria_id → cuenta_publicitaria]] | [[cuenta_publicitaria]] | — | no |
+| [[factura_publicidad.factura_electronica_id → factura_electronica]] | [[factura_electronica]] | ↗ | sí |
+| [[impresion_anuncio.anuncio_id → anuncio]] | [[anuncio]] | — | no |
+| [[impresion_anuncio.usuario_id → usuario]] | [[usuario]] | ↗ | sí |
+| [[pieza_creativa.anunciante_id → anunciante]] | [[anunciante]] | — | no |
+| [[revision_creativa.pieza_creativa_id → pieza_creativa]] | [[pieza_creativa]] | — | no |
+| [[revision_creativa.revisada_por → usuario]] | [[usuario]] | ↗ | no |
+| [[segmento_audiencia.creado_por → usuario]] | [[usuario]] | ↗ | no |
+| [[socio_comercial.verificado_por → usuario]] | [[usuario]] | ↗ | sí |
 

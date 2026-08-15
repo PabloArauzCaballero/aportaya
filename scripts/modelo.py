@@ -27,6 +27,8 @@ MODULOS = {
     "10": ("Billetera, Custodia y Dinero Electrónico", "10_billetera_custodia"),
     "11": ("Tarifas, Comisiones, Impuestos y Facturación", "11_tarifas_comisiones"),
     "12": ("Cumplimiento Regulatorio y Consumidor Financiero", "12_cumplimiento_asfi"),
+    "13": ("Contabilidad Financiera y ERP", "13_contabilidad_erp"),
+    "14": ("Publicidad y Campañas", "14_publicidad_campanas"),
 }
 
 FOCO = {
@@ -42,6 +44,8 @@ FOCO = {
     "10": "El saldo no se guarda: se deriva, y todos los días cuadra contra el banco",
     "11": "La política de cobro es dato, no código: se cambia con un seeder",
     "12": "Que una inspección se responda con consultas, no armando carpetas",
+    "13": "Que cerrar un mes no dependa de un Excel armado a mano",
+    "14": "Que un partner se anuncie dentro de la app sin inventar un segundo cobro",
 }
 
 APPEND_ONLY = {
@@ -53,6 +57,34 @@ APPEND_ONLY = {
     "saldo_diario_billetera", "devengo_comision",
     "registro_operacion_relevante", "evento_riesgo_operativo",
     "acta_comite",
+    # --- M13: contabilidad financiera y ERP ---
+    "factura_proveedor", "pago_a_proveedor", "cuenta_por_cobrar",
+    "cobro_cuenta_por_cobrar", "depreciacion_activo", "estado_financiero_generado",
+    "cierre_periodo_contable",
+    # --- M14: publicidad y campañas ---
+    "impresion_anuncio", "clic_anuncio", "conversion_anuncio", "factura_publicidad",
+}
+
+# --- tablas particionadas por rango de fecha -----------------------------
+# Crecen sin techo y su retención es de años: la bitácora es el problema
+# operativo dominante de un sistema financiero maduro. Particionar por mes
+# permite desprender el período vencido con DETACH + DROP de la partición, que
+# es la única forma de purgar una tabla append-only sin violar R-AUD-01: nunca
+# se ejecuta un DELETE sobre las filas.
+#
+# La clave de partición tiene que formar parte de la clave primaria, así que la
+# PK de estas tablas pasa a ser compuesta (id + columna de rango). Eso tiene un
+# costo: una tabla particionada ya no puede ser destino de una clave foránea por
+# `id` a secas. Por eso sólo se particiona lo que NADIE referencia.
+#
+# `notificacion` y `transaccion_billetera` quedan fuera a propósito: reciben 5 y
+# 14 claves foráneas respectivamente, y perder esa integridad referencial es un
+# precio mucho más alto que el tamaño de la tabla. Si algún día hace falta,
+# primero se migran esas FK a la clave compuesta.
+PARTICIONADAS = {
+    "bitacora_evento": "fecha_hora",
+    "evento_dominio": "ocurrido_en",
+    "registro_acceso_datos": "fecha_hora",
 }
 
 # --- FK -> tabla destino: overrides donde el nombre de columna no coincide ---
@@ -133,6 +165,14 @@ OVERRIDES = {
     "propietario_id": "usuario", "custodio_id": "usuario",
     "responsable_id": "usuario", "analista_id": "usuario",
     "usuario_obligado_id": "usuario", "responsable_usuario_id": "usuario",
+    # --- M13: contabilidad financiera y ERP ---
+    "cuenta_padre_id": "cuenta_contable",
+    "cuenta_activo_id": "cuenta_contable",
+    "cuenta_depreciacion_id": "cuenta_contable",
+    "cuenta_gasto_depreciacion_id": "cuenta_contable",
+    # --- M14: publicidad y campañas ---
+    "impresion_id": "impresion_anuncio",
+    "clic_id": "clic_anuncio",
 }
 
 # FK por modulo cuando el nombre es ambiguo
@@ -144,6 +184,13 @@ POR_MODULO = {
     ("09", "regla_id"): "regla_cumplimiento",
     ("05", "evento_id"): "evento_notificable",
     ("08", "politica_id"): "politica_sancion",
+    # token_verificacion.politica_id apunta a la política de tokens del propio
+    # módulo 01, no a la política de sanciones del módulo 08.
+    ("01", "politica_id"): "politica_token",
+    # linea_plantilla_asiento.plantilla_id apunta a asiento_plantilla (M13), no
+    # a plantilla_mensaje (M05): el override global de "plantilla_id" es para
+    # notificaciones.
+    ("13", "plantilla_id"): "asiento_plantilla",
 }
 
 ACTOR_A_USUARIO = re.compile(

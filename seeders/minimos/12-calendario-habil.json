@@ -1,0 +1,75 @@
+{
+  "descripcion": "Calendario de días no hábiles. Sin esta tabla, todo plazo legal expresado en días hábiles se calcula mal: el vencimiento de un reclamo, el plazo de descargo y la remisión de un reporte dependen de acá.",
+  "entorno": "minimo",
+  "estado": "listo — ampliar cada año antes de que se agote el horizonte",
+  "advertencia": "Solo se siembran los feriados NACIONALES. Los departamentales existen (Oruro 10-02, Tarija 15-04, Chuquisaca 25-05, La Paz 16-07, Cochabamba 14-09, Santa Cruz y Pando 24-09, Potosí 10-11, Beni 18-11) pero la tabla no tiene columna de departamento: sembrarlos con alcance DEPARTAMENTAL los haría no hábiles para todo el país. Mientras el modelo no distinga departamento, se calcula sobre el calendario nacional y se documenta la desviación.",
+  "nota": "El horizonte llega hasta 2028-12-31. La operación no puede quedarse sin calendario: cargar el año siguiente es tarea del cierre anual (control CI-12).",
+  "bloques": [
+    {
+      "tabla": "dia_no_habil",
+      "conflicto": [
+        "fecha",
+        "alcance",
+        "COALESCE(grupo_id, '00000000-0000-0000-0000-000000000000'::uuid)"
+      ],
+      "comentario": "Feriados nacionales 2026. Carnaval, Viernes Santo y Corpus Christi son móviles: derivan de la Pascua (2026-04-05).",
+      "filas": [
+        { "fecha": "2026-01-01", "descripcion": "Año Nuevo — feriado nacional con suspensión de actividades", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2026-01-22", "descripcion": "Día del Estado Plurinacional — D.S. 405 de 2010", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2026-02-16", "descripcion": "Lunes de Carnaval — feriado móvil (Pascua 2026-04-05)", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2026-02-17", "descripcion": "Martes de Carnaval — feriado móvil (Pascua 2026-04-05)", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2026-04-03", "descripcion": "Viernes Santo — feriado móvil (Pascua 2026-04-05)", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2026-05-01", "descripcion": "Día del Trabajo — feriado nacional", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2026-06-04", "descripcion": "Corpus Christi — feriado móvil (Pascua 2026-04-05)", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2026-06-21", "descripcion": "Año Nuevo Andino Amazónico — D.S. 0173 de 2009", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2026-08-06", "descripcion": "Día de la Independencia — feriado nacional", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2026-11-02", "descripcion": "Todos Santos — Ley 2200 de 2001", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2026-12-25", "descripcion": "Navidad — feriado nacional", "alcance": "NACIONAL", "grupo_id": null }
+      ]
+    },
+    {
+      "tabla": "dia_no_habil",
+      "conflicto": [
+        "fecha",
+        "alcance",
+        "COALESCE(grupo_id, '00000000-0000-0000-0000-000000000000'::uuid)"
+      ],
+      "comentario": "Feriados nacionales 2027 (Pascua 2027-03-28)",
+      "filas": [
+        { "fecha": "2027-01-01", "descripcion": "Año Nuevo — feriado nacional con suspensión de actividades", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2027-01-22", "descripcion": "Día del Estado Plurinacional — D.S. 405 de 2010", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2027-02-08", "descripcion": "Lunes de Carnaval — feriado móvil (Pascua 2027-03-28)", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2027-02-09", "descripcion": "Martes de Carnaval — feriado móvil (Pascua 2027-03-28)", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2027-03-26", "descripcion": "Viernes Santo — feriado móvil (Pascua 2027-03-28)", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2027-05-01", "descripcion": "Día del Trabajo — feriado nacional", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2027-05-27", "descripcion": "Corpus Christi — feriado móvil (Pascua 2027-03-28)", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2027-06-21", "descripcion": "Año Nuevo Andino Amazónico — D.S. 0173 de 2009", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2027-08-06", "descripcion": "Día de la Independencia — feriado nacional", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2027-11-02", "descripcion": "Todos Santos — Ley 2200 de 2001", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2027-12-25", "descripcion": "Navidad — feriado nacional", "alcance": "NACIONAL", "grupo_id": null }
+      ]
+    },
+    {
+      "tabla": "dia_no_habil",
+      "conflicto": [
+        "fecha",
+        "alcance",
+        "COALESCE(grupo_id, '00000000-0000-0000-0000-000000000000'::uuid)"
+      ],
+      "comentario": "Feriados nacionales 2028 (Pascua 2028-04-16; año bisiesto: el martes de Carnaval cae 29-02)",
+      "filas": [
+        { "fecha": "2028-01-01", "descripcion": "Año Nuevo — feriado nacional con suspensión de actividades", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2028-01-22", "descripcion": "Día del Estado Plurinacional — D.S. 405 de 2010", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2028-02-28", "descripcion": "Lunes de Carnaval — feriado móvil (Pascua 2028-04-16)", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2028-02-29", "descripcion": "Martes de Carnaval — feriado móvil (Pascua 2028-04-16)", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2028-04-14", "descripcion": "Viernes Santo — feriado móvil (Pascua 2028-04-16)", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2028-05-01", "descripcion": "Día del Trabajo — feriado nacional", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2028-06-15", "descripcion": "Corpus Christi — feriado móvil (Pascua 2028-04-16)", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2028-06-21", "descripcion": "Año Nuevo Andino Amazónico — D.S. 0173 de 2009", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2028-08-06", "descripcion": "Día de la Independencia — feriado nacional", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2028-11-02", "descripcion": "Todos Santos — Ley 2200 de 2001", "alcance": "NACIONAL", "grupo_id": null },
+        { "fecha": "2028-12-25", "descripcion": "Navidad — feriado nacional", "alcance": "NACIONAL", "grupo_id": null }
+      ]
+    }
+  ]
+}

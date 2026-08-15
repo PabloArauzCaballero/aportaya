@@ -6,7 +6,7 @@ tabla: documento_identidad
 clase: DocumentoIdentidad
 modulo: "01 — Identidad, Usuarios y Seguridad"
 clave_primaria: [id]
-columnas: 13
+columnas: 14
 fk_salientes: 1
 fk_entrantes: 1
 append_only: false
@@ -24,6 +24,7 @@ append_only: false
 | `usuario_id` | UUID | FK IDX | no | FK, IDX |
 | `tipo` | VARCHAR(25) | — | no | CK |
 | `numero_cifrado` | VARCHAR(255) | — | no | — |
+| `version_llave` | SMALLINT | — | no | — |
 | `hash_numero` | VARCHAR(64) | UQ | no | UQ, busqueda sin descifrar |
 | `complemento` | VARCHAR(10) | — | sí | NULL |
 | `pais_emision` | CHAR(2) | — | no | — |

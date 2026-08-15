@@ -515,7 +515,7 @@ entity "tarea_automatizada" as tarea {
   programada_para : TIMESTAMPTZ <<IDX>>
   estado : VARCHAR(25) <<CK, IDX>>
   intentos : SMALLINT
-  clave_idempotencia : VARCHAR(80) <<UQ>>
+  clave_idempotencia : VARCHAR(80)
 }
 
 entity "ejecucion_tarea" as ejec {

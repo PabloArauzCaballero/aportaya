@@ -3,8 +3,8 @@ tags:
   - moc
   - caso-uso
 titulo: "Casos de uso — AportaYa"
-total_casos: 87
-fecha: 2026-08-13
+total_casos: 99
+fecha: 2026-08-14
 ---
 
 # Casos de uso
@@ -194,15 +194,42 @@ Norma (docs/Cumplimiento.md)  →  Caso de uso (esta carpeta)  →  Restricción
 | [[CU-98 Publicar el tablero de indicadores]] | Los mismos números para todos, con su meta | Operaciones · Directorio | ASFI gobierno corporativo |
 | [[CU-99 Dar de alta un proveedor de pago y enrutar el cobro]] | No depender de una sola pasarela | Operaciones · Tesorería | ASFI tercerización · BCB |
 
+### Contabilidad financiera y ERP
+
+| Código | Caso de uso | Actor | Normativa que lo obliga |
+| --- | --- | --- | --- |
+| [[CU-100 Abrir y cerrar el período contable]] | Un mes que se cierra de verdad | Sistema · Contabilidad | Ley 393 · Código de Comercio |
+| [[CU-101 Presupuestar por centro de costo]] | Lo autorizado contra lo ejecutado | Contabilidad · Directorio | Control interno |
+| [[CU-102 Dar de alta un tercero comercial y su orden de compra]] | Comprar con autorización previa | Operaciones · Contabilidad | Código de Comercio |
+| [[CU-103 Registrar y pagar una factura de proveedor]] | Cuentas por pagar con cuatro ojos | Contabilidad · Tesorería | Ley 393 · SIN |
+| [[CU-104 Cobrar una cuenta por cobrar]] | Todo lo que nos deben, por un solo camino | Sistema · Tesorería | Ley 393 · NIIF |
+| [[CU-105 Depreciar un activo fijo]] | El gasto se reconoce a lo largo de la vida útil | Sistema · Contabilidad | NIIF |
+| [[CU-106 Generar el estado financiero del período]] | Un balance reproducible, no recalculado cada vez | Sistema · Contabilidad | NIIF · Ley 393 |
+
+### Publicidad y campañas
+
+| Código | Caso de uso | Actor | Normativa que lo obliga |
+| --- | --- | --- | --- |
+| [[CU-110 Dar de alta un anunciante y su cuenta publicitaria]] | Anunciar sin que el organizador cobre por ello | Organizador · Socio comercial · Operaciones | Política comercial |
+| [[CU-111 Crear y aprobar una campaña publicitaria]] | Nada sale al aire sin aprobación | Anunciante · Operaciones | Política comercial |
+| [[CU-112 Moderar una pieza creativa]] | Moderación previa, no posterior | Anunciante · Moderador | Política comercial |
+| [[CU-113 Entregar un anuncio y medir su desempeño]] | Solo mientras hay presupuesto y cupo | Sistema · Usuario | Política comercial |
+| [[CU-114 Liquidar y facturar el gasto publicitario]] | Se cobra por el mismo camino de siempre | Sistema · Contabilidad | SIN · Ley 393 |
+
 ## Casos de uso todavía no escritos
 
-Ninguno. **Las 274 entidades del modelo tienen al menos un caso de uso que las
+Ninguno. **Las 307 entidades del modelo tienen al menos un caso de uso que las
 especifica**, y esa es la verificación que se corre: si aparece una entidad sin caso,
 falta escribirlo o sobra la tabla.
 
 Los rangos CU-90..99 se abrieron para el organizador, la automatización y los
 proveedores de plataforma, que hasta entonces existían en el modelo (módulo 07) sin
-especificación de flujo.
+especificación de flujo. CU-100..109 (contabilidad financiera y ERP, módulo 13) y
+CU-110..119 (publicidad y campañas, módulo 14) se abrieron por la misma razón: dos
+módulos nuevos del modelo sin especificación de flujo todavía. Los códigos de tres
+dígitos rompían un supuesto de ancho fijo en `scripts/verificar_boveda.py`
+(`stem[3:5]`); se corrigió para extraer el número con una expresión regular en vez
+de asumir dos dígitos.
 
 ## Ver también
 

@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS factor_mfa (
   usuario_id                         UUID NOT NULL,
   tipo                               VARCHAR(20) NOT NULL,
   secreto_cifrado                    VARCHAR(255) NOT NULL,
+  version_llave                      SMALLINT NOT NULL,
   activo                             BOOLEAN DEFAULT FALSE NOT NULL,
   es_principal                       BOOLEAN DEFAULT FALSE NOT NULL,
   confirmado_en                      TIMESTAMPTZ,

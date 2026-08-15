@@ -160,6 +160,10 @@ ALTER TABLE orden_retiro
   FOREIGN KEY (retencion_id) REFERENCES retencion_saldo (id) ON DELETE SET NULL ON UPDATE CASCADE;
 
 ALTER TABLE orden_retiro
+  ADD CONSTRAINT fk_orden_retiro_solicitada_por
+  FOREIGN KEY (solicitada_por) REFERENCES usuario (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE orden_retiro
   ADD CONSTRAINT fk_orden_retiro_transaccion_id
   FOREIGN KEY (transaccion_id) REFERENCES transaccion_billetera (id) ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -174,6 +178,10 @@ ALTER TABLE punto_atencion
 ALTER TABLE regla_antifraude
   ADD CONSTRAINT fk_regla_antifraude_aprobada_por
   FOREIGN KEY (aprobada_por) REFERENCES usuario (id) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE respuesta_idempotente
+  ADD CONSTRAINT fk_respuesta_idempotente_usuario_id
+  FOREIGN KEY (usuario_id) REFERENCES usuario (id) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 ALTER TABLE retencion_saldo
   ADD CONSTRAINT fk_retencion_saldo_cuenta_billetera_id

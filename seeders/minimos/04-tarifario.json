@@ -276,6 +276,98 @@
           "activo": true
         }
       ]
+    },
+    {
+      "tabla": "segmento_comercial",
+      "conflicto": [
+        "codigo"
+      ],
+      "comentario": "Segmentos a los que se puede asignar un tarifario distinto. Existen desde el día uno para que una decisión comercial futura sea una fila, no una migración.",
+      "filas": [
+        { "codigo": "GENERAL", "descripcion": "Todos los titulares que no califican a otro segmento", "criterio": { "tipo": "SIEMPRE" }, "prioridad": 100, "activo": true },
+        { "codigo": "NUEVO_CLIENTE", "descripcion": "Titulares con menos de 90 días desde la apertura de la billetera", "criterio": { "tipo": "ANTIGUEDAD_DIAS", "operador": "<", "valor": 90 }, "prioridad": 20, "activo": true },
+        { "codigo": "ALTO_VOLUMEN", "descripcion": "Titulares con más de Bs 20.000 operados en los últimos 90 días", "criterio": { "tipo": "VOLUMEN_BOB_90D", "operador": ">=", "valor": 20000 }, "prioridad": 10, "activo": true },
+        { "codigo": "ORGANIZADOR_MAESTRO", "descripcion": "Organizadores con nivel MAESTRO vigente y sin sanción firme", "criterio": { "tipo": "NIVEL_ORGANIZADOR", "operador": "=", "valor": "MAESTRO" }, "prioridad": 5, "activo": true }
+      ]
+    },
+    {
+      "tabla": "regla_tarifa",
+      "solo_si_vacia": true,
+      "conflicto": "ninguno",
+      "comentario": "Tramos de la comisión de entrega. La regla que coincide gana sobre el valor por defecto del concepto (0,3 %); el piso de Bs 10 y el techo de Bs 50 se mantienen en todos los tramos, que es lo que impide que una bolsa chica quede confiscada por la comisión.",
+      "filas": [
+        {
+          "concepto_tarifa_id": { "$ref": "concepto_tarifa", "codigo": "COM_ENTREGA", "tarifario_id": { "$ref": "tarifario", "codigo": "GENERAL", "version": 1 } },
+          "orden": 1,
+          "condicion": { "tramo": "bolsa pequeña" },
+          "monto_base_desde": 0.0,
+          "monto_base_hasta": 3000.0,
+          "valor_porcentual": 0.35,
+          "valor_fijo": null,
+          "monto_minimo": 10.0,
+          "monto_maximo": 50.0,
+          "vigente_desde": "2026-01-01T00:00:00-04:00",
+          "vigente_hasta": null
+        },
+        {
+          "concepto_tarifa_id": { "$ref": "concepto_tarifa", "codigo": "COM_ENTREGA", "tarifario_id": { "$ref": "tarifario", "codigo": "GENERAL", "version": 1 } },
+          "orden": 2,
+          "condicion": { "tramo": "bolsa media" },
+          "monto_base_desde": 3000.01,
+          "monto_base_hasta": 10000.0,
+          "valor_porcentual": 0.3,
+          "valor_fijo": null,
+          "monto_minimo": 10.0,
+          "monto_maximo": 50.0,
+          "vigente_desde": "2026-01-01T00:00:00-04:00",
+          "vigente_hasta": null
+        },
+        {
+          "concepto_tarifa_id": { "$ref": "concepto_tarifa", "codigo": "COM_ENTREGA", "tarifario_id": { "$ref": "tarifario", "codigo": "GENERAL", "version": 1 } },
+          "orden": 3,
+          "condicion": { "tramo": "bolsa grande" },
+          "monto_base_desde": 10000.01,
+          "monto_base_hasta": null,
+          "valor_porcentual": 0.25,
+          "valor_fijo": null,
+          "monto_minimo": 10.0,
+          "monto_maximo": 50.0,
+          "vigente_desde": "2026-01-01T00:00:00-04:00",
+          "vigente_hasta": null
+        }
+      ]
+    },
+    {
+      "tabla": "asignacion_tarifario",
+      "solo_si_vacia": true,
+      "conflicto": "ninguno",
+      "comentario": "Quién cobra con qué tarifario. La asignación GLOBAL es la red de seguridad: sin ella, un titular sin segmento no tendría tarifa y la operación se rechazaría por omisión.",
+      "filas": [
+        {
+          "tarifario_id": { "$ref": "tarifario", "codigo": "GENERAL", "version": 1 },
+          "segmento_id": null,
+          "grupo_id": null,
+          "usuario_id": null,
+          "autorizado_por": null,
+          "ambito": "GLOBAL",
+          "prioridad": 100,
+          "motivo": "Tarifario general aplicable por defecto a toda la plataforma",
+          "vigente_desde": "2026-01-01T00:00:00-04:00",
+          "vigente_hasta": null
+        },
+        {
+          "tarifario_id": { "$ref": "tarifario", "codigo": "GENERAL", "version": 1 },
+          "segmento_id": { "$ref": "segmento_comercial", "codigo": "GENERAL" },
+          "grupo_id": null,
+          "usuario_id": null,
+          "autorizado_por": null,
+          "ambito": "SEGMENTO",
+          "prioridad": 90,
+          "motivo": "Segmento general — mismo tarifario mientras no exista decisión comercial distinta",
+          "vigente_desde": "2026-01-01T00:00:00-04:00",
+          "vigente_hasta": null
+        }
+      ]
     }
   ]
 }

@@ -29,7 +29,7 @@ append_only: false
 | `estado` | VARCHAR(15) | — | no | CK |
 | `codigo_error` | VARCHAR(40) | — | sí | NULL |
 | `mensaje_proveedor` | VARCHAR(255) | — | sí | NULL |
-| `clave_idempotencia` | VARCHAR(80) | UQ | no | UQ |
+| `clave_idempotencia` | VARCHAR(80) | — | no | — |
 
 ## Claves foráneas salientes
 

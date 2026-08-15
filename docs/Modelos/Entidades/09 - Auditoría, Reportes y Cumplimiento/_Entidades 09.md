@@ -20,7 +20,7 @@ Las **19 tablas** de este módulo. Justificación de negocio en [[09_auditoria_r
 | [[politica_retencion]] | 7 | 0 | 0 |
 | [[definicion_reporte]] | 11 | 0 | 2 |
 | [[ejecucion_reporte]] | 12 | 3 | 1 |
-| [[exportacion_reporte]] | 10 | 1 | 0 |
+| [[exportacion_reporte]] | 11 | 1 | 0 |
 | [[programacion_reporte]] | 10 | 1 | 0 |
 | [[indicador_kpi]] | 11 | 0 | 0 |
 | [[regla_cumplimiento]] | 10 | 0 | 1 |

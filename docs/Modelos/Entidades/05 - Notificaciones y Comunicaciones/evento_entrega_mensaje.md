@@ -27,7 +27,7 @@ append_only: false
 | `recibido_en` | TIMESTAMPTZ | — | no | — |
 | `payload_crudo` | JSONB | — | no | — |
 | `codigo_error` | VARCHAR(40) | — | sí | NULL |
-| `clave_idempotencia` | VARCHAR(120) | UQ | no | UQ |
+| `clave_idempotencia` | VARCHAR(120) | — | no | — |
 
 ## Claves foráneas salientes
 

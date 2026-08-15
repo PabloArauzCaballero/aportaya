@@ -1,0 +1,197 @@
+{
+  "descripcion": "Parámetros de emisión y validación de tokens, uno por propósito. Sin la fila, el propósito no puede emitir token: el vencimiento, el largo del código y el tope de intentos son dato, no constante en el código.",
+  "entorno": "minimo",
+  "estado": "listo — revisar con seguridad de la información en cada revisión anual de la política",
+  "nota": "Cambiar un parámetro es cerrar la vigencia de la fila y agregar otra con `vigente_desde` posterior: los tokens ya emitidos se validan con la política que regía al emitirlos.",
+  "bloques": [
+    {
+      "tabla": "politica_token",
+      "conflicto": [
+        "proposito",
+        "vigente_desde"
+      ],
+      "comentario": "OTP numéricos: código corto, vida corta y pocos intentos. La ventana de 5 minutos y los 3 intentos son el estándar de segundo factor en banca móvil.",
+      "filas": [
+        {
+          "proposito": "SEGUNDO_FACTOR",
+          "ttl_segundos": 300,
+          "longitud_codigo": 6,
+          "max_intentos_validacion": 3,
+          "max_reenvios_por_hora": 3,
+          "cooldown_reenvio_segundos": 60,
+          "max_emisiones_por_dia": 10,
+          "canales_permitidos": "SMS,WHATSAPP,APP_AUTENTICADORA",
+          "exige_dispositivo_conocido": false,
+          "invalida_anteriores": true,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        },
+        {
+          "proposito": "INICIO_SESION_SIN_CONTRASENA",
+          "ttl_segundos": 300,
+          "longitud_codigo": 6,
+          "max_intentos_validacion": 3,
+          "max_reenvios_por_hora": 3,
+          "cooldown_reenvio_segundos": 60,
+          "max_emisiones_por_dia": 10,
+          "canales_permitidos": "SMS,WHATSAPP",
+          "exige_dispositivo_conocido": false,
+          "invalida_anteriores": true,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        },
+        {
+          "proposito": "VERIFICACION_TELEFONO",
+          "ttl_segundos": 600,
+          "longitud_codigo": 6,
+          "max_intentos_validacion": 5,
+          "max_reenvios_por_hora": 3,
+          "cooldown_reenvio_segundos": 60,
+          "max_emisiones_por_dia": 8,
+          "canales_permitidos": "SMS,WHATSAPP,LLAMADA_VOZ",
+          "exige_dispositivo_conocido": false,
+          "invalida_anteriores": true,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        },
+        {
+          "proposito": "RECUPERACION_CONTRASENA",
+          "ttl_segundos": 900,
+          "longitud_codigo": 8,
+          "max_intentos_validacion": 3,
+          "max_reenvios_por_hora": 2,
+          "cooldown_reenvio_segundos": 120,
+          "max_emisiones_por_dia": 5,
+          "canales_permitidos": "SMS,CORREO",
+          "exige_dispositivo_conocido": false,
+          "invalida_anteriores": true,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        },
+        {
+          "proposito": "CAMBIO_TELEFONO",
+          "ttl_segundos": 300,
+          "longitud_codigo": 6,
+          "max_intentos_validacion": 3,
+          "max_reenvios_por_hora": 2,
+          "cooldown_reenvio_segundos": 120,
+          "max_emisiones_por_dia": 3,
+          "canales_permitidos": "CORREO",
+          "exige_dispositivo_conocido": true,
+          "invalida_anteriores": true,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        },
+        {
+          "proposito": "CAMBIO_CORREO",
+          "ttl_segundos": 300,
+          "longitud_codigo": 6,
+          "max_intentos_validacion": 3,
+          "max_reenvios_por_hora": 2,
+          "cooldown_reenvio_segundos": 120,
+          "max_emisiones_por_dia": 3,
+          "canales_permitidos": "SMS,WHATSAPP",
+          "exige_dispositivo_conocido": true,
+          "invalida_anteriores": true,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        },
+        {
+          "proposito": "AUTORIZACION_DISPOSITIVO",
+          "ttl_segundos": 300,
+          "longitud_codigo": 6,
+          "max_intentos_validacion": 3,
+          "max_reenvios_por_hora": 2,
+          "cooldown_reenvio_segundos": 120,
+          "max_emisiones_por_dia": 5,
+          "canales_permitidos": "SMS,WHATSAPP,CORREO",
+          "exige_dispositivo_conocido": false,
+          "invalida_anteriores": true,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        },
+        {
+          "proposito": "CONFIRMACION_ENTREGA",
+          "ttl_segundos": 3600,
+          "longitud_codigo": 6,
+          "max_intentos_validacion": 3,
+          "max_reenvios_por_hora": 2,
+          "cooldown_reenvio_segundos": 60,
+          "max_emisiones_por_dia": 5,
+          "canales_permitidos": "SMS,WHATSAPP,PUSH_APP",
+          "exige_dispositivo_conocido": true,
+          "invalida_anteriores": true,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        }
+      ]
+    },
+    {
+      "tabla": "politica_token",
+      "conflicto": [
+        "proposito",
+        "vigente_desde"
+      ],
+      "comentario": "Enlaces firmados: no son adivinables, así que la vida es más larga, pero `longitud_codigo` es la del secreto aleatorio y no un código que alguien tipea.",
+      "filas": [
+        {
+          "proposito": "VERIFICACION_CORREO",
+          "ttl_segundos": 86400,
+          "longitud_codigo": 32,
+          "max_intentos_validacion": 5,
+          "max_reenvios_por_hora": 2,
+          "cooldown_reenvio_segundos": 300,
+          "max_emisiones_por_dia": 5,
+          "canales_permitidos": "CORREO",
+          "exige_dispositivo_conocido": false,
+          "invalida_anteriores": true,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        },
+        {
+          "proposito": "INVITACION_GRUPO",
+          "ttl_segundos": 604800,
+          "longitud_codigo": 32,
+          "max_intentos_validacion": 5,
+          "max_reenvios_por_hora": 2,
+          "cooldown_reenvio_segundos": 300,
+          "max_emisiones_por_dia": 20,
+          "canales_permitidos": "SMS,WHATSAPP,CORREO",
+          "exige_dispositivo_conocido": false,
+          "invalida_anteriores": false,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        },
+        {
+          "proposito": "ENLACE_PAGO",
+          "ttl_segundos": 172800,
+          "longitud_codigo": 32,
+          "max_intentos_validacion": 10,
+          "max_reenvios_por_hora": 3,
+          "cooldown_reenvio_segundos": 120,
+          "max_emisiones_por_dia": 20,
+          "canales_permitidos": "SMS,WHATSAPP,PUSH_APP",
+          "exige_dispositivo_conocido": false,
+          "invalida_anteriores": false,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        },
+        {
+          "proposito": "FIRMA_REGLAMENTO",
+          "ttl_segundos": 259200,
+          "longitud_codigo": 32,
+          "max_intentos_validacion": 5,
+          "max_reenvios_por_hora": 2,
+          "cooldown_reenvio_segundos": 300,
+          "max_emisiones_por_dia": 5,
+          "canales_permitidos": "WHATSAPP,CORREO,PUSH_APP",
+          "exige_dispositivo_conocido": false,
+          "invalida_anteriores": true,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        },
+        {
+          "proposito": "EXPORTACION_DATOS",
+          "ttl_segundos": 604800,
+          "longitud_codigo": 32,
+          "max_intentos_validacion": 3,
+          "max_reenvios_por_hora": 1,
+          "cooldown_reenvio_segundos": 600,
+          "max_emisiones_por_dia": 2,
+          "canales_permitidos": "CORREO",
+          "exige_dispositivo_conocido": true,
+          "invalida_anteriores": true,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        }
+      ]
+    }
+  ]
+}

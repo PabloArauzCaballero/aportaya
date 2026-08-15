@@ -109,7 +109,7 @@ ALTER TABLE token_verificacion
 
 ALTER TABLE token_verificacion
   ADD CONSTRAINT fk_token_verificacion_politica_id
-  FOREIGN KEY (politica_id) REFERENCES politica_sancion (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+  FOREIGN KEY (politica_id) REFERENCES politica_token (id) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 ALTER TABLE token_verificacion
   ADD CONSTRAINT fk_token_verificacion_rotado_de_id

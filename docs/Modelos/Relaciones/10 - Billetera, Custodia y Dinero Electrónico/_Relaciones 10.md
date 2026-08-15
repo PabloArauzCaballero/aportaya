@@ -3,12 +3,12 @@ tags:
   - moc
   - modulo/10-billetera-custodia-y-dinero-electronico
 modulo: "10 — Billetera, Custodia y Dinero Electrónico"
-relaciones_fk: 63
+relaciones_fk: 65
 ---
 
 # 10 — Billetera, Custodia y Dinero Electrónico · relaciones
 
-Las **63 claves foráneas** que salen de las tablas de este módulo.
+Las **65 claves foráneas** que salen de las tablas de este módulo.
 
 [[_Relaciones|← Todas las relaciones]] · [[Index]]
 
@@ -53,10 +53,12 @@ Las **63 claves foráneas** que salen de las tablas de este módulo.
 | [[orden_retiro.instrumento_destino_id → instrumento_fondeo]] | [[instrumento_fondeo]] | — | no |
 | [[orden_retiro.proveedor_id → proveedor_pago]] | [[proveedor_pago]] | ↗ 03 | sí |
 | [[orden_retiro.retencion_id → retencion_saldo]] | [[retencion_saldo]] | — | sí |
+| [[orden_retiro.solicitada_por → usuario]] | [[usuario]] | ↗ 01 | no |
 | [[orden_retiro.transaccion_id → transaccion_billetera]] | [[transaccion_billetera]] | — | sí |
 | [[politica_billetera.aprobada_por → usuario]] | [[usuario]] | ↗ 01 | sí |
 | [[punto_atencion.responsable_usuario_id → usuario]] | [[usuario]] | ↗ 01 | sí |
 | [[regla_antifraude.aprobada_por → usuario]] | [[usuario]] | ↗ 01 | sí |
+| [[respuesta_idempotente.usuario_id → usuario]] | [[usuario]] | ↗ 01 | no |
 | [[retencion_saldo.cuenta_billetera_id → cuenta_billetera]] | [[cuenta_billetera]] | — | no |
 | [[retencion_saldo.liberada_por → usuario]] | [[usuario]] | ↗ 01 | sí |
 | [[retencion_saldo.transaccion_origen_id → transaccion_billetera]] | [[transaccion_billetera]] | — | sí |

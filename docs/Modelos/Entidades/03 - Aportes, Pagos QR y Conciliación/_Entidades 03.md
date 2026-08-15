@@ -33,7 +33,7 @@ Las **23 tablas** de este módulo. Justificación de negocio en [[03_aportes_pag
 | [[excepcion_conciliacion]] | 10 | 2 | 0 |
 | [[webhook_pasarela]] | 13 | 2 | 0 |
 | [[tipo_cambio]] | 7 | 0 | 0 |
-| [[cuenta_contable]] | 8 | 2 | 5 |
-| [[asiento_contable]] | 10 | 3 | 8 |
+| [[cuenta_contable]] | 11 | 3 | 12 |
+| [[asiento_contable]] | 11 | 4 | 12 |
 | [[movimiento_contable]] | 6 | 2 | 0 |
 | [[cierre_diario]] | 10 | 1 | 1 |

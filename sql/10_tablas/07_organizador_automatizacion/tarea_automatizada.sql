@@ -21,4 +21,3 @@ COMMENT ON COLUMN tarea_automatizada.regla_id IS 'FK, IDX';
 COMMENT ON COLUMN tarea_automatizada.grupo_id IS 'FK, IDX';
 COMMENT ON COLUMN tarea_automatizada.programada_para IS 'IDX';
 COMMENT ON COLUMN tarea_automatizada.estado IS 'CK, IDX';
-COMMENT ON COLUMN tarea_automatizada.clave_idempotencia IS 'UQ';

@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS orden_retiro (
   instrumento_destino_id             UUID NOT NULL,
   retencion_id                       UUID,
   transaccion_id                     UUID,
+  solicitada_por                     UUID NOT NULL,
   aprobada_por                       UUID,
   proveedor_id                       UUID,
   monto_solicitado                   NUMERIC(16,2) DEFAULT 0 NOT NULL,
@@ -33,11 +34,11 @@ COMMENT ON COLUMN orden_retiro.cuenta_billetera_id IS 'FK, IDX';
 COMMENT ON COLUMN orden_retiro.instrumento_destino_id IS 'FK';
 COMMENT ON COLUMN orden_retiro.retencion_id IS 'FK, NULL, UQ';
 COMMENT ON COLUMN orden_retiro.transaccion_id IS 'FK, NULL';
+COMMENT ON COLUMN orden_retiro.solicitada_por IS 'FK, IDX';
 COMMENT ON COLUMN orden_retiro.aprobada_por IS 'FK, NULL';
 COMMENT ON COLUMN orden_retiro.proveedor_id IS 'FK, NULL, M3';
 COMMENT ON COLUMN orden_retiro.monto_solicitado IS 'CK: > 0';
 COMMENT ON COLUMN orden_retiro.estado IS 'CK, IDX';
 COMMENT ON COLUMN orden_retiro.ventana_enfriamiento_hasta IS 'NULL';
 COMMENT ON COLUMN orden_retiro.referencia_proveedor IS 'UQ, NULL';
-COMMENT ON COLUMN orden_retiro.clave_idempotencia IS 'UQ';
 COMMENT ON COLUMN orden_retiro.pagada_en IS 'NULL';

@@ -6,7 +6,7 @@ tabla: cuenta_bancaria_beneficiario
 clase: CuentaBancariaBeneficiario
 modulo: "04 — Entregas de Fondo"
 clave_primaria: [id]
-columnas: 15
+columnas: 16
 fk_salientes: 1
 fk_entrantes: 2
 append_only: false
@@ -25,6 +25,7 @@ append_only: false
 | `tipo_cuenta` | VARCHAR(15) | — | no | CK |
 | `entidad_financiera` | VARCHAR(60) | — | no | — |
 | `numero_cuenta_cifrado` | VARCHAR(255) | — | no | — |
+| `version_llave` | SMALLINT | — | no | — |
 | `hash_numero_cuenta` | VARCHAR(64) | UQ | no | UQ+usuario_id |
 | `numero_enmascarado` | VARCHAR(30) | — | no | — |
 | `titular_nombre` | VARCHAR(120) | — | no | — |

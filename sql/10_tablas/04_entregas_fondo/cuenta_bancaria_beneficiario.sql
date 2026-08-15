@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS cuenta_bancaria_beneficiario (
   tipo_cuenta                        VARCHAR(15) NOT NULL,
   entidad_financiera                 VARCHAR(60) NOT NULL,
   numero_cuenta_cifrado              VARCHAR(255) NOT NULL,
+  version_llave                      SMALLINT NOT NULL,
   hash_numero_cuenta                 VARCHAR(64) NOT NULL,
   numero_enmascarado                 VARCHAR(30) NOT NULL,
   titular_nombre                     VARCHAR(120) NOT NULL,

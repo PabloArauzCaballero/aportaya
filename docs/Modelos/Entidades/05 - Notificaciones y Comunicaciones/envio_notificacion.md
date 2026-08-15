@@ -27,7 +27,7 @@ append_only: false
 | `canal_vinculado_id` | UUID | FK | sí | FK, NULL |
 | `canal` | VARCHAR(15) | — | no | CK |
 | `destinatario` | VARCHAR(150) | — | no | — |
-| `clave_idempotencia` | VARCHAR(120) | UQ | no | UQ |
+| `clave_idempotencia` | VARCHAR(120) | — | no | — |
 | `encolado_en` | TIMESTAMPTZ | — | no | — |
 | `contenido_enviado` | TEXT | — | no | — |
 | `estado` | VARCHAR(25) | IDX | no | CK, IDX |

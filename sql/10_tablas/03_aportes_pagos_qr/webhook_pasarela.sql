@@ -26,6 +26,5 @@ COMMENT ON COLUMN webhook_pasarela.proveedor_id IS 'FK, IDX';
 COMMENT ON COLUMN webhook_pasarela.recibido_en IS 'IDX';
 COMMENT ON COLUMN webhook_pasarela.procesado_en IS 'NULL';
 COMMENT ON COLUMN webhook_pasarela.estado IS 'CK, IDX';
-COMMENT ON COLUMN webhook_pasarela.clave_idempotencia IS 'UQ';
 COMMENT ON COLUMN webhook_pasarela.error_procesamiento IS 'NULL';
 COMMENT ON COLUMN webhook_pasarela.pago_id IS 'FK, NULL';

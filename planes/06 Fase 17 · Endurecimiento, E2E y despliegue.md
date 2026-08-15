@@ -1,0 +1,308 @@
+---
+tags:
+  - plan
+  - fase
+titulo: "Fase 17 — Endurecimiento, rendimiento, E2E y despliegue"
+fase: 17
+depende_de: [12, 13, 14, 15, 16]
+habilita: []
+---
+
+# Fase 17 — Endurecimiento, rendimiento, E2E y despliegue
+
+> **Objetivo.** Que lo que funciona en pruebas aguante producción: carga medida,
+> fallos absorbidos, respaldos restaurados de verdad, seguridad verificada y un
+> despliegue reproducible. Y que la afirmación *"esto se puede desplegar"* tenga
+> evidencia detrás, no confianza.
+
+> **Se ejecuta en:** Ola 5 · carril T (convergencia, máquina única) — ver [[07 Carriles de trabajo concurrente]] para
+> la propiedad de archivos y el prompt de arranque del carril.
+
+> [!important] Antes de escribir la primera línea
+> [[00b Estándar de ejecución · código limpio, pruebas y calidad]] aplica en
+> esta fase entera: regla cero de no inventar, composición atómica, KISS,
+> nombres del dominio, las seis pruebas obligatorias por caso de uso y el
+> checklist de PR. **Se declara cada pieza por nivel antes de crearla.**
+
+> **Receta exacta:** [[00c Recetario · implementar un caso de uso]] fija el orden de
+> lectura, el orden de construcción en ocho pasos, las firmas canónicas y los
+> nombres de las piezas de `comun/`. **Se copian, no se reinventan.**
+
+**Nada de funcionalidad nueva en esta fase.** Si aparece un caso de uso sin
+implementar, pertenece a su fase, no a esta.
+
+## Gate de entrada
+
+- [ ] Fases 12 a 16 cerradas con sus gates ejecutados
+- [ ] Los 87 casos de uso implementados
+- [ ] La prueba E2E `pasanaku-completo.e2e.spec.ts` (hito de la Fase 11) en verde
+
+## Leer antes
+
+`docs/Arquitectura/ADR-012 Empaquetado y despliegue.md` ·
+`docs/Arquitectura/ADR-013 Respaldo y continuidad.md` ·
+`docs/Arquitectura/Entornos y despliegue.md` ·
+skills `resiliencia-rendimiento`, `respaldos-restauracion`, `despliegue-contenedores`,
+`ci-calidad`, `documentacion-entregables`, `definicion-de-terminado`
+
+---
+
+## 17.1 · Suite E2E completa
+
+Playwright + Chromium contra el stack en `docker-compose.test.yml`, con el worker
+corriendo de verdad. Seis recorridos, no uno:
+
+| Recorrido | Qué ejercita | Por qué existe |
+| --- | --- | --- |
+| `pasanaku-completo.e2e.spec.ts` | Registro → billetera → grupo → sorteo → aportes → entrega → comisión → factura → cierre diario | El producto existe |
+| `incumplimiento.e2e.spec.ts` | Mora → declaración → descargo → fondo de garantía → subrogación → cobranza → reemplazo | El debido proceso funciona de punta a punta |
+| `disolucion.e2e.spec.ts` | Disolución con prelación y prorrata sobre saldo indivisible | **Ni un centavo perdido ni inventado** |
+| `cumplimiento.e2e.spec.ts` | Umbral cruzado → operación relevante → alerta → caso → ROS → reporte mensual remitido | La cadena regulatoria completa |
+| `reclamo.e2e.spec.ts` | Reclamo → plazo hábil → prórroga → resolución → reparación → segunda instancia | El consumidor financiero |
+| `degradacion.e2e.spec.ts` | Pasarela caída → conmutación · SIAT caído → contingencia · mensajería caída → reintento | El sistema con proveedores rotos |
+
+**Chromium** cubre además: `/docs` renderiza el OpenAPI, las rutas públicas de
+transparencia y verificación de certificados se ven correctamente, y —cuando exista
+`apps/backoffice`— las pantallas de cumplimiento.
+
+**Entregable 17.1:** los seis recorridos en verde en CI, con el compose completo.
+
+---
+
+## 17.2 · Rendimiento: medir antes de optimizar
+
+**Ninguna optimización sin medición previa.** El orden es: medir → identificar →
+corregir → volver a medir con el mismo escenario.
+
+### Escenario de carga
+
+Base sembrada con volumen realista a 12 meses: 50 000 usuarios, 5 000 grupos,
+600 000 obligaciones, 2 000 000 de movimientos de billetera. Se genera con un script
+versionado (`scripts/generar_carga.py`), no a mano.
+
+### Qué se mide
+
+| Métrica | Objetivo inicial | Cómo se mide |
+| --- | --- | --- |
+| Latencia p95 de `POST /v1/aportes` | < 400 ms | k6 o autocannon contra el compose |
+| Latencia p95 de `GET /v1/billetera/extractos` | < 800 ms (réplica) | ídem |
+| Cierre diario con 100 000 movimientos | < 5 min | ejecución cronometrada |
+| Profundidad de cola en régimen | < 100 trabajos | métrica del worker |
+| Edad del trabajo más viejo | < 60 s | métrica del worker |
+
+> Los números son **punto de partida**, no compromiso: se ajustan con la primera
+> medición real y se registran en `planes/informe.md`. Un objetivo inventado sin
+> medir no sirve para nada.
+
+### Qué se busca y se corrige
+
+- **N+1**: consultas dentro de bucles. El *identity map* de MikroORM los oculta bien;
+  se detectan con el log de consultas en las pruebas de integración, no leyendo código.
+- **Índices**: se revisan los planes de las 10 consultas más lentas con `EXPLAIN
+  ANALYZE`. Si falta un índice, **se agrega al modelo** (`docs/`, `sql/30_indices/`),
+  no como parche suelto.
+- **Paginación**: toda lista tiene tope y orden por **lista blanca**. Una lista sin
+  paginación es un incidente esperando fecha.
+- **Streaming**: extractos y exportaciones grandes se transmiten, no se arman en
+  memoria.
+- **Pools**: dimensionados con medición, no con el valor por defecto. API y worker,
+  distintos.
+
+**Entregable 17.2:** informe de rendimiento con medición antes y después, y los
+índices nuevos incorporados **al modelo**.
+
+---
+
+## 17.3 · Resiliencia
+
+| Mecanismo | Dónde | Verificación |
+| --- | --- | --- |
+| **Timeouts** en toda llamada externa | Cada `*Adapter` | Proveedor que no responde ⇒ falla en el timeout, no cuelga |
+| **Reintentos con retroceso y jitter** | Worker | Ya implementado en F2; se verifica bajo carga |
+| **Circuit breaker** por proveedor | `RegistroDeSalud` | Proveedor degradado ⇒ se abre el circuito y conmuta **con evento** |
+| **Backpressure** | Cola de envíos y de trabajos | Cola creciendo ⇒ se rechaza con `429`, no se acumula memoria |
+| **Apagado controlado** | api y worker | `SIGTERM` durante una transacción ⇒ termina, no corta |
+| **Idempotencia bajo carga** | Todo endpoint con efecto | 100 requests concurrentes con la misma clave ⇒ **un** efecto |
+
+**Prueba de caos mínima:** matar el contenedor de Postgres durante una operación,
+matar el worker a mitad de un trabajo, y cortar la red al proveedor simulado.
+Después de cada una, el sistema tiene que quedar **consistente**: sin dinero
+duplicado, sin trabajos perdidos, sin transacciones a medias.
+
+**Entregable 17.3:** las seis verificaciones y las tres pruebas de caos documentadas
+con su resultado.
+
+---
+
+## 17.4 · Respaldos y continuidad (cierra CU-56)
+
+ADR-013 y la skill `respaldos-restauracion`. **La parte que casi nunca se hace y es
+la única que importa: el ensayo de restauración.**
+
+| Punto | Qué se verifica |
+| --- | --- |
+| Respaldo automático | Programado, cifrado, con retención declarada |
+| **PITR** | Recuperación a un punto en el tiempo, probada de verdad |
+| **Ensayo de restauración** | Restaurar en un entorno limpio y **verificar que el sistema opera** |
+| RPO y RTO | **Medidos** en el ensayo, comparados con los comprometidos (`compararObjetivos` de CU-56) |
+| Evidencia regulatoria | El resultado del ensayo queda en `prueba_continuidad` y se reporta al comité |
+
+> **"Hay backup" no es una afirmación válida sin una restauración ejecutada.** El
+> ensayo produce un RTO y un RPO reales; si no coinciden con los comprometidos, se
+> corrige la infraestructura o se corrige el compromiso — pero no se declara cumplido.
+
+**Entregable 17.4:** un ensayo de restauración completo, con RTO y RPO medidos,
+registrado en `prueba_continuidad` (CU-56 ejercitado con datos reales).
+
+---
+
+## 17.5 · Seguridad
+
+| Control | Verificación |
+| --- | --- |
+| **RLS**: pruebas negativas por módulo | Contexto ajeno ⇒ cero filas, en las 12 familias de tablas |
+| **Roles de base**: mínimo privilegio | `rol_auditor` no escribe · el worker no toca append-only · ninguno es superusuario |
+| **Rate limit** en bordes públicos y operaciones sensibles | Login, recuperación, registro, retiro |
+| **Secretos** | Ninguno en la imagen, en el repo ni en un log. Escaneo en CI |
+| **PII en logs** | Revisión del `redact` de Pino con un caso real por módulo |
+| **Cabeceras** | HSTS, CSP, `X-Content-Type-Options`, sin `X-Powered-By` |
+| **Dependencias** | `yarn npm audit` sin vulnerabilidades altas o críticas sin justificar |
+| **Multer** | Tipo MIME y tamaño validados antes de escribir; nada ejecutable; rutas no derivadas del nombre del usuario |
+| **Cifrado** | Números de cuenta bancaria cifrados; cada descifrado con registro y justificación |
+| **Segregación** | `R-SEG-07`: quien autoriza no ejecuta; quien decide no resuelve la apelación |
+
+Además: pasar la skill `security-review` sobre el código completo y resolver o
+justificar cada hallazgo por escrito.
+
+**Entregable 17.5:** informe de seguridad con los diez controles verificados y los
+hallazgos resueltos o justificados.
+
+---
+
+## 17.6 · Observabilidad en producción
+
+| Pieza | Qué tiene que existir |
+| --- | --- |
+| **Trazas** | OpenTelemetry desde el request hasta el trabajo del worker, correlacionadas por `traza` |
+| **Métricas** | Latencia por operación · tasa de error · profundidad de cola · edad del trabajo más viejo · fallos por adaptador externo |
+| **Alertas** | **Solo lo que requiere que alguien actúe**: cierre diario no cuadrado, reporte regulatorio por vencer, descuadre de custodia, proveedor degradado, cola creciendo |
+| **Tableros** | Uno operativo (salud del sistema) y uno de cumplimiento (CU-98) |
+| **Salud** | `/salud` y `/salud/listo` conectados a las sondas del orquestador |
+
+> **Una alerta que nadie atiende se apaga sola en la cabeza de la gente.** Cada
+> alerta definida tiene un dueño y una acción esperada, escritos.
+
+**Entregable 17.6:** trazas correlacionadas verificadas con un caso real
+(*"¿qué pasó con el aporte de Juan del martes?"* respondido con una consulta por
+`CU-21` y una fecha).
+
+---
+
+## 17.7 · Despliegue
+
+| Pieza | Estado esperado |
+| --- | --- |
+| **Dockerfile** multietapa, sin root, sin `latest`, sin secretos | ADR-012 |
+| **NGINX** como única entrada pública; api y worker sin puertos publicados | ADR-012 |
+| **Manifiestos** separados por entorno, con sondas, recursos y secretos externos | ADR-012 |
+| **Réplicas**: API escalable; **worker con bloqueo** para los trabajos únicos | ADR-003 |
+| **Migración**: `sql/aplicar.sql` + semillas mínimas como job previo, con `rol_migracion` | ADR-002 |
+| **Rollback** probado | Volver a la versión anterior sin perder datos |
+| **PgBouncer** en modo *transaction*; el worker conectado directo | ADR-007 |
+
+### Orden del despliegue, no negociable
+
+```
+1  job de migración (rol_migracion) → sql/aplicar.sql
+2  job de semillas mínimas          → 15 catálogos
+3  despliegue de api                → sondas en verde
+4  despliegue de worker             → cron registrado
+5  verificación posterior           → sql/50_verificacion/verificaciones.sql
+```
+
+**Entregable 17.7:** un despliegue completo a un entorno de ensayo, con rollback
+probado.
+
+---
+
+## 17.8 · Documentación de entrega
+
+Sin duplicar: lo que ya está en la bóveda **no se reescribe**, se enlaza (skill
+`documentacion-entregables`).
+
+| Documento | Qué contiene | Dónde |
+| --- | --- | --- |
+| OpenAPI | **Derivado** de los Zod, publicado en `/docs` | generado |
+| `README.md` raíz | Arranque en 10 minutos, comandos, estructura | actualizado |
+| `apps/api/README.md` | Cómo agregar un módulo y un caso de uso nuevo | nuevo |
+| Runbook operativo | Qué hacer cuando: el cierre no cuadra · un reporte está por vencer · un proveedor cae · la custodia no concilia | nuevo |
+| `planes/informe.md` | Avance de las 18 fases, riesgos, decisiones y desviaciones | actualizado |
+| Evidencia de pruebas | Salida de las cinco suites + cobertura + informes de rendimiento, seguridad y restauración | adjunta |
+| ADR nuevos | Los que hayan surgido durante la ejecución | `docs/Arquitectura/` |
+
+**Entregable 17.8:** la carpeta de entrega completa y `python3
+scripts/verificar_boveda.py` en verde.
+
+---
+
+## Gate de salida de la Fase 17 — y del proyecto
+
+Este es el gate que autoriza a decir **"esto se puede desplegar"**. Cada casilla
+exige un comando ejecutado o un informe con evidencia. La skill
+`definicion-de-terminado` prohíbe explícitamente marcarlas sin eso.
+
+### Funcionalidad
+- [ ] Los **87 casos de uso** implementados, cada uno con sus criterios de aceptación como pruebas nombradas
+- [ ] Las **124 restricciones** con prueba de rechazo
+- [ ] Las **274 tablas** tienen código que las escribe (verificado contra el modelo)
+- [ ] Los seis recorridos E2E en verde
+
+### Calidad
+- [ ] `yarn verificar` en verde de punta a punta
+- [ ] Cobertura sobre los pisos: 95 % en `dominio/`, 90 % en `aplicacion/`, 100 % de criterios y restricciones
+- [ ] `yarn datos:entidades` y `yarn contratos:openapi` con diff vacío
+- [ ] Sin `eslint-disable` sin comentario que cite el motivo
+
+### Los diez invariantes, verificados uno por uno
+- [ ] 1 · El esquema sigue siendo de `sql/` (diff vacío en CI)
+- [ ] 2 · Una transacción por caso de uso (lint + revisión)
+- [ ] 3 · `SET LOCAL` dentro de la transacción (prueba de dos requests sobre la misma conexión)
+- [ ] 4 · Ningún importe pasa por `number` (lint + pruebas de cuadre)
+- [ ] 5 · Append-only respetado (rechazo por `REVOKE`, probado)
+- [ ] 6 · Ninguna red dentro de la transacción (lint)
+- [ ] 7 · Idempotencia validada antes de escribir (prueba bajo concurrencia)
+- [ ] 8 · Plazos persistidos al crear (prueba del feriado agregado después)
+- [ ] 9 · Denegar por omisión (base sin catálogos ⇒ todo rechazado)
+- [ ] 10 · Umbrales y tarifas como catálogo (lint + revisión)
+
+### Operación
+- [ ] Rendimiento medido, con informe antes/después
+- [ ] Las tres pruebas de caos con el sistema consistente al final
+- [ ] **Ensayo de restauración ejecutado**, con RTO y RPO medidos
+- [ ] Informe de seguridad con los diez controles verificados
+- [ ] Trazas correlacionadas hasta el worker, probadas con un caso real
+- [ ] Despliegue a ensayo completo, con rollback probado
+
+### Cumplimiento
+- [ ] La licencia sigue `EN_TRAMITE` en producción y **ningún servicio financiero está habilitado** hasta que ASFI resuelva
+- [ ] Los catálogos `⚠ PROVISIONAL` (límites, impuestos, umbrales UIF) **confirmados con legal y tributaria**, o el despliegue queda limitado a entorno de prueba
+- [ ] Los contratos de adhesión redactados y registrados ante ASFI
+- [ ] La deuda de *object lock* (ADR-017) declarada con fecha de revisión
+
+---
+
+## Lo que este plan deja explícitamente pendiente
+
+No es omisión: es alcance declarado, para que nadie lo descubra tarde.
+
+| Pendiente | Por qué queda fuera | Cuándo se retoma |
+| --- | --- | --- |
+| **Object storage con *object lock*** | ADR-017 eligió Multer local como transitorio. La evidencia regulatoria (reportes UIF, respaldos de reclamo, extractos) pide inmutabilidad real | Antes de operar con licencia otorgada |
+| **`apps/movil` y `apps/backoffice`** | Este plan es del backend. Los contratos de `packages/contratos` ya los habilitan | Plan de frontend aparte |
+| **Integraciones reales** (pasarela QR, SIAT, WhatsApp, KYC) | Se implementan los adaptadores y se prueban con simuladores; la integración real exige contratos comerciales | Cuando existan los convenios |
+| **Confirmación legal de los catálogos provisionales** | Límites, impuestos y umbrales UIF están sembrados como borrador con su advertencia | Antes de producción |
+| **Spring Boot + jOOQ** | [[Stack]] deja registrado que la decisión se revierte si el objetivo real es integrarse con core bancario | Si aparece ese objetivo |
+
+## Ver también
+
+[[00c Recetario · implementar un caso de uso]] · [[07 Carriles de trabajo concurrente]] · [[00b Estándar de ejecución · código limpio, pruebas y calidad]] · [[00 Plan maestro]] · [[05 Fases 12 a 16 · Plataforma, reputación y cumplimiento]] · [[ADR-012 Empaquetado y despliegue]] · [[ADR-013 Respaldo y continuidad]] · [[Entornos y despliegue]]

@@ -37,9 +37,6 @@ CREATE INDEX IF NOT EXISTS ix_orden_cobro_estado
 CREATE INDEX IF NOT EXISTS ix_orden_cobro_expira_en
   ON orden_cobro (expira_en);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_orden_cobro_clave_idempotencia
-  ON orden_cobro (clave_idempotencia);
-
 CREATE UNIQUE INDEX IF NOT EXISTS uq_qr_cobro_orden_cobro_id
   ON qr_cobro (orden_cobro_id);
 
@@ -54,9 +51,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_enlace_pago_rapido_url_corta
 
 CREATE INDEX IF NOT EXISTS ix_intento_pago_orden_cobro_id
   ON intento_pago (orden_cobro_id);
-
-CREATE UNIQUE INDEX IF NOT EXISTS uq_intento_pago_clave_idempotencia
-  ON intento_pago (clave_idempotencia);
 
 CREATE INDEX IF NOT EXISTS ix_pago_obligacion_id
   ON pago (obligacion_id);
@@ -75,9 +69,6 @@ CREATE INDEX IF NOT EXISTS ix_pago_fecha_hora_pago
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_pago_proveedor_id_referencia_proveedor
   ON pago (proveedor_id, referencia_proveedor);
-
-CREATE UNIQUE INDEX IF NOT EXISTS uq_pago_clave_idempotencia
-  ON pago (clave_idempotencia);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_comprobante_manual_pago_id
   ON comprobante_manual (pago_id);
@@ -133,9 +124,6 @@ CREATE INDEX IF NOT EXISTS ix_webhook_pasarela_recibido_en
 CREATE INDEX IF NOT EXISTS ix_webhook_pasarela_estado
   ON webhook_pasarela (estado);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_webhook_pasarela_clave_idempotencia
-  ON webhook_pasarela (clave_idempotencia);
-
 CREATE UNIQUE INDEX IF NOT EXISTS uq_tipo_cambio_moneda_destino_fecha_moneda_origen
   ON tipo_cambio (moneda_destino, fecha, moneda_origen);
 
@@ -144,6 +132,9 @@ CREATE INDEX IF NOT EXISTS ix_tipo_cambio_fecha
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_cuenta_contable_codigo
   ON cuenta_contable (codigo);
+
+CREATE INDEX IF NOT EXISTS ix_cuenta_contable_cuenta_padre_id
+  ON cuenta_contable (cuenta_padre_id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_asiento_contable_numero
   ON asiento_contable (numero);
@@ -156,6 +147,9 @@ CREATE INDEX IF NOT EXISTS ix_asiento_contable_origen_id
 
 CREATE INDEX IF NOT EXISTS ix_asiento_contable_grupo_id
   ON asiento_contable (grupo_id);
+
+CREATE INDEX IF NOT EXISTS ix_asiento_contable_periodo_contable_id
+  ON asiento_contable (periodo_contable_id);
 
 CREATE INDEX IF NOT EXISTS ix_movimiento_contable_asiento_id
   ON movimiento_contable (asiento_id);

@@ -55,8 +55,5 @@ CREATE INDEX IF NOT EXISTS ix_tarea_automatizada_programada_para
 CREATE INDEX IF NOT EXISTS ix_tarea_automatizada_estado
   ON tarea_automatizada (estado);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_tarea_automatizada_clave_idempotencia
-  ON tarea_automatizada (clave_idempotencia);
-
 CREATE INDEX IF NOT EXISTS ix_ejecucion_tarea_tarea_id
   ON ejecucion_tarea (tarea_id);

@@ -1,6 +1,7 @@
 -- bitacora_evento · módulo 09 — Auditoría, Reportes y Cumplimiento
 -- clase de dominio: BitacoraEvento
 -- APPEND-ONLY: sin UPDATE ni DELETE (ver sql/40_reglas)
+-- PARTICIONADA por rango de fecha_hora (mensual)
 -- Generado por scripts/generar_ddl.py — no editar a mano.
 
 CREATE TABLE IF NOT EXISTS bitacora_evento (
@@ -25,10 +26,25 @@ CREATE TABLE IF NOT EXISTS bitacora_evento (
   hash_registro                      VARCHAR(64) NOT NULL,
   hash_anterior                      VARCHAR(64) NOT NULL,
   fecha_hora                         TIMESTAMPTZ NOT NULL,
-  CONSTRAINT pk_bitacora_evento PRIMARY KEY (id),
+  CONSTRAINT pk_bitacora_evento PRIMARY KEY (id, fecha_hora),
   CONSTRAINT ck_bitacora_evento_accion CHECK (accion IN ('ACCESO_DATOS', 'ACTUALIZACION', 'ANULACION', 'APROBACION', 'CAMBIO_CONFIGURACION', 'CAMBIO_ESTADO', 'CAMBIO_PERMISOS', 'COBERTURA', 'CONCILIACION', 'CREACION', 'DESEMBOLSO', 'ELIMINACION_LOGICA', 'EXPORTACION', 'INICIO_SESION', 'LIQUIDACION', 'RECHAZO', 'SANCION')),
   CONSTRAINT ck_bitacora_evento_origen CHECK (origen IN ('API_PUBLICA', 'APP_MOVIL', 'APP_WEB', 'MIGRACION', 'ORGANIZADOR_DIGITAL', 'PANEL_ADMIN', 'SOPORTE_INTERNO', 'TAREA_PROGRAMADA', 'WEBHOOK_ENTRANTE'))
-);
+) PARTITION BY RANGE (fecha_hora);
+
+CREATE TABLE IF NOT EXISTS bitacora_evento_desborde
+  PARTITION OF bitacora_evento DEFAULT;
+
+DO $$
+DECLARE d DATE := date_trunc('year', current_date)::date;
+BEGIN
+  FOR i IN 0..23 LOOP
+    EXECUTE format(
+      'CREATE TABLE IF NOT EXISTS bitacora_evento_%s PARTITION OF bitacora_evento FOR VALUES FROM (%L) TO (%L)',
+      to_char(d + (i || ' month')::interval, 'YYYYMM'),
+      d + (i || ' month')::interval,
+      d + ((i + 1) || ' month')::interval);
+  END LOOP;
+END $$;
 
 COMMENT ON TABLE bitacora_evento IS 'Módulo 09 — Auditoría, Reportes y Cumplimiento. [append-only] Poder demostrar todo lo anterior ante un reclamo o un regulador';
 COMMENT ON COLUMN bitacora_evento.id IS 'PK';

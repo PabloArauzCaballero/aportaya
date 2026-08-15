@@ -4,7 +4,7 @@ tags:
   - restricciones
 titulo: "Catálogo de restricciones — AportaYa"
 motor: PostgreSQL 15+
-total_restricciones: 119
+total_restricciones: 124
 fecha: 2026-08-11
 ---
 
@@ -76,6 +76,8 @@ fn_<dominio>_<accion>  función
 | R-AUD-06 | Un asiento confirmado solo se corrige por reversa | Contabilidad | [[CU-24 Registrar el asiento contable de una operación]] |
 | R-AUD-07 | Los saldos diarios se cierran encadenados y son únicos por cuenta y fecha | Prueba de saldo histórico | [[CU-51 Ejecutar el cierre diario]] |
 | R-AUD-08 | Nada se depura antes de su fecha de conservación | Ley 393 (10 años) | [[CU-07 Ejercer derechos sobre datos personales]] |
+| R-AUD-09 | Los hashes de la bitácora los calcula la base, no la aplicación | ASFI · prueba ante el regulador | [[CU-73 Verificar la cadena de transparencia]] |
+| R-AUD-10 | Las cadenas se verifican en el control diario, no sólo al auditar | ASFI Seguridad de la Información | [[CU-73 Verificar la cadena de transparencia]] |
 
 ```sql
 -- R-AUD-01 · append-only por privilegios, no por convención
@@ -100,22 +102,76 @@ END $$ LANGUAGE plpgsql;
 -- esa lista alcanza para que quede sellada.
 
 -- R-AUD-02 / R-AUD-03 · cadena de hash verificable
+-- El bloqueo consultivo NO es opcional. Sin él, dos inserciones concurrentes
+-- leen el mismo `hash_registro` predecesor y producen dos eslabones hermanos:
+-- la cadena deja de ser una cadena y la verificación de CU-73 no puede
+-- distinguir una bifurcación legítima de un registro eliminado. Además
+-- `secuencia` es BIGSERIAL: los valores se asignan al pedirlos, pero los COMMIT
+-- pueden ocurrir en otro orden, así que "el último por secuencia" no es
+-- necesariamente el último confirmado. El bloqueo resuelve las dos cosas: sólo
+-- un escritor de la cadena a la vez.
+--
+-- El hash cubre TODO lo que hay que poder probar, no un subconjunto cómodo. La
+-- versión anterior dejaba fuera `estado`, `moneda` y `clave_idempotencia`, y
+-- sobre todo dejaba fuera las patas: se podía cambiar a quién se le debitó sin
+-- que el hash de la transacción cambiara. Las patas entran por su digest en el
+-- sellado diferido de abajo, porque al momento del INSERT todavía no existen.
 CREATE OR REPLACE FUNCTION fn_aud_encadenar_transaccion() RETURNS trigger AS $$
 DECLARE v_anterior VARCHAR(64);
 BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext('cadena_transaccion_billetera'));
   SELECT hash_registro INTO v_anterior
     FROM transaccion_billetera ORDER BY secuencia DESC LIMIT 1;
   NEW.hash_anterior := v_anterior;
   NEW.hash_registro := encode(digest(
-      COALESCE(NEW.secuencia::text,'') || NEW.tipo || NEW.monto_total::text ||
+      NEW.id::text || COALESCE(NEW.secuencia::text,'') || NEW.tipo ||
+      NEW.estado || NEW.moneda || NEW.monto_total::text ||
       COALESCE(NEW.origen_tipo,'') || COALESCE(NEW.origen_id::text,'') ||
-      NEW.ocurrida_en::text || COALESCE(v_anterior,''), 'sha256'), 'hex');
+      NEW.clave_idempotencia || COALESCE(NEW.iniciada_por::text,'') ||
+      NEW.canal || NEW.ocurrida_en::text ||
+      COALESCE(v_anterior,''), 'sha256'), 'hex');
   RETURN NEW;
 END $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER tg_transaccion_billetera_hash
   BEFORE INSERT ON transaccion_billetera
   FOR EACH ROW EXECUTE FUNCTION fn_aud_encadenar_transaccion();
+
+-- Las patas quedan fuera del hash del encabezado por una razón física: al
+-- ejecutarse el BEFORE INSERT de la transacción, los movimientos todavía no
+-- existen. Sellarlas después exigiría un UPDATE sobre `transaccion_billetera`,
+-- que es append-only (R-AUD-01) y lo rechazaría —el sello se bloquearía a sí
+-- mismo—. No hace falta: `movimiento_billetera` es append-only por derecho
+-- propio, así que una pata no se puede alterar ni borrar después de escrita. Lo
+-- que sí hay que poder detectar es una pata huérfana o un conjunto que no
+-- cuadre, y de eso se ocupan las consultas de verificación (R-AUD-10).
+
+-- R-AUD-09 · la bitácora se encadena sola: la aplicación no firma su propia huella
+--
+-- `hash_registro` y `hash_anterior` los escribía la aplicación. Una bitácora que
+-- firma la aplicación no prueba nada contra la aplicación, que es exactamente el
+-- adversario del que hay que defenderse ante un regulador. Ahora los calcula la
+-- base y el rol de aplicación no puede alterarlos (la tabla es append-only).
+CREATE OR REPLACE FUNCTION fn_aud_encadenar_bitacora() RETURNS trigger AS $$
+DECLARE v_anterior VARCHAR(64);
+BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext('cadena_bitacora_evento'));
+  SELECT hash_registro INTO v_anterior
+    FROM bitacora_evento ORDER BY secuencia DESC LIMIT 1;
+  NEW.hash_anterior := COALESCE(v_anterior, repeat('0', 64));
+  NEW.hash_registro := encode(digest(
+      NEW.entidad || NEW.entidad_id::text || NEW.accion ||
+      COALESCE(NEW.actor_usuario_id::text,'') || COALESCE(NEW.actor_rol,'') ||
+      COALESCE(NEW.suplantando_a_usuario_id::text,'') || NEW.origen ||
+      NEW.correlation_id::text || COALESCE(NEW.valor_anterior::text,'') ||
+      COALESCE(NEW.valor_nuevo::text,'') || COALESCE(NEW.motivo,'') ||
+      NEW.fecha_hora::text || NEW.hash_anterior, 'sha256'), 'hex');
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_bitacora_evento_hash
+  BEFORE INSERT ON bitacora_evento
+  FOR EACH ROW EXECUTE FUNCTION fn_aud_encadenar_bitacora();
 
 -- R-AUD-05 · invariante de partida doble contable
 CREATE OR REPLACE FUNCTION fn_aud_asiento_cuadrado() RETURNS trigger AS $$
@@ -176,6 +232,8 @@ ALTER TABLE expediente_cliente
 | R-BIL-15 | Una transacción se reversa una sola vez | Integridad | [[CU-14 Reversar una transacción]] |
 | R-BIL-17 | Una cuenta de destino por titular y número, y una sola principal | ASFI seguridad · UIF titularidad | [[CU-18 Registrar y verificar una cuenta bancaria de destino]] |
 | R-BIL-18 | Un arqueo por punto y fecha, y toda diferencia se justifica | ASFI puntos de atención | [[CU-57 Operar un punto de atención y arquear el efectivo]] |
+| R-BIL-19 | El reintento devuelve la primera respuesta, no un error de unicidad | Idempotencia extremo a extremo | [[CU-10 Recargar saldo]] |
+| R-BIL-20 | La partida doble también cuadra en moneda | Integridad del dinero | [[CU-12 Transferir saldo entre billeteras]] |
 
 ```sql
 -- R-BIL-01 · partida doble interna (diferido: se valida al COMMIT)
@@ -227,10 +285,58 @@ ALTER TABLE cuenta_billetera
   );
 
 -- R-BIL-06 · idempotencia extremo a extremo
-ALTER TABLE transaccion_billetera ADD CONSTRAINT uq_tx_idem UNIQUE (clave_idempotencia);
-ALTER TABLE orden_recarga        ADD CONSTRAINT uq_recarga_idem UNIQUE (clave_idempotencia);
-ALTER TABLE orden_retiro         ADD CONSTRAINT uq_retiro_idem  UNIQUE (clave_idempotencia);
-ALTER TABLE devengo_comision     ADD CONSTRAINT uq_devengo_idem UNIQUE (clave_idempotencia);
+--
+-- La clave se ampara SIEMPRE en el titular de la operación, nunca sola. Una
+-- unicidad global convierte la clave en un recurso compartido entre usuarios:
+-- quien reutilice —por azar o a propósito— la clave de otro hace que la
+-- operación legítima del otro sea rechazada. El espacio de claves es de cada
+-- titular. Se usa el centinela en `COALESCE` para que la unicidad también
+-- alcance a las operaciones sin usuario (lotes, sistema), donde `NULL` dejaría
+-- pasar duplicados.
+CREATE UNIQUE INDEX uq_tx_idem ON transaccion_billetera (
+    COALESCE(iniciada_por, '00000000-0000-0000-0000-000000000000'::uuid),
+    origen_tipo, clave_idempotencia);
+CREATE UNIQUE INDEX uq_recarga_idem
+  ON orden_recarga (cuenta_billetera_id, clave_idempotencia);
+CREATE UNIQUE INDEX uq_retiro_idem
+  ON orden_retiro (cuenta_billetera_id, clave_idempotencia);
+CREATE UNIQUE INDEX uq_devengo_idem ON devengo_comision (
+    COALESCE(grupo_id, '00000000-0000-0000-0000-000000000000'::uuid),
+    clave_idempotencia);
+
+-- La misma regla, en el resto del sistema. Cada clave se ampara en el objeto
+-- del que depende la operación. `webhook_pasarela` se ampara en el proveedor
+-- porque la clave la emite él: dos pasarelas distintas pueden mandar el mismo
+-- identificador de evento sin que eso signifique que sea el mismo hecho.
+CREATE UNIQUE INDEX uq_orden_cobro_idem
+  ON orden_cobro (obligacion_id, clave_idempotencia);
+CREATE UNIQUE INDEX uq_intento_pago_idem
+  ON intento_pago (orden_cobro_id, clave_idempotencia);
+CREATE UNIQUE INDEX uq_pago_idem
+  ON pago (obligacion_id, clave_idempotencia);
+CREATE UNIQUE INDEX uq_webhook_idem
+  ON webhook_pasarela (proveedor_id, clave_idempotencia);
+CREATE UNIQUE INDEX uq_cotizacion_idem
+  ON cotizacion_comision (referencia_id, clave_idempotencia);
+CREATE UNIQUE INDEX uq_token_verificacion_idem ON token_verificacion (
+    COALESCE(usuario_id, '00000000-0000-0000-0000-000000000000'::uuid),
+    clave_idempotencia);
+
+-- R-BIL-19 · el reintento devuelve la primera respuesta, no un error
+--
+-- La unicidad sola no alcanza. El caso para el que existe la idempotencia es el
+-- reintento tras un timeout: el cliente no sabe si la operación se aplicó. Con
+-- sólo un UNIQUE, ese reintento choca contra la violación y devuelve un error,
+-- que es indistinguible de "falló". Hay que poder devolver la respuesta original.
+--
+-- `hash_solicitud` cierra el hueco restante: la misma clave con otro cuerpo es un
+-- conflicto (409), nunca una reejecución silenciosa con parámetros distintos.
+ALTER TABLE respuesta_idempotente
+  ADD CONSTRAINT ck_respuesta_idem_hash CHECK (length(hash_solicitud) = 64),
+  ADD CONSTRAINT ck_respuesta_idem_expira CHECK (expira_en > registrada_en),
+  ADD CONSTRAINT ck_respuesta_idem_http CHECK (codigo_http BETWEEN 100 AND 599);
+
+CREATE INDEX ix_respuesta_idem_expiradas ON respuesta_idempotente (expira_en);
 
 -- R-BIL-07 y R-BIL-16 · los dos saldos se derivan, no se escriben
 --
@@ -240,9 +346,20 @@ ALTER TABLE devengo_comision     ADD CONSTRAINT uq_devengo_idem UNIQUE (clave_id
 --
 -- Mantenerlos por trigger elimina toda una clase de defecto: una aplicación que
 -- olvide actualizar la caché, un script suelto, o un reintento a medias.
+--
+-- El `FOR UPDATE` de la primera línea NO es decorativo: es la regla. Sin él, dos
+-- transacciones concurrentes sobre la misma cuenta leen cada una un snapshot que
+-- no contiene el movimiento de la otra, calculan el mismo saldo, y la segunda
+-- pisa a la primera al despertar del bloqueo de fila. Se pierde un movimiento
+-- del saldo, y como `ck_cuenta_saldo_no_negativo` se evalúa sobre esta columna,
+-- el control de saldo no negativo pasa a evaluarse contra un saldo falso: dos
+-- retiros simultáneos sobregiran la cuenta. Tomar el bloqueo ANTES de leer
+-- obliga a la segunda transacción a releer el libro ya completo.
 CREATE OR REPLACE FUNCTION fn_bil_recalcular_saldos(p_cuenta UUID) RETURNS VOID AS $$
 DECLARE v_movimientos NUMERIC(16,2); v_retenido NUMERIC(16,2);
 BEGIN
+  PERFORM 1 FROM cuenta_billetera WHERE id = p_cuenta FOR UPDATE;
+
   SELECT COALESCE(SUM(CASE WHEN sentido = 'CREDITO' THEN monto ELSE -monto END), 0)
     INTO v_movimientos
     FROM movimiento_billetera WHERE cuenta_billetera_id = p_cuenta;
@@ -251,7 +368,8 @@ BEGIN
    WHERE cuenta_billetera_id = p_cuenta AND estado = 'VIGENTE';
   UPDATE cuenta_billetera
      SET saldo_retenido   = v_retenido,
-         saldo_disponible = v_movimientos - v_retenido
+         saldo_disponible = v_movimientos - v_retenido,
+         version          = version + 1
    WHERE id = p_cuenta;
 END $$ LANGUAGE plpgsql;
 
@@ -269,6 +387,53 @@ CREATE TRIGGER tg_retencion_sincroniza_saldo
 CREATE TRIGGER tg_movimiento_sincroniza_saldo
   AFTER INSERT ON movimiento_billetera
   FOR EACH ROW EXECUTE FUNCTION fn_bil_sincronizar_saldos();
+
+-- R-BIL-20 · la partida doble también cuadra en moneda
+--
+-- R-BIL-01 suma importes sin mirar la moneda: una transacción que debita 100 USD
+-- y acredita 100 BOB cuadra numéricamente y descuadra económicamente. Mientras
+-- el sistema sea de una sola moneda el defecto está latente; el día que entre la
+-- segunda es una fuga de valor silenciosa. Se verifica al COMMIT porque las
+-- patas no existen todavía al insertar el encabezado.
+CREATE OR REPLACE FUNCTION fn_bil_moneda_coherente() RETURNS trigger AS $$
+DECLARE v_distintas INT;
+BEGIN
+  SELECT count(*) INTO v_distintas
+    FROM movimiento_billetera m
+    JOIN cuenta_billetera c ON c.id = m.cuenta_billetera_id
+   WHERE m.transaccion_id = NEW.id AND c.moneda <> NEW.moneda;
+  IF v_distintas > 0 THEN
+    RAISE EXCEPTION
+      'R-BIL-20: la transacción % toca % cuenta(s) en moneda distinta de %',
+      NEW.id, v_distintas, NEW.moneda;
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE CONSTRAINT TRIGGER tg_transaccion_moneda
+  AFTER INSERT OR UPDATE ON transaccion_billetera
+  DEFERRABLE INITIALLY DEFERRED
+  FOR EACH ROW WHEN (NEW.estado = 'APLICADA')
+  EXECUTE FUNCTION fn_bil_moneda_coherente();
+
+-- La orden y la cuenta que debita comparten moneda, o el neto no significa nada.
+CREATE OR REPLACE FUNCTION fn_bil_moneda_orden() RETURNS trigger AS $$
+DECLARE v_moneda CHAR(3);
+BEGIN
+  SELECT moneda INTO v_moneda FROM cuenta_billetera WHERE id = NEW.cuenta_billetera_id;
+  IF v_moneda IS DISTINCT FROM NEW.moneda THEN
+    RAISE EXCEPTION 'R-BIL-20: la orden está en % y la cuenta en %', NEW.moneda, v_moneda;
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_retiro_moneda
+  BEFORE INSERT OR UPDATE OF moneda ON orden_retiro
+  FOR EACH ROW EXECUTE FUNCTION fn_bil_moneda_orden();
+
+CREATE TRIGGER tg_recarga_moneda
+  BEFORE INSERT OR UPDATE OF moneda ON orden_recarga
+  FOR EACH ROW EXECUTE FUNCTION fn_bil_moneda_orden();
 
 -- R-BIL-08 · toda retención expira salvo orden de autoridad
 ALTER TABLE retencion_saldo
@@ -302,6 +467,40 @@ CREATE TRIGGER tg_retiro_instrumento
 -- R-BIL-10 · una referencia externa, una acreditación
 ALTER TABLE orden_recarga
   ADD CONSTRAINT uq_recarga_referencia UNIQUE (referencia_externa);
+
+-- R-BIL-11b · con el encaje roto no sale dinero
+--
+-- Registrar que el encaje no se cumple y seguir pagando retiros es el escenario
+-- clásico de la corrida: se le paga a los primeros que llegan y no queda para
+-- los demás. `AP-CU11-06` estaba declarado como error del caso de uso pero
+-- ninguna regla lo aplicaba. El modo restringido lo aplica la base.
+--
+-- Se mira la última conciliación de cada cuenta de custodia de la moneda: si
+-- alguna no cumple encaje, no se autorizan salidas nuevas. Las órdenes ya
+-- autorizadas siguen su curso: frenar a mitad de camino dejaría dinero retenido
+-- sin pagar ni devolver, que es peor.
+CREATE OR REPLACE FUNCTION fn_bil_exigir_encaje() RETURNS trigger AS $$
+DECLARE v_incumple INT;
+BEGIN
+  IF NEW.estado IN ('BORRADOR','RECHAZADA') THEN
+    RETURN NEW;
+  END IF;
+  SELECT count(*) INTO v_incumple
+    FROM (SELECT DISTINCT ON (cuenta_custodia_id) cumple_encaje
+            FROM conciliacion_custodia
+           ORDER BY cuenta_custodia_id, fecha DESC) ultima
+   WHERE NOT ultima.cumple_encaje;
+  IF v_incumple > 0 THEN
+    RAISE EXCEPTION
+      'R-BIL-11: encaje incumplido en % cuenta(s) de custodia; salidas suspendidas',
+      v_incumple;
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_retiro_encaje
+  BEFORE INSERT OR UPDATE OF estado ON orden_retiro
+  FOR EACH ROW EXECUTE FUNCTION fn_bil_exigir_encaje();
 
 -- R-BIL-11 · encaje mínimo y unicidad diaria de la conciliación
 ALTER TABLE conciliacion_custodia
@@ -411,10 +610,15 @@ BEGIN
     -- devuelve NULL: el límite dejaría de aplicarse en la primera operación de
     -- la ventana. Se inicializa en cero de forma explícita.
     v_acumulado := 0;
+    -- FOR UPDATE por el mismo motivo que en fn_bil_recalcular_saldos: leer el
+    -- acumulado sin bloquear la fila permite que dos operaciones simultáneas
+    -- lean el mismo valor y ambas pasen el tope diario. Un límite que se evade
+    -- corriendo dos veces el mismo request no es un límite.
     SELECT COALESCE(monto_acumulado, 0) INTO v_acumulado
       FROM consumo_limite
      WHERE cuenta_billetera_id = p_cuenta AND limite_id = v_lim.id
-       AND now() BETWEEN ventana_inicio AND ventana_fin;
+       AND now() BETWEEN ventana_inicio AND ventana_fin
+       FOR UPDATE;
     v_acumulado := COALESCE(v_acumulado, 0);
     IF v_lim.monto_maximo IS NOT NULL
        AND v_acumulado + p_monto > v_lim.monto_maximo THEN
@@ -702,9 +906,14 @@ BEGIN
    WHERE r.usuario_id = p_usuario AND r.umbral_reporte_id = p_umbral;
   desde := greatest(COALESCE(v_ultimo::date + 1, p_fecha - (v_u.ventana_dias_calendario - 1)),
                     p_fecha - (v_u.ventana_dias_calendario - 1));
-  SELECT COALESCE(sum(x.usd), 0), min(x.id)
+  -- `inicio_id` es la PRIMERA operación de la ventana en el tiempo, que es lo
+  -- que el formulario tiene que citar. No se puede resolver con un agregado
+  -- sobre el UUID: PostgreSQL no define min() para uuid —el error delató el
+  -- problema— y aunque lo definiera, el UUID menor no es el más antiguo.
+  SELECT COALESCE(sum(x.usd), 0),
+         (array_agg(x.id ORDER BY x.ocurrida_en, x.secuencia))[1]
     INTO monto, inicio_id
-    FROM (SELECT t.id,
+    FROM (SELECT t.id, t.ocurrida_en, t.secuencia,
                  (fn_fx_a_usd(t.monto_total, t.moneda, t.ocurrida_en::date)).monto_usd AS usd
             FROM transaccion_billetera t
            WHERE t.estado = 'APLICADA'
@@ -953,7 +1162,8 @@ ALTER TABLE estado_cuenta_billetera
 
 | Código | Regla | Obliga | Se verifica en |
 | --- | --- | --- | --- |
-| R-SEG-01 | Nunca se persiste el número completo de tarjeta o cuenta en claro | PCI DSS · ISO 27001 | [[CU-01 Registro y apertura de billetera]] |
+| R-SEG-01 | Nunca se persiste el número completo de tarjeta o cuenta en claro, y el hash de búsqueda lleva pimienta | PCI DSS · ISO 27001 | [[CU-01 Registro y apertura de billetera]] |
+| R-SEG-01b | Toda columna cifrada declara su versión de llave | PCI DSS · rotación de claves | [[CU-01 Registro y apertura de billetera]] |
 | R-SEG-02 | Todo acceso a datos sensibles queda registrado con justificación | ASFI · ISO 27001 A.8.15 | [[CU-45 Atender un requerimiento de autoridad]] |
 | R-SEG-03 | Un usuario solo ve sus propios datos (RLS) | Protección de datos | todos |
 | R-SEG-04 | Segregación de funciones: quien autoriza no ejecuta | Control interno | [[CU-22 Liquidar y entregar el fondo]] |
@@ -961,9 +1171,33 @@ ALTER TABLE estado_cuenta_billetera
 | R-SEG-06 | La anonimización respeta la retención legal | Ley 393 vs. derecho de supresión | [[CU-07 Ejercer derechos sobre datos personales]] |
 | R-SEG-07 | Nadie se otorga a sí mismo un rol | Segregación de funciones | [[CU-08 Asignar y revocar roles de operador]] |
 | R-SEG-08 | Una sola asignación vigente por usuario, rol y ámbito | Control de accesos | [[CU-08 Asignar y revocar roles de operador]] |
+| R-SEG-09 | El refresco se rota, y reusarlo revoca la familia y sus sesiones | ASFI Seguridad · toma de cuenta | [[CU-04 Autenticar con MFA y registrar dispositivo]] |
 
 ```sql
 -- R-SEG-01 · solo hash, token y enmascarado
+--
+-- El largo 64 fija SHA-256 hexadecimal, pero el algoritmo no es lo que protege
+-- aquí: lo que protege es que la entrada NO sea adivinable. Un CI boliviano son
+-- ~10⁷ valores; un PAN con BIN conocido, ~10⁶; un número de cuenta, menos. La
+-- tabla completa de digests se precalcula en segundos. Un `digest()` desnudo
+-- sobre esos campos anula el cifrado de la columna de al lado, porque el hash
+-- de búsqueda revela exactamente el dato que el cifrado protegía.
+--
+-- Por eso el hash de búsqueda es SIEMPRE un HMAC con una pimienta que vive
+-- fuera de la base (KMS o variable de entorno del proceso), nunca un digest
+-- directo. `fn_seg_hash_busqueda` es el único camino permitido, y falla si la
+-- pimienta no está configurada: denegar por omisión también aquí.
+CREATE OR REPLACE FUNCTION fn_seg_hash_busqueda(p_valor TEXT) RETURNS TEXT AS $$
+DECLARE v_pimienta TEXT;
+BEGIN
+  v_pimienta := current_setting('app.pimienta_busqueda', true);
+  IF v_pimienta IS NULL OR length(v_pimienta) < 32 THEN
+    RAISE EXCEPTION
+      'R-SEG-01: falta app.pimienta_busqueda; el hash de búsqueda sin pimienta es reversible';
+  END IF;
+  RETURN encode(hmac(p_valor, v_pimienta, 'sha256'), 'hex');
+END $$ LANGUAGE plpgsql;
+
 ALTER TABLE instrumento_fondeo
   ADD CONSTRAINT ck_instrumento_sin_pan CHECK (
       enmascarado !~ '[0-9]{9,}' AND length(hash_identificador) = 64
@@ -972,26 +1206,150 @@ ALTER TABLE cuenta_bancaria_beneficiario
   ADD CONSTRAINT ck_cuenta_bancaria_sin_claro CHECK (
       numero_enmascarado !~ '[0-9]{9,}' AND length(hash_numero_cuenta) = 64
   );
+ALTER TABLE documento_identidad
+  ADD CONSTRAINT ck_documento_hash_completo CHECK (length(hash_numero) = 64);
+
+-- R-SEG-01b · todo texto cifrado dice con qué llave se cifró
+--
+-- Sin versión de llave, rotar exige descifrar y recifrar el universo entero en
+-- una sola ventana atómica. En la práctica eso significa no rotar nunca, que es
+-- el hallazgo estándar de toda auditoría. Con la versión al lado, conviven dos
+-- generaciones y la rotación es incremental.
+ALTER TABLE documento_identidad
+  ADD CONSTRAINT ck_documento_version_llave CHECK (version_llave >= 1);
+ALTER TABLE cuenta_bancaria_beneficiario
+  ADD CONSTRAINT ck_cuenta_bancaria_version_llave CHECK (version_llave >= 1);
+ALTER TABLE factor_mfa
+  ADD CONSTRAINT ck_factor_mfa_version_llave CHECK (version_llave >= 1);
+ALTER TABLE cuenta_custodia
+  ADD CONSTRAINT ck_cuenta_custodia_version_llave CHECK (version_llave >= 1);
+ALTER TABLE exportacion_reporte
+  ADD CONSTRAINT ck_exportacion_version_llave CHECK (version_llave >= 1);
 
 -- R-SEG-02 · el acceso a datos sensibles exige justificación
+--
+-- La columna es NOT NULL a propósito: un CHECK que sólo compara longitudes se
+-- satisface con NULL, porque `length(trim(NULL)) >= 10` evalúa a NULL y un
+-- CHECK que evalúa a NULL se acepta. La restricción se saltaba dejando el campo
+-- vacío. El `IS NOT NULL` explícito es el que hace el trabajo.
 ALTER TABLE registro_acceso_datos
   ADD CONSTRAINT ck_acceso_justificacion
-  CHECK (length(trim(justificacion)) >= 10);
+  CHECK (justificacion IS NOT NULL AND length(btrim(justificacion)) >= 10);
 
 -- R-SEG-03 · seguridad a nivel de fila
-ALTER TABLE cuenta_billetera ENABLE ROW LEVEL SECURITY;
-CREATE POLICY pol_cuenta_propia ON cuenta_billetera
-  FOR SELECT TO rol_aplicacion
-  USING (usuario_id = current_setting('app.usuario_id', true)::uuid
-         OR current_setting('app.rol', true) IN ('BACKOFFICE','CUMPLIMIENTO'));
+--
+-- Tres condiciones tienen que cumplirse a la vez para que la RLS sirva de algo,
+-- y las tres se olvidan seguido:
+--
+--   1) FORCE, no sólo ENABLE. El dueño de la tabla omite las políticas siempre.
+--      Si la API se conecta como dueña del esquema, ENABLE no protege nada.
+--   2) El juego completo de comandos. Una política sólo de SELECT deja la
+--      escritura sobre filas ajenas exactamente igual de abierta que antes.
+--   3) La app NO es dueña del esquema: se conecta como rol_aplicacion, que
+--      recibe privilegios explícitos más abajo.
+--
+-- `app.usuario_id` y `app.rol` los fija la aplicación con SET LOCAL dentro de la
+-- transacción. SET LOCAL y no SET: con pooling, un SET a secas sobrevive a la
+-- devolución de la conexión y el siguiente request hereda la identidad del
+-- anterior. Ver [[ADR-007 Sesión, RLS y pooling]].
+CREATE OR REPLACE FUNCTION fn_seg_usuario_actual() RETURNS UUID AS $$
+  SELECT NULLIF(current_setting('app.usuario_id', true), '')::uuid;
+$$ LANGUAGE sql STABLE;
 
-ALTER TABLE movimiento_billetera ENABLE ROW LEVEL SECURITY;
-CREATE POLICY pol_movimiento_propio ON movimiento_billetera
-  FOR SELECT TO rol_aplicacion
-  USING (EXISTS (SELECT 1 FROM cuenta_billetera c
-                  WHERE c.id = movimiento_billetera.cuenta_billetera_id
-                    AND (c.usuario_id = current_setting('app.usuario_id', true)::uuid
-                         OR current_setting('app.rol', true) IN ('BACKOFFICE','CUMPLIMIENTO'))));
+CREATE OR REPLACE FUNCTION fn_seg_rol_privilegiado() RETURNS BOOLEAN AS $$
+  SELECT COALESCE(current_setting('app.rol', true), '')
+         IN ('BACKOFFICE','CUMPLIMIENTO','AUDITOR');
+$$ LANGUAGE sql STABLE;
+
+-- La cobertura NO se escribe a mano. Una lista de tablas escrita a mano se
+-- desactualiza en el primer módulo nuevo, y una tabla olvidada no falla: queda
+-- abierta en silencio, que es la peor forma de fallar. El recorrido va sobre el
+-- catálogo: toda tabla que tenga `usuario_id` o `cuenta_billetera_id` recibe
+-- política, hoy y cuando se agregue la próxima.
+--
+-- Hay dos regímenes, y la diferencia importa. El usuario ve sus datos de
+-- identidad, su billetera y sus operaciones. Lo que NO puede ver jamás es lo que
+-- el área de cumplimiento escribió sobre él: una alerta de monitoreo, un caso de
+-- investigación, una coincidencia con lista restrictiva, su calificación de
+-- riesgo. Darle acceso a su propia fila ahí no es una fuga de privacidad, es un
+-- delito: se llama soplo, y la Ley 393 y la UIF lo prohíben expresamente. Por
+-- eso el reparto es por lista blanca y todo lo demás cae en privilegiado.
+CREATE OR REPLACE FUNCTION fn_seg_aplicar_rls() RETURNS VOID AS $$
+DECLARE
+  r RECORD;
+  visibles_por_titular TEXT[] := ARRAY[
+      'documento_identidad','direccion_usuario','perfil_financiero',
+      'credencial_acceso','historial_credencial','factor_mfa','dispositivo',
+      'sesion','token_verificacion','consentimiento','preferencia_notificacion',
+      'referencia_personal','solicitud_baja','verificacion_kyc',
+      'reputacion_usuario','cuenta_billetera','cuenta_bancaria_beneficiario',
+      'instrumento_fondeo','respuesta_idempotente','reclamo_cliente',
+      'solicitud_datos_personales','notificacion','aceptacion_contrato',
+      'datos_facturacion','canal_vinculado','bandeja_entrada',
+      'certificado_reputacion','insignia_otorgada','declaracion_origen_fondos'];
+  cond TEXT;
+BEGIN
+  FOR r IN
+      SELECT c.relname AS t,
+             EXISTS (SELECT 1 FROM pg_attribute a
+                      WHERE a.attrelid = c.oid AND a.attname = 'usuario_id'
+                        AND NOT a.attisdropped) AS por_usuario
+        FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+       WHERE n.nspname = 'public' AND c.relkind IN ('r','p')
+         AND EXISTS (SELECT 1 FROM pg_attribute a
+                      WHERE a.attrelid = c.oid AND NOT a.attisdropped
+                        AND a.attname IN ('usuario_id','cuenta_billetera_id'))
+  LOOP
+    IF NOT (r.t = ANY (visibles_por_titular)) THEN
+      cond := 'fn_seg_rol_privilegiado()';          -- denegar por omisión
+    ELSIF r.por_usuario THEN
+      cond := 'usuario_id = fn_seg_usuario_actual() OR fn_seg_rol_privilegiado()';
+    ELSE
+      cond := format('fn_seg_rol_privilegiado() OR EXISTS ('
+                     'SELECT 1 FROM cuenta_billetera c WHERE c.id = %I.cuenta_billetera_id '
+                     'AND c.usuario_id = fn_seg_usuario_actual())', r.t);
+    END IF;
+
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', r.t);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', r.t);
+    EXECUTE format('DROP POLICY IF EXISTS pol_%s_titular ON %I', r.t, r.t);
+    EXECUTE format(
+      'CREATE POLICY pol_%s_titular ON %I FOR ALL TO rol_aplicacion '
+      'USING (%s) WITH CHECK (%s)', r.t, r.t, cond, cond);
+  END LOOP;
+END $$ LANGUAGE plpgsql;
+
+SELECT fn_seg_aplicar_rls();
+
+-- La propia tabla de usuarios: acá el dueño es la clave primaria, no usuario_id.
+ALTER TABLE usuario ENABLE ROW LEVEL SECURITY;
+ALTER TABLE usuario FORCE ROW LEVEL SECURITY;
+CREATE POLICY pol_usuario_titular ON usuario
+  FOR ALL TO rol_aplicacion
+  USING (id = fn_seg_usuario_actual() OR fn_seg_rol_privilegiado())
+  WITH CHECK (id = fn_seg_usuario_actual() OR fn_seg_rol_privilegiado());
+
+-- Las tablas de cumplimiento que NO llevan usuario_id quedan igualmente fuera
+-- del alcance de la aplicación: sólo cumplimiento y auditoría las leen.
+DO $$
+DECLARE t TEXT;
+BEGIN
+  -- `reporte_operacion_sospechosa` y `registro_operacion_relevante` NO van acá:
+  -- llevan usuario_id, así que el recorrido de arriba ya les puso política
+  -- privilegiada. Repetirlas crearía dos políticas permisivas sobre la misma
+  -- tabla, que PostgreSQL combina con OR y sólo sirven para confundir a quien
+  -- audite después.
+  FOREACH t IN ARRAY ARRAY[
+      'regla_monitoreo_lft','matriz_riesgo_lft','lista_restrictiva_externa',
+      'registro_acceso_datos','requerimiento_autoridad'] LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
+    EXECUTE format(
+      'CREATE POLICY pol_%s_reservado ON %I FOR ALL TO rol_aplicacion '
+      'USING (fn_seg_rol_privilegiado()) WITH CHECK (fn_seg_rol_privilegiado())',
+      t, t);
+  END LOOP;
+END $$;
 
 -- R-SEG-04 · cuatro ojos donde importa
 ALTER TABLE entrega_fondo
@@ -1006,6 +1364,66 @@ ALTER TABLE reporte_regulatorio
       estado <> 'ENVIADO'
    OR (aprobado_por IS NOT NULL AND aprobado_por <> generado_por)
   );
+
+-- El retiro es la salida de dinero de mayor riesgo del sistema y era la única
+-- sin segregación exigible: `requiere_doble_aprobacion` existía sin ninguna
+-- restricción que lo hiciera valer, y la tabla ni siquiera guardaba quién había
+-- solicitado la orden, así que no había con qué comparar al aprobador.
+ALTER TABLE orden_retiro
+  ADD CONSTRAINT ck_retiro_doble_aprobacion CHECK (
+      NOT requiere_doble_aprobacion
+   OR estado IN ('BORRADOR','PENDIENTE','RECHAZADA')
+   OR (aprobada_por IS NOT NULL AND aprobada_por <> solicitada_por)
+  );
+
+-- R-SEG-09 · el refresco se rota, y reusarlo revoca la familia entera
+--
+-- Un token de refresco consumido que vuelve a presentarse es la firma de un
+-- robo: el legítimo y el ladrón tienen el mismo token y uno lo usó después del
+-- otro. No se sabe cuál es cuál, así que no alcanza con rechazar el segundo
+-- intento: hay que invalidar la familia completa y cortar las sesiones que
+-- colgaban de ella. Sin esto, la rotación es decorativa.
+--
+-- El disparador no lanza excepción a propósito: si lo hiciera, la propia
+-- revocación se iría en el ROLLBACK. Marca el token como INVALIDADO y propaga;
+-- la aplicación ve que no obtuvo un token vivo y responde 401.
+ALTER TABLE token_verificacion
+  ADD CONSTRAINT ck_token_refresco_familia CHECK (
+      tipo_token <> 'REFRESCO' OR familia_id IS NOT NULL);
+
+CREATE UNIQUE INDEX uq_token_refresco_vivo
+  ON token_verificacion (familia_id)
+  WHERE (tipo_token = 'REFRESCO' AND estado = 'EMITIDO');
+
+CREATE OR REPLACE FUNCTION fn_seg_detectar_reuso_refresco() RETURNS trigger AS $$
+BEGIN
+  IF NEW.tipo_token <> 'REFRESCO' OR NEW.estado <> 'CONSUMIDO' THEN
+    RETURN NEW;
+  END IF;
+  IF OLD.estado = 'EMITIDO' THEN
+    RETURN NEW;                      -- rotación normal
+  END IF;
+
+  NEW.estado := 'INVALIDADO';
+  NEW.invalidado_en := now();
+  NEW.motivo_invalidacion := 'R-SEG-09: reuso de token de refresco';
+
+  UPDATE token_verificacion
+     SET estado = 'INVALIDADO', invalidado_en = now(),
+         motivo_invalidacion = 'R-SEG-09: reuso en la familia'
+   WHERE familia_id = NEW.familia_id AND id <> NEW.id AND estado = 'EMITIDO';
+
+  UPDATE sesion
+     SET revocada_en = now(),
+         motivo_revocacion = 'R-SEG-09: reuso de token de refresco'
+   WHERE refresco_familia_id = NEW.familia_id AND revocada_en IS NULL;
+
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_token_reuso_refresco
+  BEFORE UPDATE OF estado ON token_verificacion
+  FOR EACH ROW EXECUTE FUNCTION fn_seg_detectar_reuso_refresco();
 
 -- R-SEG-05 · plazo de reporte guardado
 ALTER TABLE incidente_seguridad
@@ -1457,9 +1875,11 @@ CREATE TRIGGER tg_resena_convivencia
 | R-NOT-03 | Una supresión vigente corta los envíos comerciales | Consumidor financiero | [[CU-82 Procesar una respuesta entrante]] |
 
 ```sql
--- R-NOT-01 · idempotencia del envío
-ALTER TABLE envio_notificacion
-  ADD CONSTRAINT uq_envio_idempotencia UNIQUE (clave_idempotencia);
+-- R-NOT-01 · idempotencia del envío, amparada en la notificación (R-BIL-06)
+CREATE UNIQUE INDEX uq_envio_idempotencia
+  ON envio_notificacion (notificacion_id, clave_idempotencia);
+CREATE UNIQUE INDEX uq_evento_entrega_idempotencia
+  ON evento_entrega_mensaje (envio_id, clave_idempotencia);
 
 -- R-NOT-02 · tope diario configurable, denegando por omisión
 CREATE OR REPLACE FUNCTION fn_not_puede_enviar(
@@ -1628,8 +2048,11 @@ ALTER TABLE alerta_riesgo
 
 ```sql
 -- R-DES-01 · una orden viva por entrega; la clave corta el doble pago
+-- La clave se ampara en la entrega, no es global (R-BIL-06).
+CREATE UNIQUE INDEX uq_orden_desembolso_clave
+  ON orden_desembolso (entrega_id, clave_idempotencia);
+
 ALTER TABLE orden_desembolso
-  ADD CONSTRAINT uq_orden_desembolso_clave UNIQUE (clave_idempotencia),
   ADD CONSTRAINT ck_orden_desembolso_monto CHECK (monto > 0),
   ADD CONSTRAINT ck_orden_desembolso_acreditada CHECK (
         estado <> 'ACREDITADA'
@@ -1795,8 +2218,11 @@ CREATE UNIQUE INDEX uq_regla_automatizacion_prioridad
   WHERE (activa);
 
 -- R-ORG-07 · una tarea por hecho disparador
+-- La clave se ampara en la regla y el grupo, no es global (R-BIL-06).
+CREATE UNIQUE INDEX uq_tarea_automatizada_clave
+  ON tarea_automatizada (regla_id, grupo_id, clave_idempotencia);
+
 ALTER TABLE tarea_automatizada
-  ADD CONSTRAINT uq_tarea_automatizada_clave UNIQUE (clave_idempotencia),
   ADD CONSTRAINT ck_tarea_intentos CHECK (intentos >= 0);
 
 ALTER TABLE ejecucion_tarea
@@ -1827,8 +2253,28 @@ BEGIN
   END LOOP;
 END $$;
 
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO rol_auditor;
+-- La aplicación se conecta como rol_aplicacion y NUNCA como dueña del esquema.
+-- No es un detalle de higiene: el dueño de una tabla omite sus políticas RLS
+-- siempre, incluso con FORCE activado sobre otros roles. Una API que se conecta
+-- como dueña convierte toda la sección R-SEG-03 en decoración.
+GRANT USAGE ON SCHEMA public TO
+  rol_aplicacion, rol_backoffice, rol_cumplimiento, rol_auditor;
+GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO rol_aplicacion;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO rol_aplicacion;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO
+  rol_auditor, rol_backoffice, rol_cumplimiento;
 REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM rol_auditor;
+REVOKE DELETE ON ALL TABLES IN SCHEMA public FROM rol_aplicacion;
+
+-- `ALL TABLES` sólo alcanza a las que existen en este momento. Sin privilegios
+-- por omisión, cada tabla nueva nace invisible para el auditor y sin permisos
+-- para la aplicación, y nadie se entera hasta que algo falla en producción.
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE ON TABLES TO rol_aplicacion;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT ON TABLES TO rol_auditor, rol_backoffice, rol_cumplimiento;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT USAGE, SELECT ON SEQUENCES TO rol_aplicacion;
 
 -- El rol de aplicación no puede tocar catálogos regulatorios
 REVOKE INSERT, UPDATE, DELETE ON
@@ -1836,6 +2282,15 @@ REVOKE INSERT, UPDATE, DELETE ON
     impuesto, tarifario, concepto_tarifa, regla_tarifa, licencia_regulatoria,
     politica_interna, matriz_riesgo_lft, regla_monitoreo_lft
 FROM rol_aplicacion;
+
+-- El auditor lee todo, incluidos datos personales, y por eso su lectura también
+-- deja huella: es un rol privilegiado a efectos de RLS (fn_seg_rol_privilegiado)
+-- y toda consulta suya sobre datos sensibles debe registrarse en
+-- registro_acceso_datos con justificación (R-SEG-02). El privilegio de ver todo
+-- y la obligación de explicar por qué van juntos.
+COMMENT ON ROLE rol_auditor IS
+  'Sólo lectura sobre todo el esquema. Su acceso a datos personales exige '
+  'registro en registro_acceso_datos con justificación (R-SEG-02).';
 ```
 
 > [!important] Por qué el rol de la aplicación no edita los catálogos
@@ -1912,6 +2367,55 @@ SELECT d.id FROM deduccion_entrega d
 SELECT codigo FROM reclamo_cliente
  WHERE estado='CERRADO' AND resultado='FAVORABLE'
    AND monto_reclamado IS NOT NULL AND devolucion_comision_id IS NULL;
+
+-- 7) R-AUD-10 · eslabones rotos en la cadena de transacciones
+-- Cada fila debe apuntar al hash de su predecesora por secuencia. Detecta tanto
+-- una alteración como una eliminación: si falta un eslabón, el siguiente queda
+-- apuntando a un hash que ya no existe.
+SELECT t.id, t.secuencia, t.hash_anterior, prev.hash_registro AS esperado
+  FROM transaccion_billetera t
+  LEFT JOIN LATERAL (
+        SELECT p.hash_registro FROM transaccion_billetera p
+         WHERE p.secuencia < t.secuencia
+         ORDER BY p.secuencia DESC LIMIT 1) prev ON TRUE
+ WHERE t.hash_anterior IS DISTINCT FROM prev.hash_registro;
+
+-- 8) R-AUD-10 · eslabones rotos en la cadena de la bitácora
+SELECT b.id, b.secuencia, b.hash_anterior, COALESCE(prev.hash_registro, repeat('0',64)) AS esperado
+  FROM bitacora_evento b
+  LEFT JOIN LATERAL (
+        SELECT p.hash_registro FROM bitacora_evento p
+         WHERE p.secuencia < b.secuencia
+         ORDER BY p.secuencia DESC LIMIT 1) prev ON TRUE
+ WHERE b.hash_anterior IS DISTINCT FROM COALESCE(prev.hash_registro, repeat('0',64));
+
+-- 9) R-AUD-10 · patas huérfanas o transacciones aplicadas sin patas
+-- Las patas no entran en el hash del encabezado (ver R-AUD-03): esta consulta es
+-- la que cubre ese flanco.
+SELECT m.id AS movimiento_huerfano, NULL::uuid AS transaccion_sin_patas
+  FROM movimiento_billetera m
+  LEFT JOIN transaccion_billetera t ON t.id = m.transaccion_id
+ WHERE t.id IS NULL
+UNION ALL
+SELECT NULL, t.id FROM transaccion_billetera t
+ WHERE t.estado = 'APLICADA'
+   AND NOT EXISTS (SELECT 1 FROM movimiento_billetera m WHERE m.transaccion_id = t.id);
+
+-- 10) R-BIL-20 · transacciones que mezclan monedas
+SELECT t.id, t.moneda, c.moneda AS moneda_cuenta
+  FROM transaccion_billetera t
+  JOIN movimiento_billetera m ON m.transaccion_id = t.id
+  JOIN cuenta_billetera c ON c.id = m.cuenta_billetera_id
+ WHERE c.moneda <> t.moneda;
+
+-- 11) R-SEG-03 · tablas con datos de titular sin RLS forzada
+SELECT c.relname FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+ WHERE n.nspname = 'public' AND c.relkind = 'r'
+   AND EXISTS (SELECT 1 FROM pg_attribute a
+                WHERE a.attrelid = c.oid AND a.attname = 'usuario_id'
+                  AND NOT a.attisdropped)
+   AND NOT c.relrowsecurity;
 ```
 
 ## Cómo se aplica

@@ -16,5 +16,14 @@ BEGIN;
 \ir 09-reglas-operativas.sql
 \ir 10-roles-y-permisos.sql
 \ir 11-contratos-de-adhesion.sql
+\ir 12-calendario-habil.sql
+\ir 13-politicas-de-token.sql
+\ir 14-proveedores-externos.sql
+\ir 15-eventos-y-plantillas.sql
+\ir 16-reputacion-y-scoring.sql
+\ir 17-organizador-y-emparejamiento.sql
+\ir 18-sanciones-y-cobranza.sql
+\ir 19-reportes-y-retencion.sql
+\ir 20-control-interno-y-continuidad.sql
 
 COMMIT;

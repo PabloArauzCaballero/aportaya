@@ -1,0 +1,292 @@
+---
+tags:
+  - moc
+  - plan
+  - frontend
+  - carriles
+titulo: "Carriles de frontend — varias máquinas en paralelo"
+fecha: 2026-08-14
+---
+
+# Carriles de frontend
+
+> Espejo de [[07 Carriles de trabajo concurrente]], para los tres productos de
+> interfaz. Misma regla de oro: **un carril = un producto o un dominio de pantallas =
+> un directorio = una rama = una máquina = un chat**, con propiedad exclusiva de
+> archivos para que el conflicto de merge sea imposible por diseño.
+
+---
+
+## 1 · Por qué esto se paraleliza todavía mejor que el backend
+
+Por tres razones, y las tres son decisiones de la Fase F0:
+
+| Razón | Consecuencia |
+| --- | --- |
+| **Enrutamiento por sistema de archivos** en los tres productos (Expo Router, TanStack Router, Astro) | Una pantalla nueva es **un archivo nuevo**. No existe un `routes.tsx` central que todos editen |
+| **El contrato Zod existe antes que la implementación** | El frontend nunca espera al backend: programa contra el contrato y MSW |
+| **`packages/ui` se congela al cerrar F1** | Los carriles **componen**, no diseñan. Nadie edita tokens ni átomos |
+
+> **La consecuencia práctica:** el frontend no espera a que el backend termine un caso
+> de uso. Espera a que **escriba su contrato**, que es lo primero que hace.
+
+---
+
+## 2 · Mapa de olas
+
+### Ola F0 · Troncal — **una sola máquina, nadie más trabaja**
+
+| Carril | Fases | Posee |
+| --- | --- | --- |
+| **T** | F0, F1 | Todo: `packages/ui`, `packages/cliente-api`, los tres andamiajes, MSW, lint, CI, ADR-018 y ADR-019 |
+
+Bloquea las once fases restantes. **`packages/ui` queda congelado al cerrar F1**: a
+partir de ahí, un átomo nuevo se pide por micro-PR.
+
+### Ola F1 · 3 carriles — los tres shells
+
+| Carril | Fase | Producto | Directorio propio |
+| --- | :-: | --- | --- |
+| **M** | F2 | app móvil | `apps/movil/src/{navegacion,proveedores}/` |
+| **B** | F6 | backoffice | `apps/backoffice/src/{layout,proveedores}/` + `organismos/TablaDeDatos` |
+| **W** | F9 | sitio público | `apps/web/src/{pages,content,componentes}/` |
+
+### Ola F2 · 5 carriles — máxima concurrencia
+
+| Carril | Fase | Directorio propio | CU |
+| --- | :-: | --- | --- |
+| **M1** | F3 | `apps/movil/src/pantallas/identidad/` | 01–09, 40, 46 |
+| **M2** | F4 | `apps/movil/src/pantallas/billetera/` | 10–19, 30–33, 57 |
+| **B1** | F7 | `apps/backoffice/src/rutas/operacion/` | 26 CU de operación |
+| **W1** | F10 | `apps/web/src/seo/` + `astro.config` de sitemap | SEO |
+| **W2** | F11 | `apps/web/public/` + `src/geo/` | GEO |
+
+> **W1 y W2 conviven sin pisarse** porque tocan cosas distintas: SEO escribe el
+> componente `<Meta>` y el JSON-LD en `src/seo/`; GEO escribe `robots.txt`,
+> `llms.txt`, el generador de espejos `.md` y la guía de redacción. El único punto de
+> contacto es el `<head>`, y ahí **manda el componente `<Meta>` de W1**: W2 le pasa lo
+> suyo por props (`alternateMarkdown`), no edita el componente.
+
+### Ola F3 · 2 carriles
+
+| Carril | Fase | Directorio propio | CU |
+| --- | :-: | --- | --- |
+| **M3** | F5 | `apps/movil/src/pantallas/pasanaku/` | 20–29, 52, 53, 59–76 |
+| **B2** | F8 | `apps/backoffice/src/rutas/cumplimiento/` | 38 CU de cumplimiento y gobierno |
+
+### Ola F4 · 1 carril
+
+| Carril | Fase | Alcance |
+| --- | :-: | --- |
+| **T** | F12 | E2E, accesibilidad, rendimiento, seguridad, publicación |
+
+### Resumen
+
+```
+Ola F0 ──► 1 máquina   (troncal, bloqueante)
+Ola F1 ──► 3 máquinas
+Ola F2 ──► 5 máquinas   ← pico
+Ola F3 ──► 2 máquinas
+Ola F4 ──► 1 máquina
+```
+
+---
+
+## 3 · Sincronía con el backend
+
+Las olas de frontend van **una detrás** de las de backend. Cada carril de frontend
+consume los **contratos** de la ola anterior de backend, no su implementación.
+
+```
+backend    Ola 0 ─── Ola 1 ─── Ola 2 ─── Ola 3 ─── Ola 4 ─── Ola 5
+frontend             Ola F0 ── Ola F1 ── Ola F2 ── Ola F3 ── Ola F4
+```
+
+| Carril de frontend | Contratos que necesita | Los escribe |
+| --- | --- | --- |
+| M1 · F3 identidad | CU-01…09, 40, 46 | backend Olas 1A y 1C |
+| M2 · F4 billetera | CU-10…19, 30…33, 57 | backend Olas 2A y 2B |
+| B1 · F7 operación | los 26 de operación | backend Olas 2 y 3 |
+| M3 · F5 pasanaku | CU-20…29, 59…76 | backend Olas 2C, 3 y 4 |
+| B2 · F8 cumplimiento | los 38 | backend Olas 2D, 2E y 3C |
+| W · F9 sitio | CU-30, 34, 61, 72, 73, 75 | backend Olas 2B y 3B |
+
+**Si un contrato no existe todavía, el carril de frontend no lo inventa.** Lo pide al
+carril de backend y trabaja en otra pantalla mientras tanto (regla cero).
+
+---
+
+## 4 · Propiedad de archivos
+
+### Lo que un carril posee en exclusiva
+
+| Ruta | Nota |
+| --- | --- |
+| Su directorio de pantallas o rutas | Todo lo de adentro |
+| `packages/cliente-api/src/CU<NN>.ts` | **Solo los CU de su carril** |
+| Sus *handlers* de MSW | `pruebas/mocks/<su-dominio>/` |
+| `planes/informes/carril-<id>.md` | Su informe |
+
+### Lo que ningún carril toca (solo lectura)
+
+| Ruta | Quién la cambia |
+| --- | --- |
+| **`packages/ui/**`** | Ola F0. **Congelado al cerrar F1.** Un átomo nuevo = micro-PR |
+| `packages/contratos/**` | Los carriles de **backend** |
+| `apps/*/src/tokens/**` | Ola F0. Jamás durante un carril |
+| `apps/movil/src/{navegacion,proveedores}/` | Carril M (F2), luego congelado |
+| `apps/backoffice/src/{layout,proveedores}/` | Carril B (F6), luego congelado |
+| `apps/web/src/seo/<Meta>` | Carril W1 (F10) |
+| `package.json`, `yarn.lock`, configs, `docker/`, `.github/` | Micro-PR |
+
+---
+
+## 5 · Los seis puntos de conflicto, y cómo se eliminan
+
+Se implementan en la **Ola F0**.
+
+| # | Conflicto | Solución |
+| :-: | --- | --- |
+| 1 | Un registro central de rutas | **Enrutamiento por archivos** en los tres productos. El registro no existe |
+| 2 | Barril `packages/ui/index.ts` con 80 exports | Sin barril: `@aportaya/ui/Boton`. Un componente nuevo no edita nada compartido |
+| 3 | Un archivo global de traducciones o textos | **Un archivo por dominio de pantallas**, en el directorio del carril |
+| 4 | Storybook con un registro central | El catálogo es `/catalogo` en Astro, **por descubrimiento de archivos** |
+| 5 | `yarn.lock`: dos carriles agregan dependencias | Todas se instalan en la Ola F0. Ninguna en rama de carril |
+| 6 | W1 (SEO) y W2 (GEO) editando el `<head>` | El componente `<Meta>` es de **W1**; W2 le pasa lo suyo por props |
+
+---
+
+## 6 · Micro-PR al troncal
+
+Igual que en el backend ([[07 Carriles de trabajo concurrente]] §6). El caso más común
+acá: **un carril necesita un átomo que `packages/ui` no tiene.**
+
+```
+1  ¿Existe algo parecido? Reusar antes que crear
+2  ¿Lo van a usar dos productos o dos pantallas? → sube a packages/ui por micro-PR
+3  ¿Es de un solo dominio? → vive en el directorio del carril, sin micro-PR
+4  rama troncal/<carril>-<pieza> · con su prueba y su entrada en /catalogo
+5  PR [MICRO] → revisión prioritaria · todos rebasan
+```
+
+> **Regla del tercer uso.** No se sube a `packages/ui` al segundo uso: al tercero. Y
+> **nunca se duplica** un átomo — dos `Monto` con formatos distintos es cómo dos
+> pantallas empiezan a mostrar el mismo saldo diferente.
+
+---
+
+## 7 · Puntos de sincronización entre olas
+
+- [ ] Todos los carriles de la ola fusionaron a `main`
+- [ ] `main` pasa el CI completo, incluidos `test:a11y` y Lighthouse CI
+- [ ] Cada carril ejecutó su gate y lo registró en su informe
+- [ ] Micro-PR pendientes, fusionados
+- [ ] Cada máquina hace `git pull`; **nadie regenera nada**: `packages/ui` está congelado
+- [ ] **Revisión visual conjunta**: una máquina abre `/catalogo` y las pantallas nuevas
+      en claro y oscuro. Es la única forma de detectar que dos carriles resolvieron lo
+      mismo de dos maneras
+
+---
+
+## 8 · Montar una máquina nueva
+
+```bash
+git clone <repo> && cd Pasanaku
+git checkout -b carril/f<ola>-<id>-<dominio> origin/main
+
+yarn install --immutable          # sin yarn add
+yarn dev:mock                     # MSW: no necesita el backend levantado
+
+# según el carril:
+yarn dev:movil                    # Expo — requiere simulador o Expo Go
+yarn dev:backoffice
+yarn dev:web
+
+yarn lint && yarn typecheck && yarn test:front && yarn test:a11y
+```
+
+**Los carriles de frontend no necesitan el backend corriendo.** Trabajan contra MSW.
+La API real aparece en los puntos de sincronización y en la Fase F12.
+
+Los carriles móviles necesitan además: Android Studio o un dispositivo físico —
+**preferentemente de gama baja**, que es el parque real en Bolivia.
+
+---
+
+## 9 · Prompt de arranque de un carril
+
+```text
+Sos el carril <ID> de la ola F<N> del frontend de AportaYa.
+
+ANTES DE ESCRIBIR NADA, leé en este orden:
+  planes/00b Estándar de ejecución · código limpio, pruebas y calidad.md
+  planes/10b Estándar de ejecución del frontend.md          ← cómo se escribe la UI
+  planes/10 Plan maestro del frontend.md                    ← invariantes y stack
+  planes/16 Carriles de frontend.md                         ← qué archivos podés tocar
+  planes/<documento de tu fase>.md
+  docs/CasosDeUso/CU-<NN> *.md  (todos los de tu carril — la sección INTERFAZ manda)
+  .claude/skills/disenar-frontend/SKILL.md  +  docs/Views/Sistema-Diseno/
+
+TU ALCANCE
+  Fase:        F<N>
+  Producto:    <movil | backoffice | web>
+  Casos de uso: <lista>
+  Rama:        carril/f<ola>-<id>-<dominio>
+
+POSEÉS EN EXCLUSIVA
+  <su directorio de pantallas o rutas>
+  packages/cliente-api/src/CU<NN>.ts   (solo los tuyos)
+  pruebas/mocks/<tu-dominio>/
+  planes/informes/carril-<id>.md
+
+NO TOCÁS (solo lectura)
+  packages/ui/   packages/contratos/   apps/*/src/tokens/
+  los shells (navegacion/, proveedores/, layout/)   apps/web/src/seo/
+  package.json  yarn.lock  docker/  .github/
+  ¿Necesitás un átomo nuevo? Micro-PR. NO lo crees en tu rama.
+
+REGLAS QUE NO SE NEGOCIAN
+  - Regla cero: la pantalla sale de la sección Interfaz del CU. No se inventa.
+    Si falta algo crítico, PARÁS Y PREGUNTÁS. Si no, declarás el supuesto.
+  - Los cuatro estados en toda pantalla con datos: cargando, vacío, error, éxito.
+  - Cero literales de diseño. Todo desde tokens.
+  - Ningún fetch en un componente. Ningún tipo reescrito a mano.
+  - Ningún importe formateado fuera del átomo Monto.
+  - Doble envío bloqueado en toda operación de dinero, con la misma clave.
+  - Un solo botón naranja por pantalla.
+  - Accesibilidad bloqueante: teclado, foco, contraste AA, semántica.
+  - No declarás nada terminado sin haber ejecutado el comando.
+
+TERMINÁS CUANDO
+  El gate de salida de tu fase está ejecutado, con evidencia en
+  planes/informes/carril-<id>.md, y tu PR pasa el CI.
+
+Empezá listando los componentes que vas a crear, por nivel, y esperá mi visto bueno.
+```
+
+---
+
+## 10 · Cuando dos carriles se pisan igual
+
+| Síntoma | Causa | Qué se hace |
+| --- | --- | --- |
+| Dos componentes casi iguales con nombres distintos | Ninguno abrió micro-PR | Se unifica en `packages/ui` y se borran los dos. **Prioridad alta** |
+| El mismo saldo se ve distinto en dos pantallas | Alguien formateó fuera de `Monto` | Se revierte. Es rechazo sin discusión |
+| Un carril necesita un endpoint que no existe | El contrato no está escrito | Se pide al carril de backend. **No se inventa el contrato** |
+| Conflicto en `<head>` entre W1 y W2 | W2 editó `<Meta>` | Se revierte: W2 pasa props |
+| Dos pantallas resuelven el mismo estado vacío distinto | Falta revisión visual conjunta | Se unifica en el punto de sincronización |
+
+---
+
+## 11 · Lo que **no** se paraleliza
+
+- **La Ola F0.** Es el sistema de diseño; si se parte, cada carril inventa su propia
+  paleta y el producto deja de verse como un producto.
+- **Un cambio de tokens.** Para todo, se hace en troncal, se revisa el catálogo
+  completo en claro y oscuro, y recién ahí los carriles rebasan.
+- **La Ola F4.** Accesibilidad, rendimiento y publicación se miden sobre el producto
+  entero.
+
+## Ver también
+
+[[10 Plan maestro del frontend]] · [[10b Estándar de ejecución del frontend]] · [[07 Carriles de trabajo concurrente]] · [[informe]] · [[disenar-frontend]]

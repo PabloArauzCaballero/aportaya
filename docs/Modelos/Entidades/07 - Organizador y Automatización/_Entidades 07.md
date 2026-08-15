@@ -14,7 +14,7 @@ Las **12 tablas** de este módulo. Justificación de negocio en [[07_organizador
 
 | Tabla | Columnas | FK sal. | FK ent. |
 | --- | --: | --: | --: |
-| [[organizador]] | 15 | 1 | 5 |
+| [[organizador]] | 15 | 1 | 6 |
 | [[solicitud_organizador]] | 11 | 3 | 0 |
 | [[requisito_habilitacion]] | 8 | 0 | 0 |
 | [[capacitacion_organizador]] | 7 | 1 | 0 |

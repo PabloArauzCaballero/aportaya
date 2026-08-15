@@ -40,9 +40,6 @@ CREATE INDEX IF NOT EXISTS ix_transaccion_billetera_grupo_id
 CREATE INDEX IF NOT EXISTS ix_transaccion_billetera_origen_id
   ON transaccion_billetera (origen_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_transaccion_billetera_clave_idempotencia
-  ON transaccion_billetera (clave_idempotencia);
-
 CREATE INDEX IF NOT EXISTS ix_transaccion_billetera_ocurrida_en
   ON transaccion_billetera (ocurrida_en);
 
@@ -100,23 +97,20 @@ CREATE INDEX IF NOT EXISTS ix_orden_recarga_estado
 CREATE UNIQUE INDEX IF NOT EXISTS uq_orden_recarga_referencia_externa
   ON orden_recarga (referencia_externa);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_orden_recarga_clave_idempotencia
-  ON orden_recarga (clave_idempotencia);
-
 CREATE INDEX IF NOT EXISTS ix_orden_retiro_cuenta_billetera_id
   ON orden_retiro (cuenta_billetera_id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_orden_retiro_retencion_id
   ON orden_retiro (retencion_id);
 
+CREATE INDEX IF NOT EXISTS ix_orden_retiro_solicitada_por
+  ON orden_retiro (solicitada_por);
+
 CREATE INDEX IF NOT EXISTS ix_orden_retiro_estado
   ON orden_retiro (estado);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_orden_retiro_referencia_proveedor
   ON orden_retiro (referencia_proveedor);
-
-CREATE UNIQUE INDEX IF NOT EXISTS uq_orden_retiro_clave_idempotencia
-  ON orden_retiro (clave_idempotencia);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_transferencia_p2p_transaccion_id
   ON transferencia_p2p (transaccion_id);
@@ -163,7 +157,7 @@ CREATE INDEX IF NOT EXISTS ix_descuadre_custodia_severidad
 CREATE INDEX IF NOT EXISTS ix_descuadre_custodia_estado
   ON descuadre_custodia (estado);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_limite_operativo_billetera_nivel_debida_diligencia__96d62d
+CREATE UNIQUE INDEX IF NOT EXISTS uq_limite_operativo_billetera_nivel_debida_diligencia__b809a0
   ON limite_operativo_billetera (nivel_debida_diligencia, ventana, concepto);
 
 CREATE INDEX IF NOT EXISTS ix_consumo_limite_cuenta_billetera_id
@@ -174,6 +168,15 @@ CREATE INDEX IF NOT EXISTS ix_consumo_limite_limite_id
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_consumo_limite_cuenta_billetera_id_limite_id_ventana_inicio
   ON consumo_limite (cuenta_billetera_id, limite_id, ventana_inicio);
+
+CREATE INDEX IF NOT EXISTS ix_respuesta_idempotente_usuario_id
+  ON respuesta_idempotente (usuario_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_respuesta_idempotente_usuario_id_clave_idempotencia_4b4bc9
+  ON respuesta_idempotente (usuario_id, clave_idempotencia, operacion);
+
+CREATE INDEX IF NOT EXISTS ix_respuesta_idempotente_expira_en
+  ON respuesta_idempotente (expira_en);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_regla_antifraude_codigo
   ON regla_antifraude (codigo);
@@ -208,7 +211,7 @@ CREATE INDEX IF NOT EXISTS ix_bloqueo_saldo_estado
 CREATE INDEX IF NOT EXISTS ix_estado_cuenta_billetera_cuenta_billetera_id
   ON estado_cuenta_billetera (cuenta_billetera_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_estado_cuenta_billetera_cuenta_billetera_id_periodo_eeabc5
+CREATE UNIQUE INDEX IF NOT EXISTS uq_estado_cuenta_billetera_cuenta_billetera_id_periodo_33629d
   ON estado_cuenta_billetera (cuenta_billetera_id, periodo_hasta, periodo_desde);
 
 CREATE INDEX IF NOT EXISTS ix_certificado_saldo_cuenta_billetera_id

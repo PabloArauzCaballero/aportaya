@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS documento_identidad (
   usuario_id                         UUID NOT NULL,
   tipo                               VARCHAR(25) NOT NULL,
   numero_cifrado                     VARCHAR(255) NOT NULL,
+  version_llave                      SMALLINT NOT NULL,
   hash_numero                        VARCHAR(64) NOT NULL,
   complemento                        VARCHAR(10),
   pais_emision                       CHAR(2) NOT NULL,

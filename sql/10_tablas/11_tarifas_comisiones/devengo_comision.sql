@@ -45,4 +45,3 @@ COMMENT ON COLUMN devengo_comision.monto_comision IS 'CK: >= 0';
 COMMENT ON COLUMN devengo_comision.estado IS 'CK, IDX';
 COMMENT ON COLUMN devengo_comision.fecha_devengo IS 'IDX';
 COMMENT ON COLUMN devengo_comision.periodo_contable IS 'IDX';
-COMMENT ON COLUMN devengo_comision.clave_idempotencia IS 'UQ';

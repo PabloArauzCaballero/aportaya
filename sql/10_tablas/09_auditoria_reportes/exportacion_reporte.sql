@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS exportacion_reporte (
   hash_archivo                       VARCHAR(64) NOT NULL,
   tamano_bytes                       BIGINT NOT NULL,
   esta_cifrado                       BOOLEAN DEFAULT FALSE NOT NULL,
+  version_llave                      SMALLINT NOT NULL,
   descargas                          SMALLINT NOT NULL,
   expira_en                          TIMESTAMPTZ NOT NULL,
   generada_en                        TIMESTAMPTZ NOT NULL,

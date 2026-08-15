@@ -35,7 +35,7 @@ append_only: false
 | `valida_hasta` | TIMESTAMPTZ | — | no | — |
 | `mostrada_al_usuario_en` | TIMESTAMPTZ | — | sí | NULL |
 | `aceptada_en` | TIMESTAMPTZ | — | sí | NULL |
-| `clave_idempotencia` | VARCHAR(100) | UQ | no | UQ |
+| `clave_idempotencia` | VARCHAR(100) | — | no | — |
 
 ## Claves foráneas salientes
 

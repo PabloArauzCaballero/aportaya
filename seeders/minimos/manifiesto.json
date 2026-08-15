@@ -12,6 +12,15 @@
     "08-gobierno-y-licencia.json",
     "09-reglas-operativas.json",
     "10-roles-y-permisos.json",
-    "11-contratos-de-adhesion.json"
+    "11-contratos-de-adhesion.json",
+    "12-calendario-habil.json",
+    "13-politicas-de-token.json",
+    "14-proveedores-externos.json",
+    "15-eventos-y-plantillas.json",
+    "16-reputacion-y-scoring.json",
+    "17-organizador-y-emparejamiento.json",
+    "18-sanciones-y-cobranza.json",
+    "19-reportes-y-retencion.json",
+    "20-control-interno-y-continuidad.json"
   ]
 }

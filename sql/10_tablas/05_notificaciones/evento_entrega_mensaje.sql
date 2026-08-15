@@ -20,4 +20,3 @@ COMMENT ON COLUMN evento_entrega_mensaje.id IS 'PK';
 COMMENT ON COLUMN evento_entrega_mensaje.envio_id IS 'FK, IDX';
 COMMENT ON COLUMN evento_entrega_mensaje.tipo_evento IS 'CK';
 COMMENT ON COLUMN evento_entrega_mensaje.codigo_error IS 'NULL';
-COMMENT ON COLUMN evento_entrega_mensaje.clave_idempotencia IS 'UQ';

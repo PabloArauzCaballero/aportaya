@@ -43,4 +43,3 @@ COMMENT ON COLUMN pago.pagador_nombre IS 'NULL';
 COMMENT ON COLUMN pago.pagador_documento IS 'NULL';
 COMMENT ON COLUMN pago.cuenta_origen_enmascarada IS 'NULL';
 COMMENT ON COLUMN pago.registrado_por IS 'FK, NULL';
-COMMENT ON COLUMN pago.clave_idempotencia IS 'UQ';

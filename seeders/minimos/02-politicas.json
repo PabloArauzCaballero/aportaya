@@ -91,7 +91,8 @@
           "tasa_recargo_recuperacion": 1.5,
           "vigente_desde": {
             "$sql": "now()"
-          }
+          },
+          "exige_aval_previo": false
         }
       ]
     }

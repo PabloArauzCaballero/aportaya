@@ -1,0 +1,97 @@
+{
+  "descripcion": "Qué pasa cuando alguien no paga: la escalera de cobranza y la matriz que dice qué sanción corresponde a qué incumplimiento. Nada de esto se decide caso por caso ni se improvisa en el código.",
+  "entorno": "minimo",
+  "estado": "revisar con riesgos y legal — los plazos de descargo y apelación son garantías del debido proceso, no parámetros de producto",
+  "nota": "La matriz propone; la sanción se aplica después del descargo. Todo lo CRÍTICO lleva `es_automatica = false` y `requiere_revision_humana = true`: ninguna expulsión ni inhabilitación se ejecuta sola (skill `debido-proceso`).",
+  "bloques": [
+    {
+      "tabla": "politica_sancion",
+      "solo_si_vacia": true,
+      "conflicto": "ninguno",
+      "comentario": "Política global (grupo_id nulo). Un grupo puede tener la suya, pero nunca con plazos de descargo o apelación menores que estos.",
+      "filas": [
+        {
+          "grupo_id": null,
+          "version": "v1",
+          "requiere_acuerdo_grupo": false,
+          "plazo_descargo_dias": 5,
+          "plazo_apelacion_dias": 5,
+          "prescribe_en_dias": 365,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        }
+      ]
+    },
+    {
+      "tabla": "matriz_sancion",
+      "conflicto": [
+        "severidad",
+        "numero_reincidencia",
+        "tipo_incumplimiento"
+      ],
+      "comentario": "Atrasos y pagos parciales: la primera vez se advierte. La escalera existe para que reincidir cueste, no para castigar un olvido.",
+      "filas": [
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "APORTE_ATRASADO", "severidad": "LEVE", "numero_reincidencia": 1, "tipo_sancion": "ADVERTENCIA", "valor": 0.0, "duracion_dias": null, "es_automatica": true, "requiere_revision_humana": false },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "APORTE_ATRASADO", "severidad": "LEVE", "numero_reincidencia": 2, "tipo_sancion": "AFECTACION_REPUTACION", "valor": 25.0, "duracion_dias": null, "es_automatica": true, "requiere_revision_humana": false },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "APORTE_ATRASADO", "severidad": "MODERADA", "numero_reincidencia": 3, "tipo_sancion": "SUSPENSION_DE_VOTO", "valor": 0.0, "duracion_dias": 30, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "APORTE_PARCIAL", "severidad": "LEVE", "numero_reincidencia": 1, "tipo_sancion": "ADVERTENCIA", "valor": 0.0, "duracion_dias": null, "es_automatica": true, "requiere_revision_humana": false },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "APORTE_PARCIAL", "severidad": "MODERADA", "numero_reincidencia": 2, "tipo_sancion": "AFECTACION_REPUTACION", "valor": 40.0, "duracion_dias": null, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "PAGO_RECHAZADO_O_REVERSADO", "severidad": "LEVE", "numero_reincidencia": 1, "tipo_sancion": "ADVERTENCIA", "valor": 0.0, "duracion_dias": null, "es_automatica": true, "requiere_revision_humana": false },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "PAGO_RECHAZADO_O_REVERSADO", "severidad": "MODERADA", "numero_reincidencia": 2, "tipo_sancion": "RESTRICCION_NUEVOS_GRUPOS", "valor": 0.0, "duracion_dias": 60, "es_automatica": false, "requiere_revision_humana": true }
+      ]
+    },
+    {
+      "tabla": "matriz_sancion",
+      "conflicto": [
+        "severidad",
+        "numero_reincidencia",
+        "tipo_incumplimiento"
+      ],
+      "comentario": "Impago y abandono: acá el grupo ya perdió plata. La retención de entrega precede a la expulsión, porque devolver el cupo es peor negocio que cobrarlo.",
+      "filas": [
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "APORTE_IMPAGO", "severidad": "MODERADA", "numero_reincidencia": 1, "tipo_sancion": "AFECTACION_REPUTACION", "valor": 60.0, "duracion_dias": null, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "APORTE_IMPAGO", "severidad": "GRAVE", "numero_reincidencia": 2, "tipo_sancion": "RETENCION_DE_ENTREGA", "valor": 0.0, "duracion_dias": null, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "APORTE_IMPAGO", "severidad": "GRAVE", "numero_reincidencia": 3, "tipo_sancion": "PERDIDA_DE_PRIORIDAD_DE_TURNO", "valor": 0.0, "duracion_dias": null, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "APORTE_IMPAGO", "severidad": "CRITICA", "numero_reincidencia": 4, "tipo_sancion": "EXPULSION_DEL_GRUPO", "valor": 0.0, "duracion_dias": null, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "INCUMPLIMIENTO_PLAN_REGULARIZACION", "severidad": "GRAVE", "numero_reincidencia": 1, "tipo_sancion": "RETENCION_DE_ENTREGA", "valor": 0.0, "duracion_dias": null, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "INCUMPLIMIENTO_PLAN_REGULARIZACION", "severidad": "GRAVE", "numero_reincidencia": 2, "tipo_sancion": "RESTRICCION_NUEVOS_GRUPOS", "valor": 0.0, "duracion_dias": 180, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "ABANDONO_DE_GRUPO", "severidad": "GRAVE", "numero_reincidencia": 1, "tipo_sancion": "AFECTACION_REPUTACION", "valor": 200.0, "duracion_dias": null, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "ABANDONO_DE_GRUPO", "severidad": "CRITICA", "numero_reincidencia": 2, "tipo_sancion": "INHABILITACION_PLATAFORMA", "valor": 0.0, "duracion_dias": 365, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "BENEFICIARIO_NO_CONTINUA_APORTANDO", "severidad": "GRAVE", "numero_reincidencia": 1, "tipo_sancion": "RESTRICCION_NUEVOS_GRUPOS", "valor": 0.0, "duracion_dias": 365, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "BENEFICIARIO_NO_CONTINUA_APORTANDO", "severidad": "CRITICA", "numero_reincidencia": 2, "tipo_sancion": "INHABILITACION_PLATAFORMA", "valor": 0.0, "duracion_dias": 730, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "INCUMPLIMIENTO_AVAL", "severidad": "GRAVE", "numero_reincidencia": 1, "tipo_sancion": "AFECTACION_REPUTACION", "valor": 150.0, "duracion_dias": null, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "INCUMPLIMIENTO_ORGANIZADOR", "severidad": "GRAVE", "numero_reincidencia": 1, "tipo_sancion": "RESTRICCION_NUEVOS_GRUPOS", "valor": 0.0, "duracion_dias": 180, "es_automatica": false, "requiere_revision_humana": true }
+      ]
+    },
+    {
+      "tabla": "matriz_sancion",
+      "conflicto": [
+        "severidad",
+        "numero_reincidencia",
+        "tipo_incumplimiento"
+      ],
+      "comentario": "Fraude y uso indebido: no hay escalera. Va directo a revisión humana y, si se confirma, deriva a cumplimiento (posible operación sospechosa).",
+      "filas": [
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "COMPROBANTE_FALSO", "severidad": "CRITICA", "numero_reincidencia": 1, "tipo_sancion": "INHABILITACION_PLATAFORMA", "valor": 0.0, "duracion_dias": 1095, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "FRAUDE_CONFIRMADO", "severidad": "CRITICA", "numero_reincidencia": 1, "tipo_sancion": "INHABILITACION_PLATAFORMA", "valor": 0.0, "duracion_dias": 3650, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "USO_INDEBIDO_DE_LA_PLATAFORMA", "severidad": "GRAVE", "numero_reincidencia": 1, "tipo_sancion": "RESTRICCION_NUEVOS_GRUPOS", "valor": 0.0, "duracion_dias": 90, "es_automatica": false, "requiere_revision_humana": true },
+        { "politica_id": { "$ref": "politica_sancion", "version": "v1" }, "tipo_incumplimiento": "USO_INDEBIDO_DE_LA_PLATAFORMA", "severidad": "CRITICA", "numero_reincidencia": 2, "tipo_sancion": "INHABILITACION_PLATAFORMA", "valor": 0.0, "duracion_dias": 365, "es_automatica": false, "requiere_revision_humana": true }
+      ]
+    },
+    {
+      "tabla": "estrategia_cobranza",
+      "conflicto": [
+        "dias_mora_desde",
+        "etapa"
+      ],
+      "comentario": "Los tramos son contiguos y sin huecos: de -3 a 1095 días toda mora cae en exactamente una etapa. `max_contactos_por_semana` es un tope duro que el motor de notificaciones respeta aunque la regla dispare más veces.",
+      "filas": [
+        { "etapa": "PREVENTIVA", "dias_mora_desde": -3, "dias_mora_hasta": 0, "canales_permitidos": "PUSH,WHATSAPP,IN_APP", "frecuencia_dias": 3, "max_contactos_por_semana": 1, "plantilla_notificacion_codigo": "COB_APORTE_POR_VENCER_WA", "requiere_gestor_humano": false, "permite_quita": false, "quita_maxima_porcentaje": 0.0, "siguiente_etapa": "TEMPRANA" },
+        { "etapa": "TEMPRANA", "dias_mora_desde": 1, "dias_mora_hasta": 7, "canales_permitidos": "PUSH,WHATSAPP,SMS,IN_APP", "frecuencia_dias": 2, "max_contactos_por_semana": 3, "plantilla_notificacion_codigo": "COB_APORTE_VENCIDO_WA", "requiere_gestor_humano": false, "permite_quita": false, "quita_maxima_porcentaje": 0.0, "siguiente_etapa": "ADMINISTRATIVA" },
+        { "etapa": "ADMINISTRATIVA", "dias_mora_desde": 8, "dias_mora_hasta": 30, "canales_permitidos": "WHATSAPP,SMS,LLAMADA_VOZ,CORREO", "frecuencia_dias": 5, "max_contactos_por_semana": 3, "plantilla_notificacion_codigo": "COB_APORTE_VENCIDO_WA", "requiere_gestor_humano": true, "permite_quita": false, "quita_maxima_porcentaje": 0.0, "siguiente_etapa": "PREJUDICIAL" },
+        { "etapa": "PREJUDICIAL", "dias_mora_desde": 31, "dias_mora_hasta": 90, "canales_permitidos": "WHATSAPP,LLAMADA_VOZ,CORREO", "frecuencia_dias": 15, "max_contactos_por_semana": 2, "plantilla_notificacion_codigo": null, "requiere_gestor_humano": true, "permite_quita": true, "quita_maxima_porcentaje": 20.0, "siguiente_etapa": "JUDICIAL" },
+        { "etapa": "JUDICIAL", "dias_mora_desde": 91, "dias_mora_hasta": 365, "canales_permitidos": "CORREO,LLAMADA_VOZ", "frecuencia_dias": 30, "max_contactos_por_semana": 1, "plantilla_notificacion_codigo": null, "requiere_gestor_humano": true, "permite_quita": true, "quita_maxima_porcentaje": 40.0, "siguiente_etapa": "CASTIGO" },
+        { "etapa": "CASTIGO", "dias_mora_desde": 366, "dias_mora_hasta": 1095, "canales_permitidos": "CORREO", "frecuencia_dias": 90, "max_contactos_por_semana": 1, "plantilla_notificacion_codigo": null, "requiere_gestor_humano": true, "permite_quita": true, "quita_maxima_porcentaje": 70.0, "siguiente_etapa": null }
+      ]
+    }
+  ]
+}

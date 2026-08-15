@@ -478,6 +478,7 @@ entity "cuenta_bancaria_beneficiario" as ctabco {
   tipo_cuenta : VARCHAR(15) <<CK>>
   entidad_financiera : VARCHAR(60)
   numero_cuenta_cifrado : VARCHAR(255)
+  version_llave : SMALLINT
   hash_numero_cuenta : VARCHAR(64) <<UQ+usuario_id>>
   numero_enmascarado : VARCHAR(30)
   titular_nombre : VARCHAR(120)
@@ -501,7 +502,7 @@ entity "orden_desembolso" as ordendes {
   estado : VARCHAR(25) <<CK, IDX>>
   referencia_proveedor : VARCHAR(80) <<UQ, NULL>>
   glosa : VARCHAR(140)
-  clave_idempotencia : VARCHAR(80) <<UQ>>
+  clave_idempotencia : VARCHAR(80)
   creada_en : TIMESTAMPTZ
   acreditada_en : TIMESTAMPTZ <<NULL>>
 }

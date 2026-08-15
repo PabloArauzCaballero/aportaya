@@ -240,7 +240,8 @@
           "hash_archivo": {
             "$sql": "repeat('a', 64)"
           },
-          "estado": "APROBADA"
+          "estado": "APROBADA",
+          "version_llave": 1
         },
         {
           "usuario_id": {
@@ -257,7 +258,8 @@
           "hash_archivo": {
             "$sql": "repeat('a', 64)"
           },
-          "estado": "APROBADA"
+          "estado": "APROBADA",
+          "version_llave": 1
         },
         {
           "usuario_id": {
@@ -274,7 +276,8 @@
           "hash_archivo": {
             "$sql": "repeat('a', 64)"
           },
-          "estado": "APROBADA"
+          "estado": "APROBADA",
+          "version_llave": 1
         },
         {
           "usuario_id": {
@@ -291,7 +294,8 @@
           "hash_archivo": {
             "$sql": "repeat('a', 64)"
           },
-          "estado": "APROBADA"
+          "estado": "APROBADA",
+          "version_llave": 1
         },
         {
           "usuario_id": {
@@ -308,7 +312,8 @@
           "hash_archivo": {
             "$sql": "repeat('a', 64)"
           },
-          "estado": "APROBADA"
+          "estado": "APROBADA",
+          "version_llave": 1
         },
         {
           "usuario_id": {
@@ -325,9 +330,11 @@
           "hash_archivo": {
             "$sql": "repeat('a', 64)"
           },
-          "estado": "APROBADA"
+          "estado": "APROBADA",
+          "version_llave": 1
         }
-      ]
+      ],
+      "comentario": "`version_llave` dice con qué versión de la llave maestra se cifró el dato: rotar la llave es cifrar de nuevo y subir el número, no perder el acceso a lo viejo."
     },
     {
       "tabla": "verificacion_kyc",

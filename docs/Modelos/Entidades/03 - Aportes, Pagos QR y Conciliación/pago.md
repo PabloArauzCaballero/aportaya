@@ -39,7 +39,7 @@ append_only: false
 | `cuenta_origen_enmascarada` | VARCHAR(40) | — | sí | NULL |
 | `registrado_por` | UUID | FK | sí | FK, NULL |
 | `es_manual` | BOOLEAN | — | no | — |
-| `clave_idempotencia` | VARCHAR(80) | UQ | no | UQ |
+| `clave_idempotencia` | VARCHAR(80) | — | no | — |
 
 ## Claves foráneas salientes
 

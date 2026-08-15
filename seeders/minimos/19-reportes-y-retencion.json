@@ -1,0 +1,243 @@
+{
+  "descripcion": "Los reportes que la plataforma sabe generar, cada cuánto salen solos, cuánto tiempo se guarda cada cosa y qué dispara una alerta de cumplimiento. Sin la definición de reporte no hay extracción: no se corren consultas sueltas contra producción.",
+  "entorno": "minimo",
+  "estado": "⚠ PROVISIONAL — plazos de conservación por confirmar con legal; las consultas base requieren revisión de rendimiento contra la réplica de lectura",
+  "advertencia": "`consulta_base` se ejecuta SIEMPRE con la sesión del solicitante y con RLS activo: un reporte no es una puerta trasera a datos de otro. Todo lo marcado `contiene_datos_sensibles` deja huella en `registro_acceso_datos` y su exportación caduca.",
+  "bloques": [
+    {
+      "tabla": "definicion_reporte",
+      "conflicto": [
+        "nombre"
+      ],
+      "comentario": "Un reporte es una definición parametrizada con permiso propio, no una consulta improvisada. `cache_minutos` en 0 significa que siempre se recalcula: lo que va a un regulador nunca sale de caché.",
+      "filas": [
+        {
+          "tipo": "ESTADO_DE_CUENTA_PARTICIPANTE",
+          "nombre": "Estado de cuenta del participante",
+          "descripcion": "Movimientos de billetera, aportes, entregas y comisiones de un titular en un rango de fechas, con saldo inicial y final.",
+          "consulta_base": "SELECT m.registrado_en, t.tipo, m.sentido, m.monto, m.glosa, m.saldo_disponible_posterior FROM movimiento_billetera m JOIN transaccion_billetera t ON t.id = m.transaccion_id JOIN cuenta_billetera c ON c.id = m.cuenta_billetera_id WHERE c.titular_usuario_id = :usuario_id AND m.registrado_en >= :desde AND m.registrado_en < :hasta ORDER BY m.registrado_en, m.orden",
+          "parametros_esperados": { "usuario_id": "uuid", "desde": "date", "hasta": "date" },
+          "columnas": ["registrado_en", "tipo", "sentido", "monto", "glosa", "saldo_disponible_posterior"],
+          "permiso_requerido": "BILLETERA_VER",
+          "contiene_datos_sensibles": true,
+          "cache_minutos": 0,
+          "activa": true
+        },
+        {
+          "tipo": "ESTADO_DE_GRUPO",
+          "nombre": "Estado del grupo",
+          "descripcion": "Cupos, turnos, períodos y situación de cada participante del grupo: aportado, pendiente, en mora y cubierto por garantía.",
+          "consulta_base": "SELECT p.id AS participante_id, u.codigo_publico, t.numero_turno, o.periodo_id, o.estado, o.monto_total, o.fecha_vencimiento FROM participante p JOIN usuario u ON u.id = p.usuario_id LEFT JOIN cupo cu ON cu.participante_id = p.id LEFT JOIN turno t ON t.cupo_id = cu.id LEFT JOIN obligacion_aporte o ON o.participante_id = p.id WHERE p.grupo_id = :grupo_id ORDER BY t.numero_turno, o.fecha_vencimiento",
+          "parametros_esperados": { "grupo_id": "uuid" },
+          "columnas": ["participante_id", "codigo_publico", "numero_turno", "periodo_id", "estado", "monto_total", "fecha_vencimiento"],
+          "permiso_requerido": "GRUPO_ADMINISTRAR",
+          "contiene_datos_sensibles": false,
+          "cache_minutos": 5,
+          "activa": true
+        },
+        {
+          "tipo": "HISTORICO_DE_PAGOS",
+          "nombre": "Histórico de pagos conciliados",
+          "descripcion": "Pagos acreditados con su referencia de proveedor, su conciliación bancaria y su constancia, para responder un reclamo sin armar carpetas.",
+          "consulta_base": "SELECT pg.fecha_hora_pago, pg.monto, pg.canal, pg.estado, pg.referencia_proveedor, c.estado AS estado_conciliacion, c.diferencia_monto FROM pago pg LEFT JOIN conciliacion c ON c.pago_id = pg.id JOIN obligacion_aporte o ON o.id = pg.obligacion_id WHERE o.grupo_id = :grupo_id AND pg.fecha_hora_pago >= :desde AND pg.fecha_hora_pago < :hasta ORDER BY pg.fecha_hora_pago",
+          "parametros_esperados": { "grupo_id": "uuid", "desde": "date", "hasta": "date" },
+          "columnas": ["fecha_hora_pago", "monto", "canal", "estado", "referencia_proveedor", "estado_conciliacion", "diferencia_monto"],
+          "permiso_requerido": "GRUPO_ADMINISTRAR",
+          "contiene_datos_sensibles": false,
+          "cache_minutos": 15,
+          "activa": true
+        },
+        {
+          "tipo": "CARTERA_EN_MORA",
+          "nombre": "Cartera en mora por tramo",
+          "descripcion": "Obligaciones vencidas agrupadas por tramo de días de mora, con monto expuesto y cobertura del fondo de garantía.",
+          "consulta_base": "SELECT CASE WHEN o.dias_mora BETWEEN 1 AND 7 THEN '1-7' WHEN o.dias_mora BETWEEN 8 AND 30 THEN '8-30' WHEN o.dias_mora BETWEEN 31 AND 90 THEN '31-90' ELSE '90+' END AS tramo, count(*) AS casos, sum(o.monto_total) AS monto_expuesto FROM obligacion_aporte o WHERE o.estado = 'VENCIDA' AND (:grupo_id IS NULL OR o.grupo_id = :grupo_id) GROUP BY 1 ORDER BY 1",
+          "parametros_esperados": { "grupo_id": "uuid?" },
+          "columnas": ["tramo", "casos", "monto_expuesto"],
+          "permiso_requerido": "AUDITORIA_LEER",
+          "contiene_datos_sensibles": false,
+          "cache_minutos": 30,
+          "activa": true
+        },
+        {
+          "tipo": "CONCILIACION_DIARIA",
+          "nombre": "Conciliación diaria de custodia",
+          "descripcion": "Saldo de libro contra saldo del banco custodio del día, con las excepciones abiertas y su antigüedad. Es el reporte que prueba el encaje.",
+          "consulta_base": "SELECT cc.id AS cuenta_custodia_id, cc.saldo_segun_libro, cc.saldo_segun_banco, cc.saldo_segun_banco - cc.saldo_segun_libro AS diferencia, cc.fecha_saldo FROM cuenta_custodia cc WHERE cc.estado = 'ACTIVA' AND cc.fecha_saldo::date = :fecha",
+          "parametros_esperados": { "fecha": "date" },
+          "columnas": ["cuenta_custodia_id", "saldo_segun_libro", "saldo_segun_banco", "diferencia", "fecha_saldo"],
+          "permiso_requerido": "AUDITORIA_LEER",
+          "contiene_datos_sensibles": false,
+          "cache_minutos": 0,
+          "activa": true
+        },
+        {
+          "tipo": "MOVIMIENTO_FONDO_GARANTIA",
+          "nombre": "Movimiento del fondo de garantía",
+          "descripcion": "Constituciones, coberturas y recuperaciones del fondo de un grupo, con saldo resultante en cada punto.",
+          "consulta_base": "SELECT mf.registrado_en, mf.tipo, mf.monto, mf.saldo_posterior, mf.glosa FROM movimiento_fondo mf JOIN fondo_garantia f ON f.id = mf.fondo_id WHERE f.grupo_id = :grupo_id AND mf.registrado_en >= :desde AND mf.registrado_en < :hasta ORDER BY mf.registrado_en",
+          "parametros_esperados": { "grupo_id": "uuid", "desde": "date", "hasta": "date" },
+          "columnas": ["registrado_en", "tipo", "monto", "saldo_posterior", "glosa"],
+          "permiso_requerido": "GRUPO_ADMINISTRAR",
+          "contiene_datos_sensibles": false,
+          "cache_minutos": 10,
+          "activa": true
+        },
+        {
+          "tipo": "INCUMPLIMIENTOS_Y_SANCIONES",
+          "nombre": "Incumplimientos y sanciones firmes",
+          "descripcion": "Expedientes de incumplimiento con su estado procesal: notificación, descargo, resolución y apelación. Sin resolución firme no aparece como sancionado.",
+          "consulta_base": "SELECT ri.codigo_expediente, ri.tipo, ri.severidad, ri.estado, ri.monto_involucrado, ri.monto_recuperado, ri.detectado_en, ri.notificado_en, ri.cerrado_en FROM registro_incumplimiento ri WHERE ri.grupo_id = :grupo_id AND ri.detectado_en >= :desde ORDER BY ri.detectado_en DESC",
+          "parametros_esperados": { "grupo_id": "uuid", "desde": "date" },
+          "columnas": ["codigo_expediente", "tipo", "severidad", "estado", "monto_involucrado", "monto_recuperado", "detectado_en", "notificado_en", "cerrado_en"],
+          "permiso_requerido": "AUDITORIA_LEER",
+          "contiene_datos_sensibles": true,
+          "cache_minutos": 0,
+          "activa": true
+        },
+        {
+          "tipo": "DESEMPENO_ORGANIZADOR",
+          "nombre": "Desempeño del organizador",
+          "descripcion": "Métricas del organizador por período: grupos activos, tasa de cobranza, entregas en plazo e incidencias.",
+          "consulta_base": "SELECT o.id AS organizador_id, u.codigo_publico, count(DISTINCT g.id) AS grupos_activos, count(DISTINCT ri.id) AS incidencias FROM organizador o JOIN usuario u ON u.id = o.usuario_id LEFT JOIN grupo g ON g.organizador_id = o.id AND g.estado = 'ACTIVO' LEFT JOIN registro_incumplimiento ri ON ri.grupo_id = g.id AND ri.tipo = 'INCUMPLIMIENTO_ORGANIZADOR' WHERE o.estado = 'HABILITADO' GROUP BY o.id, u.codigo_publico ORDER BY incidencias DESC",
+          "parametros_esperados": {},
+          "columnas": ["organizador_id", "codigo_publico", "grupos_activos", "incidencias"],
+          "permiso_requerido": "AUDITORIA_LEER",
+          "contiene_datos_sensibles": false,
+          "cache_minutos": 60,
+          "activa": true
+        },
+        {
+          "tipo": "OPERACIONES_SOSPECHOSAS",
+          "nombre": "Operaciones relevantes y alertas de monitoreo",
+          "descripcion": "Registro de operaciones relevantes y alertas de monitoreo LGI/FT del período, para la remisión a la UIF y para el comité de cumplimiento.",
+          "consulta_base": "SELECT ro.registrado_en, ro.formulario, ro.concepto_operacion, ro.monto_usd, ro.usuario_id, ro.incluido_en_reporte FROM registro_operacion_relevante ro WHERE ro.registrado_en >= :desde AND ro.registrado_en < :hasta ORDER BY ro.registrado_en",
+          "parametros_esperados": { "desde": "date", "hasta": "date" },
+          "columnas": ["registrado_en", "formulario", "concepto_operacion", "monto_usd", "usuario_id", "incluido_en_reporte"],
+          "permiso_requerido": "CUMPLIMIENTO_REPORTAR",
+          "contiene_datos_sensibles": true,
+          "cache_minutos": 0,
+          "activa": true
+        },
+        {
+          "tipo": "KPI_PLATAFORMA",
+          "nombre": "Indicadores de plataforma",
+          "descripcion": "Panel de indicadores del período con su meta y su variación respecto del período anterior.",
+          "consulta_base": "SELECT k.codigo, k.nombre, k.valor, k.unidad, k.meta, k.variacion_periodo_anterior, k.calculado_en FROM indicador_kpi k WHERE k.periodo = :periodo AND k.dimension = 'GLOBAL' ORDER BY k.codigo",
+          "parametros_esperados": { "periodo": "string" },
+          "columnas": ["codigo", "nombre", "valor", "unidad", "meta", "variacion_periodo_anterior", "calculado_en"],
+          "permiso_requerido": "AUDITORIA_LEER",
+          "contiene_datos_sensibles": false,
+          "cache_minutos": 60,
+          "activa": true
+        }
+      ]
+    },
+    {
+      "tabla": "programacion_reporte",
+      "solo_si_vacia": true,
+      "conflicto": "ninguno",
+      "comentario": "Corridas automáticas. La toma del trabajo usa bloqueo entre réplicas: dos instancias no generan el mismo reporte dos veces (skill `automatizacion-tareas`).",
+      "filas": [
+        { "definicion_id": { "$ref": "definicion_reporte", "nombre": "Conciliación diaria de custodia" }, "expresion_cron": "0 7 * * *", "parametros_fijos": { "fecha": "$ayer" }, "destinatarios": ["tesoreria@aportaya.bo", "contabilidad@aportaya.bo"], "canal_entrega": "CORREO", "formato": "XLSX", "activa": true, "ultima_ejecucion_en": null, "proxima_ejecucion_en": { "$sql": "date_trunc('day', now()) + interval '1 day 7 hours'" } },
+        { "definicion_id": { "$ref": "definicion_reporte", "nombre": "Cartera en mora por tramo" }, "expresion_cron": "0 8 * * 1", "parametros_fijos": { "grupo_id": null }, "destinatarios": ["riesgos@aportaya.bo"], "canal_entrega": "CORREO", "formato": "XLSX", "activa": true, "ultima_ejecucion_en": null, "proxima_ejecucion_en": { "$sql": "date_trunc('week', now()) + interval '7 days 8 hours'" } },
+        { "definicion_id": { "$ref": "definicion_reporte", "nombre": "Operaciones relevantes y alertas de monitoreo" }, "expresion_cron": "0 6 1 * *", "parametros_fijos": { "desde": "$inicio_mes_anterior", "hasta": "$inicio_mes_actual" }, "destinatarios": ["cumplimiento@aportaya.bo"], "canal_entrega": "ALMACENAMIENTO", "formato": "CSV", "activa": true, "ultima_ejecucion_en": null, "proxima_ejecucion_en": { "$sql": "date_trunc('month', now()) + interval '1 month 6 hours'" } },
+        { "definicion_id": { "$ref": "definicion_reporte", "nombre": "Indicadores de plataforma" }, "expresion_cron": "0 9 1 * *", "parametros_fijos": { "periodo": "$mes_anterior" }, "destinatarios": ["directorio@aportaya.bo", "riesgos@aportaya.bo"], "canal_entrega": "PORTAL", "formato": "PDF", "activa": true, "ultima_ejecucion_en": null, "proxima_ejecucion_en": { "$sql": "date_trunc('month', now()) + interval '1 month 9 hours'" } },
+        { "definicion_id": { "$ref": "definicion_reporte", "nombre": "Desempeño del organizador" }, "expresion_cron": "0 9 1 */3 *", "parametros_fijos": {}, "destinatarios": ["operaciones@aportaya.bo"], "canal_entrega": "PORTAL", "formato": "XLSX", "activa": true, "ultima_ejecucion_en": null, "proxima_ejecucion_en": { "$sql": "date_trunc('month', now()) + interval '3 months 9 hours'" } }
+      ]
+    },
+    {
+      "tabla": "politica_retencion",
+      "conflicto": [
+        "entidad"
+      ],
+      "comentario": "Cuánto se guarda cada cosa y qué se hace al vencer. Borrar antes de plazo es tan grave como guardar para siempre: lo primero destruye evidencia, lo segundo viola la finalidad del dato.",
+      "filas": [
+        { "entidad": "expediente_cliente", "meses_retencion_activa": 60, "meses_retencion_historica": 120, "accion_al_vencer": "ANONIMIZAR", "base_legal": "Instructivo específico EIF (UIF) — conservación mínima de 5 años desde el fin de la relación comercial; Código de Comercio art. 52", "vigente_desde": "2026-01-01" },
+        { "entidad": "documento_identidad", "meses_retencion_activa": 60, "meses_retencion_historica": 120, "accion_al_vencer": "ANONIMIZAR", "base_legal": "Instructivo específico EIF (UIF) — respaldo documental de la debida diligencia", "vigente_desde": "2026-01-01" },
+        { "entidad": "transaccion_billetera", "meses_retencion_activa": 60, "meses_retencion_historica": 120, "accion_al_vencer": "ARCHIVAR", "base_legal": "Código de Comercio art. 52 — libros y registros contables por 5 años", "vigente_desde": "2026-01-01" },
+        { "entidad": "movimiento_billetera", "meses_retencion_activa": 60, "meses_retencion_historica": 120, "accion_al_vencer": "ARCHIVAR", "base_legal": "Código de Comercio art. 52 — partida de cada transacción", "vigente_desde": "2026-01-01" },
+        { "entidad": "asiento_contable", "meses_retencion_activa": 60, "meses_retencion_historica": 120, "accion_al_vencer": "ARCHIVAR", "base_legal": "Código de Comercio art. 52", "vigente_desde": "2026-01-01" },
+        { "entidad": "pago", "meses_retencion_activa": 60, "meses_retencion_historica": 120, "accion_al_vencer": "ARCHIVAR", "base_legal": "Código de Comercio art. 52; respaldo de reclamos del consumidor financiero", "vigente_desde": "2026-01-01" },
+        { "entidad": "extracto_bancario", "meses_retencion_activa": 60, "meses_retencion_historica": 120, "accion_al_vencer": "ARCHIVAR", "base_legal": "Código de Comercio art. 52 — respaldo de la conciliación", "vigente_desde": "2026-01-01" },
+        { "entidad": "registro_operacion_relevante", "meses_retencion_activa": 60, "meses_retencion_historica": 120, "accion_al_vencer": "ARCHIVAR", "base_legal": "Instructivo específico EIF (UIF) art. 52 — respaldo de la remisión", "vigente_desde": "2026-01-01" },
+        { "entidad": "reporte_operacion_sospechosa", "meses_retencion_activa": 120, "meses_retencion_historica": 120, "accion_al_vencer": "ARCHIVAR", "base_legal": "Ley 1768 y normativa UIF — reserva y conservación del ROS", "vigente_desde": "2026-01-01" },
+        { "entidad": "registro_incumplimiento", "meses_retencion_activa": 60, "meses_retencion_historica": 120, "accion_al_vencer": "ARCHIVAR", "base_legal": "Respaldo del debido proceso y de la reputación calculada", "vigente_desde": "2026-01-01" },
+        { "entidad": "reclamo_cliente", "meses_retencion_activa": 60, "meses_retencion_historica": 120, "accion_al_vencer": "ARCHIVAR", "base_legal": "RNSF Libro 4 Título I — atención al consumidor financiero; la restricción ck_reclamo_conservacion exige 10 años desde el ingreso", "vigente_desde": "2026-01-01" },
+        { "entidad": "evento_riesgo_operativo", "meses_retencion_activa": 60, "meses_retencion_historica": 120, "accion_al_vencer": "ARCHIVAR", "base_legal": "RNSF Libro 3 Título V — base de datos de eventos de riesgo operativo (CIRO)", "vigente_desde": "2026-01-01" },
+        { "entidad": "bitacora_evento", "meses_retencion_activa": 24, "meses_retencion_historica": 60, "accion_al_vencer": "ARCHIVAR", "base_legal": "Pista de auditoría — RNSF Libro 3 Título VII, gestión de seguridad de la información", "vigente_desde": "2026-01-01" },
+        { "entidad": "registro_acceso_datos", "meses_retencion_activa": 24, "meses_retencion_historica": 60, "accion_al_vencer": "ARCHIVAR", "base_legal": "Huella de acceso a datos personales — respaldo ante requerimiento de autoridad", "vigente_desde": "2026-01-01" },
+        { "entidad": "envio_notificacion", "meses_retencion_activa": 12, "meses_retencion_historica": 24, "accion_al_vencer": "ELIMINAR", "base_legal": "Prueba de notificación mientras corren los plazos de reclamo y apelación", "vigente_desde": "2026-01-01" },
+        { "entidad": "webhook_pasarela", "meses_retencion_activa": 12, "meses_retencion_historica": 24, "accion_al_vencer": "ELIMINAR", "base_legal": "Respaldo técnico de la conciliación de pagos", "vigente_desde": "2026-01-01" },
+        { "entidad": "intento_autenticacion", "meses_retencion_activa": 12, "meses_retencion_historica": 24, "accion_al_vencer": "ELIMINAR", "base_legal": "Investigación de incidentes de seguridad", "vigente_desde": "2026-01-01" },
+        { "entidad": "sesion", "meses_retencion_activa": 6, "meses_retencion_historica": 12, "accion_al_vencer": "ELIMINAR", "base_legal": "Minimización: la sesión cerrada ya no cumple finalidad operativa", "vigente_desde": "2026-01-01" },
+        { "entidad": "token_verificacion", "meses_retencion_activa": 3, "meses_retencion_historica": 6, "accion_al_vencer": "ELIMINAR", "base_legal": "Minimización: el token consumido o expirado no cumple finalidad", "vigente_desde": "2026-01-01" }
+      ]
+    },
+    {
+      "tabla": "regla_cumplimiento",
+      "conflicto": [
+        "codigo"
+      ],
+      "comentario": "Reglas operativas de cumplimiento sobre la billetera. Complementan a `regla_monitoreo_lft` (archivo 08), que es la tipología LGI/FT: acá está lo que se mide en la operación diaria. Ninguna bloquea a un usuario sola salvo coincidencia con lista restrictiva.",
+      "filas": [
+        { "codigo": "UMBRAL_OPERACION_UNICA", "descripcion": "Operación única igual o mayor al umbral de registro de operación relevante", "categoria": "UMBRAL_MONTO", "expresion": "operacion.monto_usd >= umbral(:PCC01_OPERACION_UNICA)", "umbral": 10000.0, "ventana_horas": null, "severidad": "MEDIA", "accion_automatica": "ALERTAR", "activa": true },
+        { "codigo": "UMBRAL_ACUMULADO_10D", "descripcion": "Acumulado del titular sobre el umbral dentro de la ventana de diez días", "categoria": "UMBRAL_MONTO", "expresion": "suma(operaciones.monto_usd, ventana) >= umbral(:PCC01_ACUMULADO)", "umbral": 10000.0, "ventana_horas": 240, "severidad": "ALTA", "accion_automatica": "ALERTAR", "activa": true },
+        { "codigo": "FRACCIONAMIENTO_90", "descripcion": "Tres o más operaciones entre el 80 % y el 99 % del umbral en la misma ventana", "categoria": "FRACCIONAMIENTO", "expresion": "conteo(operaciones donde monto_usd entre 0.8*umbral y 0.99*umbral, ventana) >= 3", "umbral": 10000.0, "ventana_horas": 240, "severidad": "ALTA", "accion_automatica": "ALERTAR", "activa": true },
+        { "codigo": "VELOCIDAD_RECARGAS", "descripcion": "Más de diez recargas acreditadas en veinticuatro horas", "categoria": "VELOCIDAD", "expresion": "conteo(orden_recarga.acreditada, ventana) > 10", "umbral": 10.0, "ventana_horas": 24, "severidad": "MEDIA", "accion_automatica": "ALERTAR", "activa": true },
+        { "codigo": "ENTRADA_SALIDA_INMEDIATA", "descripcion": "Recarga y retiro del mismo importe dentro de dos horas, sin uso del saldo", "categoria": "VELOCIDAD", "expresion": "existe(retiro donde abs(monto - recarga.monto) <= 0.05*recarga.monto, ventana)", "umbral": null, "ventana_horas": 2, "severidad": "ALTA", "accion_automatica": "RETENER_OPERACION", "activa": true },
+        { "codigo": "COINCIDENCIA_LISTA_RESTRICTIVA", "descripcion": "Coincidencia exacta del titular contra una lista restrictiva vigente", "categoria": "LISTA_RESTRICTIVA", "expresion": "coincidencia(usuario, listas_vigentes).puntaje >= 0.95", "umbral": 0.95, "ventana_horas": null, "severidad": "CRITICA", "accion_automatica": "BLOQUEAR_USUARIO", "activa": true },
+        { "codigo": "COINCIDENCIA_LISTA_PARCIAL", "descripcion": "Coincidencia parcial que requiere revisión de un analista antes de decidir", "categoria": "LISTA_RESTRICTIVA", "expresion": "coincidencia(usuario, listas_vigentes).puntaje entre 0.80 y 0.94", "umbral": 0.8, "ventana_horas": null, "severidad": "ALTA", "accion_automatica": "RETENER_OPERACION", "activa": true },
+        { "codigo": "RED_MISMO_DISPOSITIVO", "descripcion": "Cinco o más titulares distintos operando desde el mismo dispositivo en una semana", "categoria": "RED_SOSPECHOSA", "expresion": "conteo_distinto(usuario_id por dispositivo_id, ventana) >= 5", "umbral": 5.0, "ventana_horas": 168, "severidad": "ALTA", "accion_automatica": "ALERTAR", "activa": true },
+        { "codigo": "RED_MISMO_INSTRUMENTO", "descripcion": "Un mismo instrumento de fondeo asociado a tres o más titulares", "categoria": "RED_SOSPECHOSA", "expresion": "conteo_distinto(usuario_id por instrumento.hash_identificador) >= 3", "umbral": 3.0, "ventana_horas": null, "severidad": "ALTA", "accion_automatica": "RETENER_OPERACION", "activa": true },
+        { "codigo": "DESVIO_PERFIL_TRANSACCIONAL", "descripcion": "Operativa del mes que supera en tres veces el perfil declarado por el titular", "categoria": "UMBRAL_MONTO", "expresion": "suma(operaciones.monto_bob, mes) > 3 * perfil_transaccional.monto_mensual_estimado", "umbral": 3.0, "ventana_horas": 720, "severidad": "MEDIA", "accion_automatica": "ALERTAR", "activa": true },
+        { "codigo": "PEP_OPERACION_RELEVANTE", "descripcion": "Persona expuesta políticamente con una operación sobre el umbral de registro", "categoria": "UMBRAL_MONTO", "expresion": "usuario.es_pep AND operacion.monto_usd >= 5000", "umbral": 5000.0, "ventana_horas": null, "severidad": "ALTA", "accion_automatica": "ALERTAR", "activa": true }
+      ]
+    },
+    {
+      "tabla": "umbral_operativo",
+      "conflicto": [
+        "nivel_kyc_requerido",
+        "concepto"
+      ],
+      "comentario": "Umbral por nivel de verificación de identidad, usado por cumplimiento para monitorear. Quien RECHAZA la operación es `limite_operativo_billetera` (archivo 03): esta tabla mide, aquella impide. Si los dos números divergen, manda el del archivo 03 y hay un hallazgo que corregir. Correspondencia de niveles: NINGUNO = sin verificar, BASICO = diligencia SIMPLIFICADA, INTERMEDIO = ESTANDAR, COMPLETO = AMPLIADA o REFORZADA.",
+      "filas": [
+        { "concepto": "SALDO_MAXIMO", "nivel_kyc_requerido": "NINGUNO", "monto_maximo": 0.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "SALDO_MAXIMO", "nivel_kyc_requerido": "BASICO", "monto_maximo": 2000.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "SALDO_MAXIMO", "nivel_kyc_requerido": "INTERMEDIO", "monto_maximo": 5000.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "SALDO_MAXIMO", "nivel_kyc_requerido": "COMPLETO", "monto_maximo": 50000.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "RECARGA_OPERACION", "nivel_kyc_requerido": "NINGUNO", "monto_maximo": 0.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "RECARGA_OPERACION", "nivel_kyc_requerido": "BASICO", "monto_maximo": 1000.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "RECARGA_OPERACION", "nivel_kyc_requerido": "INTERMEDIO", "monto_maximo": 2500.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "RECARGA_OPERACION", "nivel_kyc_requerido": "COMPLETO", "monto_maximo": 20000.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "RETIRO_OPERACION", "nivel_kyc_requerido": "NINGUNO", "monto_maximo": 0.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "RETIRO_OPERACION", "nivel_kyc_requerido": "BASICO", "monto_maximo": 1000.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "RETIRO_OPERACION", "nivel_kyc_requerido": "INTERMEDIO", "monto_maximo": 2500.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "RETIRO_OPERACION", "nivel_kyc_requerido": "COMPLETO", "monto_maximo": 20000.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "TRANSFERENCIA_P2P_DIA", "nivel_kyc_requerido": "NINGUNO", "monto_maximo": 0.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "TRANSFERENCIA_P2P_DIA", "nivel_kyc_requerido": "BASICO", "monto_maximo": 500.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "TRANSFERENCIA_P2P_DIA", "nivel_kyc_requerido": "INTERMEDIO", "monto_maximo": 2000.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "TRANSFERENCIA_P2P_DIA", "nivel_kyc_requerido": "COMPLETO", "monto_maximo": 10000.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "EFECTIVO_DIA", "nivel_kyc_requerido": "NINGUNO", "monto_maximo": 0.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "EFECTIVO_DIA", "nivel_kyc_requerido": "BASICO", "monto_maximo": 700.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "EFECTIVO_DIA", "nivel_kyc_requerido": "INTERMEDIO", "monto_maximo": 2000.0, "moneda": "BOB", "vigente_desde": "2026-01-01" },
+        { "concepto": "EFECTIVO_DIA", "nivel_kyc_requerido": "COMPLETO", "monto_maximo": 7000.0, "moneda": "BOB", "vigente_desde": "2026-01-01" }
+      ]
+    },
+    {
+      "tabla": "lista_restrictiva_externa",
+      "conflicto": [
+        "version",
+        "nombre_lista"
+      ],
+      "comentario": "Se siembra la fila de control con `registros = 0`: la lista real la carga el proceso de actualización, no un seeder. Una lista sembrada con datos falsos produciría coincidencias falsas contra personas reales.",
+      "filas": [
+        { "nombre_lista": "ONU_CSNU", "version": "pendiente-carga", "fecha_actualizacion": "2026-01-01", "registros": 0 },
+        { "nombre_lista": "OFAC_SDN", "version": "pendiente-carga", "fecha_actualizacion": "2026-01-01", "registros": 0 },
+        { "nombre_lista": "UE_SANCIONES", "version": "pendiente-carga", "fecha_actualizacion": "2026-01-01", "registros": 0 },
+        { "nombre_lista": "PEP_NACIONAL", "version": "pendiente-carga", "fecha_actualizacion": "2026-01-01", "registros": 0 },
+        { "nombre_lista": "LISTA_INTERNA", "version": "pendiente-carga", "fecha_actualizacion": "2026-01-01", "registros": 0 }
+      ]
+    }
+  ]
+}

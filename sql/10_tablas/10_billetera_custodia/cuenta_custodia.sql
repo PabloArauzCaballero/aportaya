@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS cuenta_custodia (
   tipo                               VARCHAR(25) NOT NULL,
   entidad_financiera                 VARCHAR(60) NOT NULL,
   numero_cuenta_cifrado              VARCHAR(255) NOT NULL,
+  version_llave                      SMALLINT NOT NULL,
   numero_enmascarado                 VARCHAR(30) NOT NULL,
   moneda                             CHAR(3) NOT NULL,
   saldo_segun_banco                  NUMERIC(18,2) DEFAULT 0 NOT NULL,

@@ -214,6 +214,7 @@ BEGIN;
 \ir 10_tablas/10_billetera_custodia/descuadre_custodia.sql
 \ir 10_tablas/10_billetera_custodia/limite_operativo_billetera.sql
 \ir 10_tablas/10_billetera_custodia/consumo_limite.sql
+\ir 10_tablas/10_billetera_custodia/respuesta_idempotente.sql
 \ir 10_tablas/10_billetera_custodia/regla_antifraude.sql
 \ir 10_tablas/10_billetera_custodia/evaluacion_antifraude.sql
 \ir 10_tablas/10_billetera_custodia/bloqueo_saldo.sql
@@ -296,6 +297,40 @@ BEGIN;
 \ir 10_tablas/12_cumplimiento_asfi/prueba_continuidad.sql
 \ir 10_tablas/12_cumplimiento_asfi/contrato_tercero.sql
 \ir 10_tablas/12_cumplimiento_asfi/evaluacion_tercero.sql
+--    módulo 13 — Contabilidad Financiera y ERP
+\ir 10_tablas/13_contabilidad_erp/ejercicio_fiscal.sql
+\ir 10_tablas/13_contabilidad_erp/periodo_contable.sql
+\ir 10_tablas/13_contabilidad_erp/cierre_periodo_contable.sql
+\ir 10_tablas/13_contabilidad_erp/centro_costo.sql
+\ir 10_tablas/13_contabilidad_erp/presupuesto.sql
+\ir 10_tablas/13_contabilidad_erp/partida_presupuestaria.sql
+\ir 10_tablas/13_contabilidad_erp/tercero_comercial.sql
+\ir 10_tablas/13_contabilidad_erp/orden_compra.sql
+\ir 10_tablas/13_contabilidad_erp/factura_proveedor.sql
+\ir 10_tablas/13_contabilidad_erp/pago_a_proveedor.sql
+\ir 10_tablas/13_contabilidad_erp/cuenta_por_cobrar.sql
+\ir 10_tablas/13_contabilidad_erp/cobro_cuenta_por_cobrar.sql
+\ir 10_tablas/13_contabilidad_erp/categoria_activo_fijo.sql
+\ir 10_tablas/13_contabilidad_erp/activo_fijo.sql
+\ir 10_tablas/13_contabilidad_erp/depreciacion_activo.sql
+\ir 10_tablas/13_contabilidad_erp/asiento_plantilla.sql
+\ir 10_tablas/13_contabilidad_erp/linea_plantilla_asiento.sql
+\ir 10_tablas/13_contabilidad_erp/estado_financiero_generado.sql
+--    módulo 14 — Publicidad y Campañas
+\ir 10_tablas/14_publicidad_campanas/socio_comercial.sql
+\ir 10_tablas/14_publicidad_campanas/anunciante.sql
+\ir 10_tablas/14_publicidad_campanas/cuenta_publicitaria.sql
+\ir 10_tablas/14_publicidad_campanas/campana_publicitaria.sql
+\ir 10_tablas/14_publicidad_campanas/segmento_audiencia.sql
+\ir 10_tablas/14_publicidad_campanas/espacio_publicitario.sql
+\ir 10_tablas/14_publicidad_campanas/conjunto_anuncios.sql
+\ir 10_tablas/14_publicidad_campanas/pieza_creativa.sql
+\ir 10_tablas/14_publicidad_campanas/revision_creativa.sql
+\ir 10_tablas/14_publicidad_campanas/anuncio.sql
+\ir 10_tablas/14_publicidad_campanas/impresion_anuncio.sql
+\ir 10_tablas/14_publicidad_campanas/clic_anuncio.sql
+\ir 10_tablas/14_publicidad_campanas/conversion_anuncio.sql
+\ir 10_tablas/14_publicidad_campanas/factura_publicidad.sql
 
 -- 3) Claves foráneas (después de todas las tablas)
 \ir 20_claves/01_identidad_usuarios.sql
@@ -310,6 +345,8 @@ BEGIN;
 \ir 20_claves/10_billetera_custodia.sql
 \ir 20_claves/11_tarifas_comisiones.sql
 \ir 20_claves/12_cumplimiento_asfi.sql
+\ir 20_claves/13_contabilidad_erp.sql
+\ir 20_claves/14_publicidad_campanas.sql
 
 -- 4) Índices y unicidad
 \ir 30_indices/01_identidad_usuarios.sql
@@ -324,6 +361,8 @@ BEGIN;
 \ir 30_indices/10_billetera_custodia.sql
 \ir 30_indices/11_tarifas_comisiones.sql
 \ir 30_indices/12_cumplimiento_asfi.sql
+\ir 30_indices/13_contabilidad_erp.sql
+\ir 30_indices/14_publicidad_campanas.sql
 
 -- 5) Sellado de las tablas append-only
 \ir 35_append_only/append_only.sql

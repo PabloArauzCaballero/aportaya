@@ -29,3 +29,32 @@ INSERT INTO concepto_tarifa (tarifario_id, hecho_generador_id, codigo, nombre_co
   ((SELECT id FROM tarifario WHERE codigo = 'GENERAL' AND version = 1), (SELECT id FROM catalogo_hecho_generador WHERE codigo = 'TRANSFERENCIA_EJECUTADA'), 'COM_TRANSF', 'Transferencia', 'Enviar saldo a otra persona no tiene costo.', 'GRATUITO', 'SIN_BASE', 'PAGADOR_DE_LA_OPERACION', 'DEBITO_DE_BILLETERA', 'AL_DEVENGAR', FALSE, FALSE, TRUE, 13, TRUE),
   ((SELECT id FROM tarifario WHERE codigo = 'GENERAL' AND version = 1), (SELECT id FROM catalogo_hecho_generador WHERE codigo = 'PARTICIPANTE_INSCRITO'), 'COM_INSCRIP', 'Inscripción al grupo', 'Entrar a un grupo no tiene costo.', 'GRATUITO', 'SIN_BASE', 'PAGADOR_DE_LA_OPERACION', 'DEBITO_DE_BILLETERA', 'AL_DEVENGAR', FALSE, FALSE, TRUE, 14, TRUE)
 ON CONFLICT (tarifario_id, codigo) DO NOTHING;
+
+-- Segmentos a los que se puede asignar un tarifario distinto. Existen desde el día uno para que una decisión comercial futura sea una fila, no una migración.
+INSERT INTO segmento_comercial (codigo, descripcion, criterio, prioridad, activo) VALUES
+  ('GENERAL', 'Todos los titulares que no califican a otro segmento', '{"tipo": "SIEMPRE"}'::jsonb, 100, TRUE),
+  ('NUEVO_CLIENTE', 'Titulares con menos de 90 días desde la apertura de la billetera', '{"tipo": "ANTIGUEDAD_DIAS", "operador": "<", "valor": 90}'::jsonb, 20, TRUE),
+  ('ALTO_VOLUMEN', 'Titulares con más de Bs 20.000 operados en los últimos 90 días', '{"tipo": "VOLUMEN_BOB_90D", "operador": ">=", "valor": 20000}'::jsonb, 10, TRUE),
+  ('ORGANIZADOR_MAESTRO', 'Organizadores con nivel MAESTRO vigente y sin sanción firme', '{"tipo": "NIVEL_ORGANIZADOR", "operador": "=", "valor": "MAESTRO"}'::jsonb, 5, TRUE)
+ON CONFLICT (codigo) DO NOTHING;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM regla_tarifa) THEN
+  -- Tramos de la comisión de entrega. La regla que coincide gana sobre el valor por defecto del concepto (0,3 %); el piso de Bs 10 y el techo de Bs 50 se mantienen en todos los tramos, que es lo que impide que una bolsa chica quede confiscada por la comisión.
+  INSERT INTO regla_tarifa (concepto_tarifa_id, orden, condicion, monto_base_desde, monto_base_hasta, valor_porcentual, valor_fijo, monto_minimo, monto_maximo, vigente_desde, vigente_hasta) VALUES
+    ((SELECT id FROM concepto_tarifa WHERE codigo = 'COM_ENTREGA' AND tarifario_id = (SELECT id FROM tarifario WHERE codigo = 'GENERAL' AND version = 1)), 1, '{"tramo": "bolsa pequeña"}'::jsonb, 0.0, 3000.0, 0.35, NULL, 10.0, 50.0, '2026-01-01T00:00:00-04:00', NULL),
+    ((SELECT id FROM concepto_tarifa WHERE codigo = 'COM_ENTREGA' AND tarifario_id = (SELECT id FROM tarifario WHERE codigo = 'GENERAL' AND version = 1)), 2, '{"tramo": "bolsa media"}'::jsonb, 3000.01, 10000.0, 0.3, NULL, 10.0, 50.0, '2026-01-01T00:00:00-04:00', NULL),
+    ((SELECT id FROM concepto_tarifa WHERE codigo = 'COM_ENTREGA' AND tarifario_id = (SELECT id FROM tarifario WHERE codigo = 'GENERAL' AND version = 1)), 3, '{"tramo": "bolsa grande"}'::jsonb, 10000.01, NULL, 0.25, NULL, 10.0, 50.0, '2026-01-01T00:00:00-04:00', NULL);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM asignacion_tarifario) THEN
+  -- Quién cobra con qué tarifario. La asignación GLOBAL es la red de seguridad: sin ella, un titular sin segmento no tendría tarifa y la operación se rechazaría por omisión.
+  INSERT INTO asignacion_tarifario (tarifario_id, segmento_id, grupo_id, usuario_id, autorizado_por, ambito, prioridad, motivo, vigente_desde, vigente_hasta) VALUES
+    ((SELECT id FROM tarifario WHERE codigo = 'GENERAL' AND version = 1), NULL, NULL, NULL, NULL, 'GLOBAL', 100, 'Tarifario general aplicable por defecto a toda la plataforma', '2026-01-01T00:00:00-04:00', NULL),
+    ((SELECT id FROM tarifario WHERE codigo = 'GENERAL' AND version = 1), (SELECT id FROM segmento_comercial WHERE codigo = 'GENERAL'), NULL, NULL, NULL, 'SEGMENTO', 90, 'Segmento general — mismo tarifario mientras no exista decisión comercial distinta', '2026-01-01T00:00:00-04:00', NULL);
+  END IF;
+END $$;

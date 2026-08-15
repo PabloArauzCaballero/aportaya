@@ -25,4 +25,3 @@ COMMENT ON COLUMN orden_cobro.proveedor_id IS 'FK';
 COMMENT ON COLUMN orden_cobro.referencia_unica IS 'UQ';
 COMMENT ON COLUMN orden_cobro.estado IS 'CK, IDX';
 COMMENT ON COLUMN orden_cobro.expira_en IS 'IDX';
-COMMENT ON COLUMN orden_cobro.clave_idempotencia IS 'UQ';

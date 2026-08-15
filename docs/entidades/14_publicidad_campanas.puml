@@ -1,0 +1,577 @@
+@startuml 14_publicidad_campanas_clases
+' ============================================================
+'  MODULO 14: Publicidad y Campanas (Ads)
+'  Diagrama de CLASES  (modelo detallado)
+'  Fusiona el inventario propio de espacios in-app (estilo
+'  PedidosYa/Yango Ads: banner de inicio, listado destacado,
+'  push patrocinado) con la jerarquia cuenta -> campana ->
+'  conjunto de anuncios -> anuncio de Meta Ads (segmentacion,
+'  puja y presupuesto por conjunto).
+'  Regla estructural (RN-18, M7): un anunciante SIEMPRE paga,
+'  nunca cobra. Cuando el anunciante es un organizador, el
+'  gasto es suyo, no un ingreso: ninguna tabla de este modulo
+'  representa un pago HACIA un organizador.
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 14 - Publicidad y Campanas (clases)
+
+legend top right
+  <b>Cadena de la publicidad</b>
+  Anunciante --> CuentaPublicitaria --> CampanaPublicitaria
+   --> ConjuntoAnuncios (segmento + espacio + puja) --> Anuncio
+   --> Impresion/Clic/Conversion --> FacturaPublicidad
+   --> CuentaPorCobrar (M13)
+  Ninguna pieza creativa se entrega sin RevisionCreativa
+  aprobada: moderacion previa, no posterior.
+endlegend
+
+' ============================================================
+package "Anunciantes" {
+
+  enum TipoAnunciante {
+    ORGANIZADOR
+    SOCIO_COMERCIAL
+  }
+
+  enum EstadoAnunciante {
+    ACTIVO
+    SUSPENDIDO
+    DADO_DE_BAJA
+  }
+
+  class SocioComercial <<AR>> {
+    - id: UUID
+    - razonSocial: String
+    - numeroDocumento: String
+    - rubro: String
+    - emailContacto: String
+    - telefonoContacto: String
+    - estado: String <<POSTULADO | ACTIVO | SUSPENDIDO | DADO_DE_BAJA>>
+    - verificadoPor: UUID
+    - creadoEn: DateTime
+    --
+    + activar(usuarioId)
+  }
+
+  class Anunciante <<AR>> {
+    - id: UUID
+    - tipo: TipoAnunciante
+    - organizadorId: UUID
+    - socioComercialId: UUID
+    - razonSocialFacturacion: String
+    - estado: EstadoAnunciante
+    - creadoEn: DateTime
+    --
+    + suspender(motivo)
+  }
+}
+
+' ============================================================
+package "Cuenta y campanas publicitarias" {
+
+  enum EstadoCuentaPublicitaria {
+    ACTIVA
+    SUSPENDIDA
+    CERRADA
+  }
+
+  enum ObjetivoCampana {
+    VISIBILIDAD_MARCA
+    TRAFICO
+    POSTULACION_GRUPO
+    DESCARGA_APP
+    CONVERSION
+  }
+
+  enum EstadoCampana {
+    BORRADOR
+    EN_REVISION
+    ACTIVA
+    PAUSADA
+    FINALIZADA
+    RECHAZADA
+  }
+
+  class CuentaPublicitaria <<AR>> {
+    - id: UUID
+    - anuncianteId: UUID
+    - limiteGastoMensual: Decimal
+    - moneda: String
+    - saldoConsumidoMes: Decimal
+    - estado: EstadoCuentaPublicitaria
+    - creadaEn: DateTime
+    --
+    + verificarLimite(monto): Boolean
+  }
+
+  class CampanaPublicitaria <<AR>> {
+    - id: UUID
+    - cuentaPublicitariaId: UUID
+    - nombre: String
+    - objetivo: ObjetivoCampana
+    - presupuestoTotal: Decimal
+    - presupuestoConsumido: Decimal
+    - moneda: String
+    - fechaInicio: DateTime
+    - fechaFin: DateTime
+    - estado: EstadoCampana
+    - aprobadaPor: UUID
+    --
+    + aprobar(usuarioId)
+    + pausar(motivo)
+    + presupuestoDisponible(): Decimal
+  }
+}
+
+' ============================================================
+package "Segmentacion, inventario y conjuntos de anuncios" {
+
+  enum TipoEspacio {
+    BANNER_INICIO
+    LISTADO_GRUPOS_DESTACADO
+    PUSH_PATROCINADO
+    BANNER_BILLETERA
+  }
+
+  enum ModeloPuja {
+    CPM
+    CPC
+  }
+
+  class SegmentoAudiencia <<VO>> {
+    - id: UUID
+    - nombre: String
+    - criterios: JSON
+    - reutilizable: Boolean
+    - creadoPor: UUID
+    - creadoEn: DateTime
+  }
+
+  class EspacioPublicitario <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - nombre: String
+    - tipo: TipoEspacio
+    - capacidadMaximaSimultanea: Integer
+    - activo: Boolean
+    --
+    + tieneCupo(): Boolean
+  }
+
+  class ConjuntoAnuncios <<AR>> {
+    - id: UUID
+    - campanaPublicitariaId: UUID
+    - segmentoAudienciaId: UUID
+    - espacioPublicitarioId: UUID
+    - nombre: String
+    - presupuestoDiario: Decimal
+    - moneda: String
+    - pujaMaxima: Decimal
+    - modeloPuja: ModeloPuja
+    - estado: String <<ACTIVO | PAUSADO | AGOTADO | FINALIZADO>>
+    --
+    + puedeEntregar(): Boolean
+  }
+}
+
+' ============================================================
+package "Creatividad y moderacion" {
+
+  class PiezaCreativa <<AR>> {
+    - id: UUID
+    - anuncianteId: UUID
+    - titulo: String
+    - texto: String
+    - urlRecurso: String
+    - tipoRecurso: String <<IMAGEN | VIDEO>>
+    - estadoModeracion: String <<PENDIENTE | APROBADA | RECHAZADA>>
+    - creadaEn: DateTime
+    --
+    + enviarARevision(): RevisionCreativa
+  }
+
+  class RevisionCreativa {
+    - id: UUID
+    - piezaCreativaId: UUID
+    - revisadaPor: UUID
+    - decision: String <<APROBADA | RECHAZADA>>
+    - motivo: String
+    - revisadaEn: DateTime
+  }
+
+  class Anuncio <<AR>> {
+    - id: UUID
+    - conjuntoAnunciosId: UUID
+    - piezaCreativaId: UUID
+    - estado: String <<PROGRAMADO | EN_ENTREGA | PAUSADO | FINALIZADO | RECHAZADO>>
+    - iniciadoEn: DateTime
+    - finalizadoEn: DateTime
+    --
+    + activar()
+    + pausar(motivo)
+  }
+}
+
+' ============================================================
+package "Entrega y facturacion" {
+
+  class ImpresionAnuncio {
+    - id: UUID
+    - anuncioId: UUID
+    - usuarioId: UUID
+    - mostradaEn: DateTime
+    - costo: Decimal
+    - moneda: String
+  }
+
+  class ClicAnuncio {
+    - id: UUID
+    - impresionId: UUID
+    - usuarioId: UUID
+    - clicEn: DateTime
+    - costo: Decimal
+    - moneda: String
+  }
+
+  class ConversionAnuncio {
+    - id: UUID
+    - clicId: UUID
+    - impresionId: UUID
+    - tipo: String <<POSTULACION_GRUPO | REGISTRO | DESCARGA_APP>>
+    - referenciaId: UUID
+    - ocurridaEn: DateTime
+  }
+
+  class FacturaPublicidad <<AR>> {
+    - id: UUID
+    - cuentaPublicitariaId: UUID
+    - periodo: String
+    - montoTotal: Decimal
+    - moneda: String
+    - facturaElectronicaId: UUID
+    - cuentaPorCobrarId: UUID
+    - estado: String <<GENERADA | FACTURADA | COBRADA | ANULADA>>
+    - generadaEn: DateTime
+    --
+    + liquidar(): CuentaPorCobrar
+  }
+}
+
+' ---------- Relaciones ----------
+Anunciante "0..1" -- "1" SocioComercial
+Anunciante "0..1" -- "1" Organizador
+Anunciante "1" *-- "1" CuentaPublicitaria
+CuentaPublicitaria "1" *-- "0..*" CampanaPublicitaria
+CampanaPublicitaria "1" *-- "1..*" ConjuntoAnuncios
+ConjuntoAnuncios "0..*" -- "1" SegmentoAudiencia
+ConjuntoAnuncios "0..*" -- "1" EspacioPublicitario
+ConjuntoAnuncios "1" *-- "1..*" Anuncio
+Anunciante "1" *-- "0..*" PiezaCreativa
+PiezaCreativa "1" *-- "1..*" RevisionCreativa
+PiezaCreativa "1" -- "0..*" Anuncio
+Anuncio "1" *-- "0..*" ImpresionAnuncio
+ImpresionAnuncio "1" *-- "0..1" ClicAnuncio
+ClicAnuncio "1" *-- "0..1" ConversionAnuncio
+ImpresionAnuncio "1" *-- "0..1" ConversionAnuncio
+CuentaPublicitaria "1" *-- "0..*" FacturaPublicidad
+
+Anunciante --> TipoAnunciante
+Anunciante --> EstadoAnunciante
+CuentaPublicitaria --> EstadoCuentaPublicitaria
+CampanaPublicitaria --> ObjetivoCampana
+CampanaPublicitaria --> EstadoCampana
+EspacioPublicitario --> TipoEspacio
+ConjuntoAnuncios --> ModeloPuja
+
+note right of Anunciante
+  <b>RN-18 no se toca</b>
+  organizador_id identifica QUIEN paga cuando el
+  anunciante es un organizador promocionando su
+  propio grupo -- nunca a quien se le paga. No existe
+  columna de ingreso ni de reparto hacia organizador
+  en todo el modulo. El gasto es del anunciante y se
+  cobra igual que a un socio_comercial.
+  CHECK: exactamente uno de organizador_id /
+  socio_comercial_id segun tipo.
+end note
+
+note bottom of RevisionCreativa
+  Una pieza creativa no llega a Anuncio sin una
+  RevisionCreativa con decision = APROBADA. La
+  moderacion es previa a la entrega, no un filtro
+  posterior: mismo principio que "revision_creativa"
+  en debido-proceso.
+end note
+
+note bottom of FacturaPublicidad
+  Liquida el gasto de un periodo de una cuenta
+  publicitaria. factura_electronica_id (M11) emite el
+  comprobante fiscal; cuenta_por_cobrar_id (M13) hace
+  el seguimiento del cobro. No hay un tercer libro:
+  esta tabla es el origen, no el registro contable.
+end note
+
+@enduml
+
+@startuml 14_publicidad_campanas_relacional
+' ============================================================
+'  MODULO 14: Publicidad y Campanas (Ads)
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 14 - Publicidad y Campanas (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> CHECK    <<NULL>> admite nulos
+  impresion_anuncio y clic_anuncio son de alto volumen
+  y APPEND_ONLY; se particionan por fecha en fase 5
+  cuando el volumen lo justifique (hoy las referencia
+  conversion_anuncio, asi que no se particionan todavia:
+  ver scripts/modelo.py, PARTICIONADAS).
+endlegend
+
+entity "socio_comercial" as sociocom {
+  * id : UUID <<PK>>
+  --
+  razon_social : VARCHAR(150)
+  numero_documento : VARCHAR(30) <<UQ>>
+  rubro : VARCHAR(60) <<NULL>>
+  email_contacto : VARCHAR(120)
+  telefono_contacto : VARCHAR(20) <<NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  # verificado_por : UUID <<FK, NULL>>
+  creado_en : TIMESTAMPTZ
+}
+
+entity "anunciante" as anunc {
+  * id : UUID <<PK>>
+  --
+  tipo : VARCHAR(15) <<CK, IDX>>
+  # organizador_id : UUID <<FK, NULL, IDX, M7>>
+  # socio_comercial_id : UUID <<FK, NULL, IDX>>
+  razon_social_facturacion : VARCHAR(150)
+  estado : VARCHAR(15) <<CK, IDX>>
+  creado_en : TIMESTAMPTZ
+}
+
+entity "cuenta_publicitaria" as cuentapub {
+  * id : UUID <<PK>>
+  --
+  # anunciante_id : UUID <<FK, UQ>>
+  limite_gasto_mensual : DECIMAL(14,2) <<NULL>>
+  moneda : CHAR(3)
+  saldo_consumido_mes : DECIMAL(14,2)
+  estado : VARCHAR(15) <<CK, IDX>>
+  creada_en : TIMESTAMPTZ
+}
+
+entity "campana_publicitaria" as campub {
+  * id : UUID <<PK>>
+  --
+  # cuenta_publicitaria_id : UUID <<FK, IDX>>
+  nombre : VARCHAR(120)
+  objetivo : VARCHAR(25) <<CK>>
+  presupuesto_total : DECIMAL(14,2) <<CK: > 0>>
+  presupuesto_consumido : DECIMAL(14,2)
+  moneda : CHAR(3)
+  fecha_inicio : TIMESTAMPTZ
+  fecha_fin : TIMESTAMPTZ <<NULL>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  # aprobada_por : UUID <<FK, NULL>>
+}
+
+entity "segmento_audiencia" as segaud {
+  * id : UUID <<PK>>
+  --
+  nombre : VARCHAR(100)
+  criterios : JSONB
+  reutilizable : BOOLEAN
+  # creado_por : UUID <<FK>>
+  creado_en : TIMESTAMPTZ
+}
+
+entity "espacio_publicitario" as espacpub {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(30) <<UQ>>
+  nombre : VARCHAR(80)
+  tipo : VARCHAR(25) <<CK>>
+  capacidad_maxima_simultanea : SMALLINT <<CK: > 0>>
+  activo : BOOLEAN
+}
+
+entity "conjunto_anuncios" as conjanun {
+  * id : UUID <<PK>>
+  --
+  # campana_publicitaria_id : UUID <<FK, IDX>>
+  # segmento_audiencia_id : UUID <<FK, IDX>>
+  # espacio_publicitario_id : UUID <<FK, IDX>>
+  nombre : VARCHAR(120)
+  presupuesto_diario : DECIMAL(12,2) <<CK: > 0>>
+  moneda : CHAR(3)
+  puja_maxima : DECIMAL(10,2) <<CK: > 0>>
+  modelo_puja : VARCHAR(10) <<CK>>
+  estado : VARCHAR(15) <<CK, IDX>>
+}
+
+entity "pieza_creativa" as piezacre {
+  * id : UUID <<PK>>
+  --
+  # anunciante_id : UUID <<FK, IDX>>
+  titulo : VARCHAR(120)
+  texto : VARCHAR(300) <<NULL>>
+  url_recurso : VARCHAR(300)
+  tipo_recurso : VARCHAR(10) <<CK>>
+  estado_moderacion : VARCHAR(15) <<CK, IDX>>
+  creada_en : TIMESTAMPTZ
+}
+
+entity "revision_creativa" as revcre {
+  * id : UUID <<PK>>
+  --
+  # pieza_creativa_id : UUID <<FK, IDX>>
+  # revisada_por : UUID <<FK>>
+  decision : VARCHAR(10) <<CK>>
+  motivo : VARCHAR(300) <<NULL>>
+  revisada_en : TIMESTAMPTZ
+}
+
+entity "anuncio" as anunci {
+  * id : UUID <<PK>>
+  --
+  # conjunto_anuncios_id : UUID <<FK, IDX>>
+  # pieza_creativa_id : UUID <<FK, IDX>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  iniciado_en : TIMESTAMPTZ <<NULL>>
+  finalizado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "impresion_anuncio" as impanun {
+  * id : UUID <<PK>>
+  --
+  # anuncio_id : UUID <<FK, IDX>>
+  # usuario_id : UUID <<FK, NULL, IDX, M1>>
+  mostrada_en : TIMESTAMPTZ <<IDX>>
+  costo : DECIMAL(10,4)
+  moneda : CHAR(3)
+}
+
+entity "clic_anuncio" as clicanun {
+  * id : UUID <<PK>>
+  --
+  # impresion_id : UUID <<FK, IDX>>
+  # usuario_id : UUID <<FK, NULL, IDX, M1>>
+  clic_en : TIMESTAMPTZ <<IDX>>
+  costo : DECIMAL(10,4)
+  moneda : CHAR(3)
+}
+
+entity "conversion_anuncio" as convanun {
+  * id : UUID <<PK>>
+  --
+  # clic_id : UUID <<FK, NULL, IDX>>
+  # impresion_id : UUID <<FK, NULL, IDX>>
+  tipo : VARCHAR(25) <<CK>>
+  referencia_id : UUID <<NULL, IDX, polimorfica>>
+  ocurrida_en : TIMESTAMPTZ
+}
+
+entity "factura_publicidad" as facpub {
+  * id : UUID <<PK>>
+  --
+  # cuenta_publicitaria_id : UUID <<FK, IDX>>
+  periodo : VARCHAR(7)
+  monto_total : DECIMAL(14,2) <<CK: > 0>>
+  moneda : CHAR(3)
+  # factura_electronica_id : UUID <<FK, NULL, M11>>
+  # cuenta_por_cobrar_id : UUID <<FK, NULL, M13>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  generada_en : TIMESTAMPTZ
+}
+
+anunc ||--o| cuentapub : "opera"
+cuentapub ||--o{ campub : "financia"
+campub ||--|{ conjanun : "reparte en"
+segaud ||--o{ conjanun : "segmenta"
+espacpub ||--o{ conjanun : "ubica"
+conjanun ||--|{ anunci : "entrega"
+anunc ||--o{ piezacre : "crea"
+piezacre ||--|{ revcre : "se revisa con"
+piezacre ||--o{ anunci : "protagoniza"
+anunci ||--o{ impanun : "se muestra en"
+impanun ||--o| clicanun : "puede derivar en"
+clicanun ||--o| convanun : "puede derivar en"
+cuentapub ||--o{ facpub : "liquida"
+
+note top of anunc
+  CHECK ck_anunciante_tipo_exclusivo:
+  (tipo = 'ORGANIZADOR' AND organizador_id IS NOT NULL
+   AND socio_comercial_id IS NULL) OR
+  (tipo = 'SOCIO_COMERCIAL' AND socio_comercial_id IS NOT NULL
+   AND organizador_id IS NULL).
+  organizador_id -> organizador.id (M7): quien paga,
+  jamas quien cobra (RN-18).
+end note
+
+note bottom of conjanun
+  presupuesto_diario y puja_maxima acotan el gasto sin
+  necesitar una tabla de subasta separada: la entrega
+  se detiene sola cuando el conjunto alcanza
+  presupuesto_diario (estado -> AGOTADO), evaluado por
+  el worker de entrega (fase 9).
+end note
+
+note bottom of impanun
+  Alto volumen, APPEND_ONLY. usuario_id es NULL si la
+  impresion ocurre sin sesion identificada (ej.
+  landing publica). costo se calcula segun
+  modelo_puja del conjunto (CPM aqui, CPC en clic).
+end note
+
+note bottom of facpub
+  Un solo camino de cobro: factura_publicidad ->
+  cuenta_por_cobrar (M13) -> cobro_cuenta_por_cobrar ->
+  asiento_contable (M3). factura_electronica_id es el
+  comprobante fiscal (M11); no reemplaza el
+  seguimiento de cobro de M13.
+end note
+
+@enduml

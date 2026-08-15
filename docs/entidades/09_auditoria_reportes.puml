@@ -586,7 +586,7 @@ entity "registro_acceso_datos" as accdatos {
   # usuario_afectado_id : UUID <<FK, IDX>>
   tipo_dato : VARCHAR(30) <<CK>>
   operacion : VARCHAR(15) <<CK>>
-  justificacion : VARCHAR(300) <<NULL>>
+  justificacion : VARCHAR(300)
   ticket_soporte_id : VARCHAR(30) <<NULL>>
   cantidad_registros : INTEGER
   ip_origen : INET
@@ -644,6 +644,7 @@ entity "exportacion_reporte" as exprep {
   hash_archivo : VARCHAR(64)
   tamano_bytes : BIGINT
   esta_cifrado : BOOLEAN
+  version_llave : SMALLINT
   descargas : SMALLINT
   expira_en : TIMESTAMPTZ <<IDX>>
   generada_en : TIMESTAMPTZ

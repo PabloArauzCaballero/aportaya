@@ -28,6 +28,11 @@ Norma (docs/Cumplimiento.md) → Caso de uso (docs/CasosDeUso/) → Restricción
 | CU-70..79 | Transparencia verificable y reputación |
 | CU-80..89 | Notificaciones y comunicación con el usuario |
 | CU-90..99 | Organizador, automatización y proveedores de plataforma |
+| CU-100..109 | Contabilidad financiera y ERP |
+| CU-110..119 | Publicidad y campañas |
+
+Los códigos de tres dígitos son válidos: `scripts/verificar_boveda.py` extrae el
+número de `CU-NN` con una expresión regular, no asume dos dígitos fijos.
 
 **Los códigos no se reutilizan ni se renumeran.** Un caso retirado se marca como
 obsoleto y conserva su número.

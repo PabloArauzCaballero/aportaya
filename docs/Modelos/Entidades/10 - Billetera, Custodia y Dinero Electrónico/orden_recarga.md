@@ -34,7 +34,7 @@ append_only: false
 | `moneda` | CHAR(3) | — | no | — |
 | `estado` | VARCHAR(15) | IDX | no | CK, IDX |
 | `referencia_externa` | VARCHAR(80) | UQ | sí | UQ, NULL |
-| `clave_idempotencia` | VARCHAR(100) | UQ | no | UQ |
+| `clave_idempotencia` | VARCHAR(100) | — | no | — |
 | `solicitada_en` | TIMESTAMPTZ | — | no | — |
 | `acreditada_en` | TIMESTAMPTZ | — | sí | NULL |
 | `expira_en` | TIMESTAMPTZ | — | sí | NULL |

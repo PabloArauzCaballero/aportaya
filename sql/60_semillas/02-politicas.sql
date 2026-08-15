@@ -24,7 +24,7 @@ END $$;
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM politica_cobertura) THEN
-  INSERT INTO politica_cobertura (porcentaje_constitucion, dias_mora_para_activar, porcentaje_maximo_cobertura_por_aporte, tope_cobertura_por_participante, tope_cobertura_por_periodo, max_coberturas_por_participante, requiere_aprobacion_manual_desde, plazo_recuperacion_dias, tasa_recargo_recuperacion, vigente_desde) VALUES
-    (5.0, 5, 100.0, 3000.0, 10000.0, 3, 2000.0, 90, 1.5, now());
+  INSERT INTO politica_cobertura (porcentaje_constitucion, dias_mora_para_activar, porcentaje_maximo_cobertura_por_aporte, tope_cobertura_por_participante, tope_cobertura_por_periodo, max_coberturas_por_participante, requiere_aprobacion_manual_desde, plazo_recuperacion_dias, tasa_recargo_recuperacion, vigente_desde, exige_aval_previo) VALUES
+    (5.0, 5, 100.0, 3000.0, 10000.0, 3, 2000.0, 90, 1.5, now(), FALSE);
   END IF;
 END $$;

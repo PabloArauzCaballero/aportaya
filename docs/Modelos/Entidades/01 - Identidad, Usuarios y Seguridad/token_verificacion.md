@@ -44,7 +44,7 @@ append_only: false
 | `ip_origen` | INET | — | no | — |
 | `agente_usuario` | VARCHAR(255) | — | no | — |
 | `correlation_id` | UUID | IDX | no | IDX |
-| `clave_idempotencia` | VARCHAR(80) | UQ | no | UQ |
+| `clave_idempotencia` | VARCHAR(80) | — | no | — |
 | `longitud` | SMALLINT | — | sí | NULL, subtipo OTP |
 | `url_destino` | VARCHAR(255) | — | sí | NULL, subtipo ENLACE |
 | `firma_hmac` | VARCHAR(128) | — | sí | NULL, subtipo ENLACE |

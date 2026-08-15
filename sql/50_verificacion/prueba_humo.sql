@@ -144,7 +144,13 @@ $q$);
 SELECT CASE WHEN count(*) = 19
             THEN 'OK    · R-AUD-01 las 19 tablas append-only están selladas'
             ELSE 'FALLA · R-AUD-01 solo ' || count(*) || ' de 19 tablas selladas' END
-  FROM pg_trigger WHERE NOT tgisinternal AND tgname LIKE '%append\_only';
+  FROM pg_trigger tg
+  JOIN pg_class c ON c.oid = tg.tgrelid
+ WHERE NOT tg.tgisinternal AND tg.tgname LIKE '%append\_only'
+   -- Las particiones heredan el trigger de su tabla padre: contarlas infla el
+   -- total (bitacora_evento tiene 75 particiones) y haría fallar la prueba sin
+   -- que falte ningún sello. Se cuentan solo las tablas raíz.
+   AND NOT c.relispartition;
 
 -- --- R-BIL-08 · toda retención expira salvo orden de autoridad --------
 SELECT pg_temp.debe_fallar('R-BIL-08 retención sin vencimiento', $q$

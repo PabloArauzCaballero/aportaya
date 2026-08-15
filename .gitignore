@@ -9,3 +9,11 @@ docs/.obsidian/cache
 # Python
 __pycache__/
 *.pyc
+
+# Editor / IDE: estado local, no del proyecto
+.vscode/
+.claude/launch.json
+
+# Andamio vacío: apps/ se quitó del repo (commit 63ec074) y se reintroduce
+# cuando exista código de verdad, no como carpeta con solo un .gitignore
+apps/

@@ -30,7 +30,7 @@ append_only: false
 | `procesado_en` | TIMESTAMPTZ | — | sí | NULL |
 | `intentos_procesamiento` | SMALLINT | — | no | — |
 | `estado` | VARCHAR(15) | IDX | no | CK, IDX |
-| `clave_idempotencia` | VARCHAR(120) | UQ | no | UQ |
+| `clave_idempotencia` | VARCHAR(120) | — | no | — |
 | `error_procesamiento` | TEXT | — | sí | NULL |
 | `pago_id` | UUID | FK | sí | FK, NULL |
 

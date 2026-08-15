@@ -675,7 +675,7 @@ entity "transaccion_billetera" as txbill {
   origen_id : UUID <<IDX, polimorfica>>
   canal : VARCHAR(15) <<CK>>
   ip_origen : INET <<NULL>>
-  clave_idempotencia : VARCHAR(100) <<UQ>>
+  clave_idempotencia : VARCHAR(100)
   hash_registro : VARCHAR(64)
   hash_anterior : VARCHAR(64) <<NULL>>
   ocurrida_en : TIMESTAMPTZ <<IDX>>
@@ -794,7 +794,7 @@ entity "orden_recarga" as orecarga {
   moneda : CHAR(3)
   estado : VARCHAR(15) <<CK, IDX>>
   referencia_externa : VARCHAR(80) <<UQ, NULL>>
-  clave_idempotencia : VARCHAR(100) <<UQ>>
+  clave_idempotencia : VARCHAR(100)
   solicitada_en : TIMESTAMPTZ
   acreditada_en : TIMESTAMPTZ <<NULL>>
   expira_en : TIMESTAMPTZ <<NULL>>
@@ -807,6 +807,7 @@ entity "orden_retiro" as oretiro {
   # instrumento_destino_id : UUID <<FK>>
   # retencion_id : UUID <<FK, NULL, UQ>>
   # transaccion_id : UUID <<FK, NULL>>
+  # solicitada_por : UUID <<FK, IDX>>
   # aprobada_por : UUID <<FK, NULL>>
   # proveedor_id : UUID <<FK, NULL, M3>>
   monto_solicitado : DECIMAL(16,2) <<CK: > 0>>
@@ -818,7 +819,7 @@ entity "orden_retiro" as oretiro {
   requiere_doble_aprobacion : BOOLEAN
   ventana_enfriamiento_hasta : TIMESTAMPTZ <<NULL>>
   referencia_proveedor : VARCHAR(80) <<UQ, NULL>>
-  clave_idempotencia : VARCHAR(100) <<UQ>>
+  clave_idempotencia : VARCHAR(100)
   solicitada_en : TIMESTAMPTZ
   pagada_en : TIMESTAMPTZ <<NULL>>
 }
@@ -844,6 +845,7 @@ entity "cuenta_custodia" as ctacust {
   tipo : VARCHAR(25) <<CK>>
   entidad_financiera : VARCHAR(60)
   numero_cuenta_cifrado : VARCHAR(255)
+  version_llave : SMALLINT
   numero_enmascarado : VARCHAR(30)
   moneda : CHAR(3)
   saldo_segun_banco : DECIMAL(18,2)
@@ -928,6 +930,19 @@ entity "consumo_limite" as consumo {
   monto_acumulado : DECIMAL(16,2)
   cantidad_acumulada : INTEGER
   actualizado_en : TIMESTAMPTZ
+}
+
+entity "respuesta_idempotente" as respidem {
+  * id : UUID <<PK>>
+  --
+  # usuario_id : UUID <<FK, IDX>>
+  operacion : VARCHAR(40) <<UQ+usuario_id+clave_idempotencia>>
+  clave_idempotencia : VARCHAR(100)
+  hash_solicitud : VARCHAR(64)
+  codigo_http : SMALLINT
+  cuerpo_respuesta : JSONB
+  registrada_en : TIMESTAMPTZ
+  expira_en : TIMESTAMPTZ <<IDX>>
 }
 
 entity "regla_antifraude" as reglafraude {

@@ -19,13 +19,14 @@ INSERT INTO credencial_acceso (usuario_id, hash_contrasena, algoritmo, parametro
   ((SELECT id FROM usuario WHERE codigo_publico = 'USR000006'), repeat('b', 64), 'argon2id', '{"m": 65536, "t": 3, "p": 4}'::jsonb, now(), FALSE)
 ON CONFLICT DO NOTHING;
 
-INSERT INTO documento_identidad (usuario_id, tipo, numero_cifrado, hash_numero, pais_emision, url_anverso, hash_archivo, estado) VALUES
-  ((SELECT id FROM usuario WHERE codigo_publico = 'USR000001'), 'CI', 'cifrado-USR000001', encode(digest('USR000001','sha256'),'hex'), 'BO', 'https://demo.local/USR000001-a.jpg', repeat('a', 64), 'APROBADA'),
-  ((SELECT id FROM usuario WHERE codigo_publico = 'USR000002'), 'CI', 'cifrado-USR000002', encode(digest('USR000002','sha256'),'hex'), 'BO', 'https://demo.local/USR000002-a.jpg', repeat('a', 64), 'APROBADA'),
-  ((SELECT id FROM usuario WHERE codigo_publico = 'USR000003'), 'CI', 'cifrado-USR000003', encode(digest('USR000003','sha256'),'hex'), 'BO', 'https://demo.local/USR000003-a.jpg', repeat('a', 64), 'APROBADA'),
-  ((SELECT id FROM usuario WHERE codigo_publico = 'USR000004'), 'CI', 'cifrado-USR000004', encode(digest('USR000004','sha256'),'hex'), 'BO', 'https://demo.local/USR000004-a.jpg', repeat('a', 64), 'APROBADA'),
-  ((SELECT id FROM usuario WHERE codigo_publico = 'USR000005'), 'CI', 'cifrado-USR000005', encode(digest('USR000005','sha256'),'hex'), 'BO', 'https://demo.local/USR000005-a.jpg', repeat('a', 64), 'APROBADA'),
-  ((SELECT id FROM usuario WHERE codigo_publico = 'USR000006'), 'CI', 'cifrado-USR000006', encode(digest('USR000006','sha256'),'hex'), 'BO', 'https://demo.local/USR000006-a.jpg', repeat('a', 64), 'APROBADA')
+-- `version_llave` dice con qué versión de la llave maestra se cifró el dato: rotar la llave es cifrar de nuevo y subir el número, no perder el acceso a lo viejo.
+INSERT INTO documento_identidad (usuario_id, tipo, numero_cifrado, hash_numero, pais_emision, url_anverso, hash_archivo, estado, version_llave) VALUES
+  ((SELECT id FROM usuario WHERE codigo_publico = 'USR000001'), 'CI', 'cifrado-USR000001', encode(digest('USR000001','sha256'),'hex'), 'BO', 'https://demo.local/USR000001-a.jpg', repeat('a', 64), 'APROBADA', 1),
+  ((SELECT id FROM usuario WHERE codigo_publico = 'USR000002'), 'CI', 'cifrado-USR000002', encode(digest('USR000002','sha256'),'hex'), 'BO', 'https://demo.local/USR000002-a.jpg', repeat('a', 64), 'APROBADA', 1),
+  ((SELECT id FROM usuario WHERE codigo_publico = 'USR000003'), 'CI', 'cifrado-USR000003', encode(digest('USR000003','sha256'),'hex'), 'BO', 'https://demo.local/USR000003-a.jpg', repeat('a', 64), 'APROBADA', 1),
+  ((SELECT id FROM usuario WHERE codigo_publico = 'USR000004'), 'CI', 'cifrado-USR000004', encode(digest('USR000004','sha256'),'hex'), 'BO', 'https://demo.local/USR000004-a.jpg', repeat('a', 64), 'APROBADA', 1),
+  ((SELECT id FROM usuario WHERE codigo_publico = 'USR000005'), 'CI', 'cifrado-USR000005', encode(digest('USR000005','sha256'),'hex'), 'BO', 'https://demo.local/USR000005-a.jpg', repeat('a', 64), 'APROBADA', 1),
+  ((SELECT id FROM usuario WHERE codigo_publico = 'USR000006'), 'CI', 'cifrado-USR000006', encode(digest('USR000006','sha256'),'hex'), 'BO', 'https://demo.local/USR000006-a.jpg', repeat('a', 64), 'APROBADA', 1)
 ON CONFLICT DO NOTHING;
 
 INSERT INTO verificacion_kyc (usuario_id, nivel_solicitado, estado, iniciada_en) VALUES

@@ -135,4 +135,4 @@ Entonces se rechaza; solo procede anulación y nota de crédito
 
 ## Ver también
 
-[[CU-22 Liquidar y entregar el fondo]] · [[CU-31 Devengar y cobrar la comisión]] · [[CU-33 Devolver comisión y emitir nota de crédito]]
+[[CU-22 Liquidar y entregar el fondo]] · [[CU-31 Devengar y cobrar la comisión]] · [[CU-33 Devolver comisión y emitir nota de crédito]] · [[CU-114 Liquidar y facturar el gasto publicitario]]

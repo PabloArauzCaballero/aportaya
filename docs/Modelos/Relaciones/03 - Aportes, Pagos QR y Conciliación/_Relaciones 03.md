@@ -3,12 +3,12 @@ tags:
   - moc
   - modulo/03-aportes-pagos-qr-y-conciliacion
 modulo: "03 — Aportes, Pagos QR y Conciliación"
-relaciones_fk: 46
+relaciones_fk: 48
 ---
 
 # 03 — Aportes, Pagos QR y Conciliación · relaciones
 
-Las **46 claves foráneas** que salen de las tablas de este módulo.
+Las **48 claves foráneas** que salen de las tablas de este módulo.
 
 [[_Relaciones|← Todas las relaciones]] · [[Index]]
 
@@ -16,6 +16,7 @@ Las **46 claves foráneas** que salen de las tablas de este módulo.
 | --- | --- | :-: | :-: |
 | [[asiento_contable.asiento_reversa_id → asiento_contable]] | [[asiento_contable]] | — | sí |
 | [[asiento_contable.grupo_id → grupo]] | [[grupo]] | ↗ 02 | sí |
+| [[asiento_contable.periodo_contable_id → periodo_contable]] | [[periodo_contable]] | ↗ 13 | sí |
 | [[asiento_contable.registrado_por → usuario]] | [[usuario]] | ↗ 01 | sí |
 | [[cierre_diario.cerrado_por → usuario]] | [[usuario]] | ↗ 01 | no |
 | [[comprobante_manual.pago_id → pago]] | [[pago]] | — | no |
@@ -25,6 +26,7 @@ Las **46 claves foráneas** que salen de las tablas de este módulo.
 | [[conciliacion.movimiento_bancario_id → movimiento_bancario]] | [[movimiento_bancario]] | — | sí |
 | [[conciliacion.pago_id → pago]] | [[pago]] | — | no |
 | [[constancia_pago.pago_id → pago]] | [[pago]] | — | no |
+| [[cuenta_contable.cuenta_padre_id → cuenta_contable]] | [[cuenta_contable]] | — | sí |
 | [[cuenta_contable.grupo_id → grupo]] | [[grupo]] | ↗ 02 | sí |
 | [[cuenta_contable.participante_id → participante]] | [[participante]] | ↗ 02 | sí |
 | [[disputa_pago.pago_id → pago]] | [[pago]] | — | no |

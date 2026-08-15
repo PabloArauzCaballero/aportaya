@@ -7,8 +7,8 @@ clase: OrdenRetiro
 modulo: "10 — Billetera, Custodia y Dinero Electrónico"
 estereotipo: Raíz de agregado
 clave_primaria: [id]
-columnas: 19
-fk_salientes: 6
+columnas: 20
+fk_salientes: 7
 fk_entrantes: 1
 append_only: false
 ---
@@ -26,6 +26,7 @@ append_only: false
 | `instrumento_destino_id` | UUID | FK | no | FK |
 | `retencion_id` | UUID | FK UQ | sí | FK, NULL, UQ |
 | `transaccion_id` | UUID | FK | sí | FK, NULL |
+| `solicitada_por` | UUID | FK IDX | no | FK, IDX |
 | `aprobada_por` | UUID | FK | sí | FK, NULL |
 | `proveedor_id` | UUID | FK | sí | FK, NULL, M3 |
 | `monto_solicitado` | DECIMAL(16,2) | — | no | CK: > 0 |
@@ -37,7 +38,7 @@ append_only: false
 | `requiere_doble_aprobacion` | BOOLEAN | — | no | — |
 | `ventana_enfriamiento_hasta` | TIMESTAMPTZ | — | sí | NULL |
 | `referencia_proveedor` | VARCHAR(80) | UQ | sí | UQ, NULL |
-| `clave_idempotencia` | VARCHAR(100) | UQ | no | UQ |
+| `clave_idempotencia` | VARCHAR(100) | — | no | — |
 | `solicitada_en` | TIMESTAMPTZ | — | no | — |
 | `pagada_en` | TIMESTAMPTZ | — | sí | NULL |
 
@@ -50,6 +51,7 @@ append_only: false
 | `instrumento_destino_id` | [[instrumento_fondeo]] | 10 | no | [[orden_retiro.instrumento_destino_id → instrumento_fondeo]] |
 | `proveedor_id` | [[proveedor_pago]] | ↗ 03 | sí | [[orden_retiro.proveedor_id → proveedor_pago]] |
 | `retencion_id` | [[retencion_saldo]] | 10 | sí | [[orden_retiro.retencion_id → retencion_saldo]] |
+| `solicitada_por` | [[usuario]] | ↗ 01 | no | [[orden_retiro.solicitada_por → usuario]] |
 | `transaccion_id` | [[transaccion_billetera]] | 10 | sí | [[orden_retiro.transaccion_id → transaccion_billetera]] |
 
 ## Referenciada por

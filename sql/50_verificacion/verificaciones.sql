@@ -36,3 +36,52 @@ SELECT d.id FROM deduccion_entrega d
 SELECT codigo FROM reclamo_cliente
  WHERE estado='CERRADO' AND resultado='FAVORABLE'
    AND monto_reclamado IS NOT NULL AND devolucion_comision_id IS NULL;
+
+-- 7) R-AUD-10 · eslabones rotos en la cadena de transacciones
+-- Cada fila debe apuntar al hash de su predecesora por secuencia. Detecta tanto
+-- una alteración como una eliminación: si falta un eslabón, el siguiente queda
+-- apuntando a un hash que ya no existe.
+SELECT t.id, t.secuencia, t.hash_anterior, prev.hash_registro AS esperado
+  FROM transaccion_billetera t
+  LEFT JOIN LATERAL (
+        SELECT p.hash_registro FROM transaccion_billetera p
+         WHERE p.secuencia < t.secuencia
+         ORDER BY p.secuencia DESC LIMIT 1) prev ON TRUE
+ WHERE t.hash_anterior IS DISTINCT FROM prev.hash_registro;
+
+-- 8) R-AUD-10 · eslabones rotos en la cadena de la bitácora
+SELECT b.id, b.secuencia, b.hash_anterior, COALESCE(prev.hash_registro, repeat('0',64)) AS esperado
+  FROM bitacora_evento b
+  LEFT JOIN LATERAL (
+        SELECT p.hash_registro FROM bitacora_evento p
+         WHERE p.secuencia < b.secuencia
+         ORDER BY p.secuencia DESC LIMIT 1) prev ON TRUE
+ WHERE b.hash_anterior IS DISTINCT FROM COALESCE(prev.hash_registro, repeat('0',64));
+
+-- 9) R-AUD-10 · patas huérfanas o transacciones aplicadas sin patas
+-- Las patas no entran en el hash del encabezado (ver R-AUD-03): esta consulta es
+-- la que cubre ese flanco.
+SELECT m.id AS movimiento_huerfano, NULL::uuid AS transaccion_sin_patas
+  FROM movimiento_billetera m
+  LEFT JOIN transaccion_billetera t ON t.id = m.transaccion_id
+ WHERE t.id IS NULL
+UNION ALL
+SELECT NULL, t.id FROM transaccion_billetera t
+ WHERE t.estado = 'APLICADA'
+   AND NOT EXISTS (SELECT 1 FROM movimiento_billetera m WHERE m.transaccion_id = t.id);
+
+-- 10) R-BIL-20 · transacciones que mezclan monedas
+SELECT t.id, t.moneda, c.moneda AS moneda_cuenta
+  FROM transaccion_billetera t
+  JOIN movimiento_billetera m ON m.transaccion_id = t.id
+  JOIN cuenta_billetera c ON c.id = m.cuenta_billetera_id
+ WHERE c.moneda <> t.moneda;
+
+-- 11) R-SEG-03 · tablas con datos de titular sin RLS forzada
+SELECT c.relname FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+ WHERE n.nspname = 'public' AND c.relkind = 'r'
+   AND EXISTS (SELECT 1 FROM pg_attribute a
+                WHERE a.attrelid = c.oid AND a.attname = 'usuario_id'
+                  AND NOT a.attisdropped)
+   AND NOT c.relrowsecurity;

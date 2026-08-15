@@ -1,0 +1,688 @@
+@startuml 13_contabilidad_erp_clases
+' ============================================================
+'  MODULO 13: Contabilidad Financiera y ERP
+'  Diagrama de CLASES  (modelo detallado)
+'  Extiende cuenta_contable/asiento_contable/movimiento_contable
+'  (M3) con plan de cuentas jerarquico, centros de costo,
+'  presupuestos, activos fijos, cuentas por pagar/cobrar y
+'  cierre por periodo. No crea un segundo libro mayor: todo lo
+'  que se registra acá termina en un asiento_contable de M3.
+'  Principio rector: un solo libro, mas origenes.
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam packageStyle rectangle
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+hide empty members
+skinparam class {
+  BackgroundColor #F4F6F7
+  BorderColor #34495E
+  ArrowColor #2C3E50
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #85929E
+  FontColor #1F5673
+}
+
+title Modulo 13 - Contabilidad Financiera y ERP (clases)
+
+legend top right
+  <b>Un solo libro mayor</b>
+  cuenta_contable, asiento_contable y movimiento_contable
+  viven en M3. Este modulo agrega origenes (factura de
+  proveedor, cobro, depreciacion) y controles (periodo
+  cerrado, presupuesto, centro de costo) alrededor de ese
+  mismo libro. Nada de aca reemplaza la partida doble.
+endlegend
+
+' ============================================================
+package "Ejercicio y periodos" {
+
+  enum EstadoPeriodo {
+    ABIERTO
+    CERRADO
+  }
+
+  class EjercicioFiscal <<AR>> {
+    - id: UUID
+    - anio: Integer
+    - fechaInicio: Date
+    - fechaFin: Date
+    - estado: EstadoPeriodo
+    - cerradoEn: DateTime
+    - cerradoPor: UUID
+    --
+    + abrir()
+    + cerrar(usuarioId)
+  }
+
+  class PeriodoContable <<AR>> {
+    - id: UUID
+    - ejercicioFiscalId: UUID
+    - mes: Integer
+    - fechaInicio: Date
+    - fechaFin: Date
+    - estado: EstadoPeriodo
+    --
+    + cerrar(usuarioId): CierrePeriodoContable
+    + estaAbierto(): Boolean
+  }
+
+  class CierrePeriodoContable {
+    - id: UUID
+    - periodoContableId: UUID
+    - cerradoEn: DateTime
+    - cerradoPor: UUID
+    - totalDebe: Decimal
+    - totalHaber: Decimal
+    - diferencia: Decimal
+    - observaciones: String
+    --
+    + validarCuadre(): Boolean
+  }
+}
+
+' ============================================================
+package "Centros de costo y presupuesto" {
+
+  enum TipoCentroCosto {
+    AREA
+    PRODUCTO
+    CAMPANA
+    PROYECTO
+  }
+
+  enum EstadoPresupuesto {
+    BORRADOR
+    APROBADO
+    CERRADO
+  }
+
+  class CentroCosto <<AR>> {
+    - id: UUID
+    - codigo: String
+    - nombre: String
+    - tipo: TipoCentroCosto
+    - activo: Boolean
+  }
+
+  class Presupuesto <<AR>> {
+    - id: UUID
+    - centroCostoId: UUID
+    - ejercicioFiscalId: UUID
+    - nombre: String
+    - estado: EstadoPresupuesto
+    - aprobadoPor: UUID
+    - aprobadoEn: DateTime
+    --
+    + aprobar(usuarioId)
+    + ejecucion(): Decimal
+  }
+
+  class PartidaPresupuestaria {
+    - id: UUID
+    - presupuestoId: UUID
+    - cuentaContableId: UUID
+    - periodoContableId: UUID
+    - montoPresupuestado: Decimal
+    - moneda: String
+    - montoEjecutado: Decimal
+    --
+    + desviacion(): Decimal
+  }
+}
+
+' ============================================================
+package "Terceros comerciales, compras y cuentas por pagar" {
+
+  enum TipoTercero {
+    PROVEEDOR
+    CLIENTE
+    AMBOS
+  }
+
+  enum EstadoTercero {
+    ACTIVO
+    INACTIVO
+    BLOQUEADO
+  }
+
+  class TerceroComercial <<AR>> {
+    - id: UUID
+    - tipo: TipoTercero
+    - razonSocial: String
+    - numeroDocumento: String
+    - email: String
+    - telefono: String
+    - cuentaContableId: UUID
+    - estado: EstadoTercero
+    - creadoEn: DateTime
+    --
+    + bloquear(motivo)
+  }
+
+  class OrdenCompra <<AR>> {
+    - id: UUID
+    - terceroComercialId: UUID
+    - centroCostoId: UUID
+    - numero: String
+    - descripcion: String
+    - montoTotal: Decimal
+    - moneda: String
+    - estado: String <<BORRADOR | APROBADA | RECIBIDA_PARCIAL | RECIBIDA_TOTAL | CANCELADA>>
+    - aprobadaPor: UUID
+    - creadaEn: DateTime
+    --
+    + aprobar(usuarioId)
+    + recibir(monto): FacturaProveedor
+  }
+
+  class FacturaProveedor <<AR>> {
+    - id: UUID
+    - terceroComercialId: UUID
+    - ordenCompraId: UUID
+    - centroCostoId: UUID
+    - numeroFactura: String
+    - fechaEmision: Date
+    - fechaVencimiento: Date
+    - monto: Decimal
+    - moneda: String
+    - montoPagado: Decimal
+    - saldoPendiente: Decimal
+    - estado: String <<REGISTRADA | APROBADA | PAGADA_PARCIAL | PAGADA | ANULADA>>
+    - aprobadaPor: UUID
+    - asientoContableId: UUID
+    --
+    + aprobar(usuarioId)
+    + registrarPago(monto): PagoAProveedor
+  }
+
+  class PagoAProveedor {
+    - id: UUID
+    - facturaProveedorId: UUID
+    - monto: Decimal
+    - moneda: String
+    - fechaPago: DateTime
+    - formaPago: String <<TRANSFERENCIA | CHEQUE | EFECTIVO>>
+    - autorizadoPor: UUID
+    - asientoContableId: UUID
+  }
+}
+
+' ============================================================
+package "Cuentas por cobrar" {
+
+  class CuentaPorCobrar <<AR>> {
+    - id: UUID
+    - origenTipo: String <<FACTURA_PUBLICIDAD | VENTA_SERVICIO | OTRO>>
+    - origenId: UUID
+    - terceroComercialId: UUID
+    - monto: Decimal
+    - moneda: String
+    - montoCobrado: Decimal
+    - saldoPendiente: Decimal
+    - fechaVencimiento: Date
+    - estado: String <<PENDIENTE | COBRADA_PARCIAL | COBRADA | INCOBRABLE>>
+    --
+    + registrarCobro(monto): CobroCuentaPorCobrar
+    + marcarIncobrable(motivo)
+  }
+
+  class CobroCuentaPorCobrar {
+    - id: UUID
+    - cuentaPorCobrarId: UUID
+    - monto: Decimal
+    - moneda: String
+    - fechaCobro: DateTime
+    - formaCobro: String <<TRANSFERENCIA | QR | TARJETA | EFECTIVO>>
+    - asientoContableId: UUID
+  }
+}
+
+' ============================================================
+package "Activos fijos y depreciacion" {
+
+  class CategoriaActivoFijo <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - nombre: String
+    - vidaUtilMeses: Integer
+    - metodoDepreciacion: String <<LINEA_RECTA>>
+    - cuentaActivoId: UUID
+    - cuentaDepreciacionId: UUID
+    - cuentaGastoDepreciacionId: UUID
+  }
+
+  class ActivoFijo <<AR>> {
+    - id: UUID
+    - categoriaActivoFijoId: UUID
+    - centroCostoId: UUID
+    - codigoInventario: String
+    - descripcion: String
+    - fechaAdquisicion: Date
+    - costoAdquisicion: Decimal
+    - moneda: String
+    - valorResidual: Decimal
+    - depreciacionAcumulada: Decimal
+    - valorEnLibros: Decimal
+    - estado: String <<ACTIVO | DADO_DE_BAJA | VENDIDO>>
+    - facturaProveedorId: UUID
+    --
+    + depreciarPeriodo(periodoId): DepreciacionActivo
+    + darDeBaja(motivo)
+  }
+
+  class DepreciacionActivo {
+    - id: UUID
+    - activoFijoId: UUID
+    - periodoContableId: UUID
+    - monto: Decimal
+    - moneda: String
+    - asientoContableId: UUID
+    - calculadaEn: DateTime
+  }
+}
+
+' ============================================================
+package "Plantillas de asiento y reportes" {
+
+  class AsientoPlantilla <<Pol>> {
+    - id: UUID
+    - codigo: String
+    - nombre: String
+    - glosa: String
+    - periodicidad: String <<MENSUAL | TRIMESTRAL | ANUAL | MANUAL>>
+    - activa: Boolean
+    - creadaPor: UUID
+    --
+    + generarAsiento(periodoId): AsientoContable
+  }
+
+  class LineaPlantillaAsiento {
+    - id: UUID
+    - plantillaId: UUID
+    - cuentaContableId: UUID
+    - tipoMovimiento: String <<DEBE | HABER>>
+    - montoReferencial: Decimal
+    - orden: Integer
+  }
+
+  class EstadoFinancieroGenerado {
+    - id: UUID
+    - periodoContableId: UUID
+    - tipo: String <<BALANCE_GENERAL | ESTADO_RESULTADOS>>
+    - generadoEn: DateTime
+    - generadoPor: UUID
+    - datos: JSON
+    - hashContenido: String
+    --
+    + regenerar(): EstadoFinancieroGenerado
+  }
+}
+
+' ---------- Relaciones ----------
+EjercicioFiscal "1" *-- "1..12" PeriodoContable
+PeriodoContable "1" *-- "0..1" CierrePeriodoContable
+PeriodoContable "1" *-- "0..*" PartidaPresupuestaria
+PeriodoContable "1" *-- "0..*" EstadoFinancieroGenerado
+
+CentroCosto "1" *-- "0..*" Presupuesto
+Presupuesto "1" *-- "1..*" PartidaPresupuestaria
+
+TerceroComercial "1" *-- "0..*" OrdenCompra
+TerceroComercial "1" *-- "0..*" FacturaProveedor
+OrdenCompra "1" *-- "0..*" FacturaProveedor
+FacturaProveedor "1" *-- "0..*" PagoAProveedor
+TerceroComercial "1" *-- "0..*" CuentaPorCobrar
+CuentaPorCobrar "1" *-- "0..*" CobroCuentaPorCobrar
+
+CategoriaActivoFijo "1" *-- "0..*" ActivoFijo
+ActivoFijo "1" *-- "0..*" DepreciacionActivo
+FacturaProveedor ..> ActivoFijo : origina >
+
+AsientoPlantilla "1" *-- "1..*" LineaPlantillaAsiento
+
+Presupuesto --> EstadoPresupuesto
+TerceroComercial --> TipoTercero
+TerceroComercial --> EstadoTercero
+CentroCosto --> TipoCentroCosto
+EjercicioFiscal --> EstadoPeriodo
+PeriodoContable --> EstadoPeriodo
+
+note right of PeriodoContable
+  <b>Regla dura: nada se asienta en un periodo
+  cerrado.</b> asiento_contable.periodo_contable_id
+  (M3) es NULL para asientos anteriores a este
+  modulo y obligatorio en adelante; un CHECK/trigger
+  en M3 rechaza el INSERT si el periodo referenciado
+  ya esta CERRADO. Cerrar un periodo es un acto
+  irreversible (CierrePeriodoContable): no hay
+  "reabrir", solo un asiento de ajuste en el periodo
+  siguiente.
+end note
+
+note bottom of FacturaProveedor
+  <b>Segregacion de funciones</b>
+  aprobada_por (autoriza la factura) y
+  autorizado_por de PagoAProveedor (ejecuta el pago)
+  no pueden ser la misma persona sobre la misma
+  factura -- mismo principio que "autorizar entrega
+  / ejecutar desembolso" en roles-y-accesos.
+end note
+
+note bottom of CuentaPorCobrar
+  origen_tipo/origen_id es polimorfica, igual que
+  asiento_contable.origen_id en M3. FACTURA_PUBLICIDAD
+  apunta a factura_publicidad.id (M14): la
+  liquidacion de gasto publicitario se cobra por este
+  camino, no por uno paralelo.
+end note
+
+note bottom of ActivoFijo
+  valor_en_libros = costo_adquisicion -
+  depreciacion_acumulada. Cada corrida mensual de
+  depreciacion genera un DepreciacionActivo y su
+  asiento_contable (DEBE gasto, HABER depreciacion
+  acumulada) contra la cuenta que define
+  CategoriaActivoFijo.
+end note
+
+@enduml
+
+@startuml 13_contabilidad_erp_relacional
+' ============================================================
+'  MODULO 13: Contabilidad Financiera y ERP
+'  Modelo RELACIONAL (entidad-relacion, listo para DDL)
+' ============================================================
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+skinparam DefaultFontSize 12
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 55
+hide circle
+skinparam class {
+  BackgroundColor #EAF2F8
+  BorderColor #2874A6
+  HeaderBackgroundColor #1F5673
+  FontColor #1B2631
+}
+
+title Modulo 13 - Contabilidad Financiera y ERP (modelo relacional)
+
+legend top right
+  <b>Notacion</b>
+  * PK    # FK    <<UQ>> unico    <<IDX>> indexado
+  <<CK>> CHECK    <<NULL>> admite nulos    <<GENERATED>> derivada
+  cuenta_contable, asiento_contable y movimiento_contable
+  viven en M3 (ver cuenta_padre_id ahi). Este diagrama solo
+  agrega tablas nuevas que originan asientos en ese libro.
+endlegend
+
+entity "ejercicio_fiscal" as ejfis {
+  * id : UUID <<PK>>
+  --
+  anio : SMALLINT <<UQ>>
+  fecha_inicio : DATE
+  fecha_fin : DATE
+  estado : VARCHAR(10) <<CK, IDX>>
+  cerrado_en : TIMESTAMPTZ <<NULL>>
+  # cerrado_por : UUID <<FK, NULL>>
+}
+
+entity "periodo_contable" as perctb {
+  * id : UUID <<PK>>
+  --
+  # ejercicio_fiscal_id : UUID <<FK, IDX>>
+  mes : SMALLINT <<CK: 1-12>>
+  fecha_inicio : DATE
+  fecha_fin : DATE
+  estado : VARCHAR(10) <<CK, IDX>>
+}
+
+entity "cierre_periodo_contable" as cierreper {
+  * id : UUID <<PK>>
+  --
+  # periodo_contable_id : UUID <<FK, UQ>>
+  cerrado_en : TIMESTAMPTZ
+  # cerrado_por : UUID <<FK>>
+  total_debe : DECIMAL(18,2)
+  total_haber : DECIMAL(18,2)
+  diferencia : DECIMAL(18,2) <<GENERATED>>
+  observaciones : VARCHAR(300) <<NULL>>
+}
+
+entity "centro_costo" as cencos {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(20) <<UQ>>
+  nombre : VARCHAR(100)
+  tipo : VARCHAR(20) <<CK>>
+  activo : BOOLEAN
+}
+
+entity "presupuesto" as presup {
+  * id : UUID <<PK>>
+  --
+  # centro_costo_id : UUID <<FK, IDX>>
+  # ejercicio_fiscal_id : UUID <<FK, IDX>>
+  nombre : VARCHAR(100)
+  estado : VARCHAR(15) <<CK, IDX>>
+  # aprobado_por : UUID <<FK, NULL>>
+  aprobado_en : TIMESTAMPTZ <<NULL>>
+}
+
+entity "partida_presupuestaria" as partpre {
+  * id : UUID <<PK>>
+  --
+  # presupuesto_id : UUID <<FK, IDX>>
+  # cuenta_contable_id : UUID <<FK, IDX, M3>>
+  # periodo_contable_id : UUID <<FK, IDX>>
+  monto_presupuestado : DECIMAL(14,2) <<CK: > 0>>
+  moneda : CHAR(3)
+  monto_ejecutado : DECIMAL(14,2)
+}
+
+entity "tercero_comercial" as tercom {
+  * id : UUID <<PK>>
+  --
+  tipo : VARCHAR(12) <<CK>>
+  razon_social : VARCHAR(150)
+  numero_documento : VARCHAR(30) <<UQ>>
+  email : VARCHAR(120) <<NULL>>
+  telefono : VARCHAR(20) <<NULL>>
+  # cuenta_contable_id : UUID <<FK, NULL, IDX, M3>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  creado_en : TIMESTAMPTZ
+}
+
+entity "orden_compra" as ordcom {
+  * id : UUID <<PK>>
+  --
+  # tercero_comercial_id : UUID <<FK, IDX>>
+  # centro_costo_id : UUID <<FK, NULL>>
+  numero : VARCHAR(30) <<UQ>>
+  descripcion : VARCHAR(300)
+  monto_total : DECIMAL(14,2) <<CK: > 0>>
+  moneda : CHAR(3)
+  estado : VARCHAR(15) <<CK, IDX>>
+  # aprobada_por : UUID <<FK, NULL>>
+  creada_en : TIMESTAMPTZ
+}
+
+entity "factura_proveedor" as facprov {
+  * id : UUID <<PK>>
+  --
+  # tercero_comercial_id : UUID <<FK, IDX>>
+  # orden_compra_id : UUID <<FK, NULL, IDX>>
+  # centro_costo_id : UUID <<FK, NULL>>
+  numero_factura : VARCHAR(30)
+  fecha_emision : DATE
+  fecha_vencimiento : DATE
+  monto : DECIMAL(14,2) <<CK: > 0>>
+  moneda : CHAR(3)
+  monto_pagado : DECIMAL(14,2)
+  saldo_pendiente : DECIMAL(14,2) <<GENERATED>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  # aprobada_por : UUID <<FK, NULL>>
+  # asiento_contable_id : UUID <<FK, NULL, M3>>
+}
+
+entity "pago_a_proveedor" as pagprov {
+  * id : UUID <<PK>>
+  --
+  # factura_proveedor_id : UUID <<FK, IDX>>
+  monto : DECIMAL(14,2) <<CK: > 0>>
+  moneda : CHAR(3)
+  fecha_pago : TIMESTAMPTZ
+  forma_pago : VARCHAR(20) <<CK>>
+  # autorizado_por : UUID <<FK>>
+  # asiento_contable_id : UUID <<FK, NULL, M3>>
+}
+
+entity "cuenta_por_cobrar" as cxc {
+  * id : UUID <<PK>>
+  --
+  origen_tipo : VARCHAR(20) <<CK, IDX>>
+  origen_id : UUID <<IDX, polimorfica>>
+  # tercero_comercial_id : UUID <<FK, NULL, IDX>>
+  monto : DECIMAL(14,2) <<CK: > 0>>
+  moneda : CHAR(3)
+  monto_cobrado : DECIMAL(14,2)
+  saldo_pendiente : DECIMAL(14,2) <<GENERATED>>
+  fecha_vencimiento : DATE
+  estado : VARCHAR(15) <<CK, IDX>>
+}
+
+entity "cobro_cuenta_por_cobrar" as cobrocxc {
+  * id : UUID <<PK>>
+  --
+  # cuenta_por_cobrar_id : UUID <<FK, IDX>>
+  monto : DECIMAL(14,2) <<CK: > 0>>
+  moneda : CHAR(3)
+  fecha_cobro : TIMESTAMPTZ
+  forma_cobro : VARCHAR(20) <<CK>>
+  # asiento_contable_id : UUID <<FK, NULL, M3>>
+}
+
+entity "categoria_activo_fijo" as catact {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(20) <<UQ>>
+  nombre : VARCHAR(80)
+  vida_util_meses : SMALLINT <<CK: > 0>>
+  metodo_depreciacion : VARCHAR(20) <<CK>>
+  # cuenta_activo_id : UUID <<FK, M3>>
+  # cuenta_depreciacion_id : UUID <<FK, M3>>
+  # cuenta_gasto_depreciacion_id : UUID <<FK, M3>>
+}
+
+entity "activo_fijo" as actfij {
+  * id : UUID <<PK>>
+  --
+  # categoria_activo_fijo_id : UUID <<FK, IDX>>
+  # centro_costo_id : UUID <<FK, NULL>>
+  codigo_inventario : VARCHAR(30) <<UQ>>
+  descripcion : VARCHAR(200)
+  fecha_adquisicion : DATE
+  costo_adquisicion : DECIMAL(14,2) <<CK: > 0>>
+  moneda : CHAR(3)
+  valor_residual : DECIMAL(14,2)
+  depreciacion_acumulada : DECIMAL(14,2)
+  valor_en_libros : DECIMAL(14,2) <<GENERATED>>
+  estado : VARCHAR(15) <<CK, IDX>>
+  # factura_proveedor_id : UUID <<FK, NULL>>
+}
+
+entity "depreciacion_activo" as deprecact {
+  * id : UUID <<PK>>
+  --
+  # activo_fijo_id : UUID <<FK, IDX>>
+  # periodo_contable_id : UUID <<FK, IDX>>
+  monto : DECIMAL(14,2) <<CK: > 0>>
+  moneda : CHAR(3)
+  # asiento_contable_id : UUID <<FK, NULL, M3>>
+  calculada_en : TIMESTAMPTZ
+}
+
+entity "asiento_plantilla" as asplan {
+  * id : UUID <<PK>>
+  --
+  codigo : VARCHAR(30) <<UQ>>
+  nombre : VARCHAR(100)
+  glosa : VARCHAR(200)
+  periodicidad : VARCHAR(15) <<CK>>
+  activa : BOOLEAN
+  # creada_por : UUID <<FK>>
+}
+
+entity "linea_plantilla_asiento" as lineaplan {
+  * id : UUID <<PK>>
+  --
+  # plantilla_id : UUID <<FK, IDX>>
+  # cuenta_contable_id : UUID <<FK, IDX, M3>>
+  tipo_movimiento : VARCHAR(5) <<CK>>
+  monto_referencial : DECIMAL(14,2) <<NULL>>
+  orden : SMALLINT
+}
+
+entity "estado_financiero_generado" as estfin {
+  * id : UUID <<PK>>
+  --
+  # periodo_contable_id : UUID <<FK, IDX>>
+  tipo : VARCHAR(20) <<CK>>
+  generado_en : TIMESTAMPTZ
+  # generado_por : UUID <<FK>>
+  datos : JSONB
+  hash_contenido : VARCHAR(64)
+}
+
+ejfis ||--|{ perctb : "contiene"
+perctb ||--o| cierreper : "se cierra con"
+perctb ||--o{ partpre : "acota"
+perctb ||--o{ estfin : "genera"
+cencos ||--o{ presup : "presupuesta"
+presup ||--|{ partpre : "detalla"
+tercom ||--o{ ordcom : "recibe"
+tercom ||--o{ facprov : "emite"
+ordcom ||--o{ facprov : "genera"
+facprov ||--o{ pagprov : "se paga con"
+tercom ||--o{ cxc : "debe"
+cxc ||--o{ cobrocxc : "se cobra con"
+catact ||--o{ actfij : "clasifica"
+actfij ||--o{ deprecact : "deprecia"
+asplan ||--|{ lineaplan : "detalla"
+
+note top of perctb
+  <<UQ>> compuesta (ejercicio_fiscal_id, mes).
+  estado ABIERTO -> CERRADO es de un solo sentido:
+  no hay CK que lo impida en el modelo, la
+  irreversibilidad la garantiza que no existe ningun
+  caso de uso de "reabrir" (fase 5).
+end note
+
+note bottom of cxc
+  origen_tipo = 'FACTURA_PUBLICIDAD' -> origen_id
+  apunta a factura_publicidad.id (M14). Es el unico
+  puente entre M13 y M14: la publicidad no factura
+  por su cuenta, factura a traves de esta tabla.
+end note
+
+note bottom of catact
+  Las tres cuentas (activo, depreciacion acumulada,
+  gasto por depreciacion) son de M3 y deben tener
+  es_cuenta_de_movimiento = true. depreciacion_activo
+  arma el asiento DEBE cuenta_gasto_depreciacion_id /
+  HABER cuenta_depreciacion_id.
+end note
+
+@enduml

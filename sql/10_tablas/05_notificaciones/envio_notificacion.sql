@@ -37,7 +37,6 @@ COMMENT ON COLUMN envio_notificacion.proveedor_id IS 'FK';
 COMMENT ON COLUMN envio_notificacion.version_plantilla_id IS 'FK';
 COMMENT ON COLUMN envio_notificacion.canal_vinculado_id IS 'FK, NULL';
 COMMENT ON COLUMN envio_notificacion.canal IS 'CK';
-COMMENT ON COLUMN envio_notificacion.clave_idempotencia IS 'UQ';
 COMMENT ON COLUMN envio_notificacion.estado IS 'CK, IDX';
 COMMENT ON COLUMN envio_notificacion.id_mensaje_proveedor IS 'UQ, NULL';
 COMMENT ON COLUMN envio_notificacion.codigo_error IS 'NULL';

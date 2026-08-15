@@ -29,7 +29,7 @@ append_only: false
 | `estado` | VARCHAR(25) | IDX | no | CK, IDX |
 | `referencia_proveedor` | VARCHAR(80) | UQ | sí | UQ, NULL |
 | `glosa` | VARCHAR(140) | — | no | — |
-| `clave_idempotencia` | VARCHAR(80) | UQ | no | UQ |
+| `clave_idempotencia` | VARCHAR(80) | — | no | — |
 | `creada_en` | TIMESTAMPTZ | — | no | — |
 | `acreditada_en` | TIMESTAMPTZ | — | sí | NULL |
 

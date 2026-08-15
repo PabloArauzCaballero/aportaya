@@ -31,7 +31,7 @@ append_only: false
 | `estado` | VARCHAR(15) | IDX | no | CK, IDX |
 | `emitida_en` | TIMESTAMPTZ | — | no | — |
 | `expira_en` | TIMESTAMPTZ | IDX | no | IDX |
-| `clave_idempotencia` | VARCHAR(80) | UQ | no | UQ |
+| `clave_idempotencia` | VARCHAR(80) | — | no | — |
 
 ## Claves foráneas salientes
 

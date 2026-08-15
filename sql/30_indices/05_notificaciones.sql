@@ -61,9 +61,6 @@ CREATE INDEX IF NOT EXISTS ix_notificacion_correlation_id
 CREATE INDEX IF NOT EXISTS ix_envio_notificacion_notificacion_id
   ON envio_notificacion (notificacion_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_envio_notificacion_clave_idempotencia
-  ON envio_notificacion (clave_idempotencia);
-
 CREATE INDEX IF NOT EXISTS ix_envio_notificacion_estado
   ON envio_notificacion (estado);
 
@@ -75,9 +72,6 @@ CREATE INDEX IF NOT EXISTS ix_envio_notificacion_proximo_reintento_en
 
 CREATE INDEX IF NOT EXISTS ix_evento_entrega_mensaje_envio_id
   ON evento_entrega_mensaje (envio_id);
-
-CREATE UNIQUE INDEX IF NOT EXISTS uq_evento_entrega_mensaje_clave_idempotencia
-  ON evento_entrega_mensaje (clave_idempotencia);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_cola_envio_envio_id
   ON cola_envio (envio_id);

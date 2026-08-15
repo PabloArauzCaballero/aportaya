@@ -53,7 +53,6 @@ COMMENT ON COLUMN token_verificacion.consumido_en IS 'NULL';
 COMMENT ON COLUMN token_verificacion.invalidado_en IS 'NULL';
 COMMENT ON COLUMN token_verificacion.motivo_invalidacion IS 'NULL';
 COMMENT ON COLUMN token_verificacion.correlation_id IS 'IDX';
-COMMENT ON COLUMN token_verificacion.clave_idempotencia IS 'UQ';
 COMMENT ON COLUMN token_verificacion.longitud IS 'NULL, subtipo OTP';
 COMMENT ON COLUMN token_verificacion.url_destino IS 'NULL, subtipo ENLACE';
 COMMENT ON COLUMN token_verificacion.firma_hmac IS 'NULL, subtipo ENLACE';

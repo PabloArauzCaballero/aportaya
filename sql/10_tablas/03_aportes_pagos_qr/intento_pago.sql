@@ -26,4 +26,3 @@ COMMENT ON COLUMN intento_pago.finalizado_en IS 'NULL';
 COMMENT ON COLUMN intento_pago.estado IS 'CK';
 COMMENT ON COLUMN intento_pago.codigo_error IS 'NULL';
 COMMENT ON COLUMN intento_pago.mensaje_proveedor IS 'NULL';
-COMMENT ON COLUMN intento_pago.clave_idempotencia IS 'UQ';

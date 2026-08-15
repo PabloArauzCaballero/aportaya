@@ -9,7 +9,7 @@ estereotipo: Raíz de agregado
 clave_primaria: [id]
 columnas: 26
 fk_salientes: 5
-fk_entrantes: 1
+fk_entrantes: 2
 append_only: false
 ---
 
@@ -62,11 +62,12 @@ append_only: false
 
 | Entidad | Columna | Módulo | Relación |
 | --- | --- | :-: | --- |
+| [[factura_publicidad]] | `factura_electronica_id` | ↗ 14 | [[factura_publicidad.factura_electronica_id → factura_electronica]] |
 | [[nota_credito_debito]] | `factura_id` | 11 | [[nota_credito_debito.factura_id → factura_electronica]] |
 
 ## Entidades vecinas
 
-[[datos_facturacion]] · [[devengo_comision]] · [[evento_significativo_sin]] · [[lote_envio_sin]] · [[nota_credito_debito]] · [[usuario]]
+[[datos_facturacion]] · [[devengo_comision]] · [[evento_significativo_sin]] · [[factura_publicidad]] · [[lote_envio_sin]] · [[nota_credito_debito]] · [[usuario]]
 
 ## Notas del modelo
 

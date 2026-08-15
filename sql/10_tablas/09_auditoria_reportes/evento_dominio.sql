@@ -1,6 +1,7 @@
 -- evento_dominio · módulo 09 — Auditoría, Reportes y Cumplimiento
 -- clase de dominio: EventoDominio
 -- APPEND-ONLY: sin UPDATE ni DELETE (ver sql/40_reglas)
+-- PARTICIONADA por rango de ocurrido_en (mensual)
 -- Generado por scripts/generar_ddl.py — no editar a mano.
 
 CREATE TABLE IF NOT EXISTS evento_dominio (
@@ -17,9 +18,24 @@ CREATE TABLE IF NOT EXISTS evento_dominio (
   publicado_en                       TIMESTAMPTZ,
   estado                             VARCHAR(15) NOT NULL,
   intentos                           SMALLINT DEFAULT 0 NOT NULL,
-  CONSTRAINT pk_evento_dominio PRIMARY KEY (id),
+  CONSTRAINT pk_evento_dominio PRIMARY KEY (id, ocurrido_en),
   CONSTRAINT ck_evento_dominio_estado CHECK (estado IN ('FALLIDO', 'PENDIENTE', 'PUBLICADO'))
-);
+) PARTITION BY RANGE (ocurrido_en);
+
+CREATE TABLE IF NOT EXISTS evento_dominio_desborde
+  PARTITION OF evento_dominio DEFAULT;
+
+DO $$
+DECLARE d DATE := date_trunc('year', current_date)::date;
+BEGIN
+  FOR i IN 0..23 LOOP
+    EXECUTE format(
+      'CREATE TABLE IF NOT EXISTS evento_dominio_%s PARTITION OF evento_dominio FOR VALUES FROM (%L) TO (%L)',
+      to_char(d + (i || ' month')::interval, 'YYYYMM'),
+      d + (i || ' month')::interval,
+      d + ((i + 1) || ' month')::interval);
+  END LOOP;
+END $$;
 
 COMMENT ON TABLE evento_dominio IS 'Módulo 09 — Auditoría, Reportes y Cumplimiento. [append-only] Poder demostrar todo lo anterior ante un reclamo o un regulador';
 COMMENT ON COLUMN evento_dominio.id IS 'PK';

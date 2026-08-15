@@ -819,7 +819,7 @@ entity "token_verificacion" as token {
   ip_origen : INET
   agente_usuario : VARCHAR(255)
   correlation_id : UUID <<IDX>>
-  clave_idempotencia : VARCHAR(80) <<UQ>>
+  clave_idempotencia : VARCHAR(80)
   longitud : SMALLINT <<NULL, subtipo OTP>>
   url_destino : VARCHAR(255) <<NULL, subtipo ENLACE>>
   firma_hmac : VARCHAR(128) <<NULL, subtipo ENLACE>>
@@ -846,6 +846,7 @@ entity "factor_mfa" as mfa {
   # usuario_id : UUID <<FK, IDX>>
   tipo : VARCHAR(20) <<CK>>
   secreto_cifrado : VARCHAR(255)
+  version_llave : SMALLINT
   activo : BOOLEAN
   es_principal : BOOLEAN
   confirmado_en : TIMESTAMPTZ <<NULL>>
@@ -927,6 +928,7 @@ entity "documento_identidad" as docid {
   # usuario_id : UUID <<FK, IDX>>
   tipo : VARCHAR(25) <<CK>>
   numero_cifrado : VARCHAR(255)
+  version_llave : SMALLINT
   hash_numero : VARCHAR(64) <<UQ, busqueda sin descifrar>>
   complemento : VARCHAR(10) <<NULL>>
   pais_emision : CHAR(2)

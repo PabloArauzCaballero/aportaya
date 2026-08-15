@@ -26,5 +26,4 @@ COMMENT ON COLUMN orden_desembolso.proveedor_id IS 'FK, M3';
 COMMENT ON COLUMN orden_desembolso.cuenta_destino_id IS 'FK';
 COMMENT ON COLUMN orden_desembolso.estado IS 'CK, IDX';
 COMMENT ON COLUMN orden_desembolso.referencia_proveedor IS 'UQ, NULL';
-COMMENT ON COLUMN orden_desembolso.clave_idempotencia IS 'UQ';
 COMMENT ON COLUMN orden_desembolso.acreditada_en IS 'NULL';

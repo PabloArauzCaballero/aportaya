@@ -1,0 +1,65 @@
+{
+  "descripcion": "Quién puede administrar un grupo, cómo se arman los grupos nuevos y qué hace sola la plataforma. Tres catálogos que deciden accesos y efectos, y por eso son dato configurable y no constantes en el código.",
+  "entorno": "minimo",
+  "estado": "revisar con riesgos — los mínimos de reputación y las garantías económicas son decisión de política, no técnica",
+  "nota": "Ninguna acción con efecto sobre el dinero de un tercero se ejecuta sola: `requiere_confirmacion_humana` marca dónde la máquina propone y una persona decide (skill `automatizacion-tareas`).",
+  "bloques": [
+    {
+      "tabla": "requisito_habilitacion",
+      "conflicto": [
+        "codigo"
+      ],
+      "comentario": "Requisitos acumulativos por nivel: para ser SENIOR hay que cumplir además todo lo de ESTANDAR. `valor_minimo` es el umbral medible; sin fila no hay nivel, y sin nivel no se crea grupo.",
+      "filas": [
+        { "codigo": "HAB_APRENDIZ_KYC", "descripcion": "Verificación de identidad completa y vigente", "tipo": "KYC", "valor_minimo": 1.0, "es_obligatorio": true, "nivel_requerido": "APRENDIZ", "activo": true },
+        { "codigo": "HAB_APRENDIZ_ANTIGUEDAD", "descripcion": "Antigüedad mínima en la plataforma, en meses", "tipo": "ANTIGUEDAD", "valor_minimo": 3.0, "es_obligatorio": true, "nivel_requerido": "APRENDIZ", "activo": true },
+        { "codigo": "HAB_APRENDIZ_REPUTACION", "descripcion": "Puntaje de reputación mínimo", "tipo": "REPUTACION", "valor_minimo": 600.0, "es_obligatorio": true, "nivel_requerido": "APRENDIZ", "activo": true },
+        { "codigo": "HAB_APRENDIZ_CAPACITACION", "descripcion": "Módulos de capacitación aprobados y vigentes", "tipo": "CAPACITACION", "valor_minimo": 1.0, "es_obligatorio": true, "nivel_requerido": "APRENDIZ", "activo": true },
+        { "codigo": "HAB_ESTANDAR_ANTIGUEDAD", "descripcion": "Antigüedad mínima en la plataforma, en meses", "tipo": "ANTIGUEDAD", "valor_minimo": 6.0, "es_obligatorio": true, "nivel_requerido": "ESTANDAR", "activo": true },
+        { "codigo": "HAB_ESTANDAR_REPUTACION", "descripcion": "Puntaje de reputación mínimo", "tipo": "REPUTACION", "valor_minimo": 650.0, "es_obligatorio": true, "nivel_requerido": "ESTANDAR", "activo": true },
+        { "codigo": "HAB_ESTANDAR_CAPACITACION", "descripcion": "Módulos de capacitación aprobados y vigentes", "tipo": "CAPACITACION", "valor_minimo": 2.0, "es_obligatorio": true, "nivel_requerido": "ESTANDAR", "activo": true },
+        { "codigo": "HAB_SENIOR_ANTIGUEDAD", "descripcion": "Antigüedad mínima en la plataforma, en meses", "tipo": "ANTIGUEDAD", "valor_minimo": 12.0, "es_obligatorio": true, "nivel_requerido": "SENIOR", "activo": true },
+        { "codigo": "HAB_SENIOR_REPUTACION", "descripcion": "Puntaje de reputación mínimo", "tipo": "REPUTACION", "valor_minimo": 720.0, "es_obligatorio": true, "nivel_requerido": "SENIOR", "activo": true },
+        { "codigo": "HAB_SENIOR_GARANTIA", "descripcion": "Garantía económica constituida, en bolivianos", "tipo": "GARANTIA_ECONOMICA", "valor_minimo": 2000.0, "es_obligatorio": true, "nivel_requerido": "SENIOR", "activo": true },
+        { "codigo": "HAB_MAESTRO_ANTIGUEDAD", "descripcion": "Antigüedad mínima en la plataforma, en meses", "tipo": "ANTIGUEDAD", "valor_minimo": 24.0, "es_obligatorio": true, "nivel_requerido": "MAESTRO", "activo": true },
+        { "codigo": "HAB_MAESTRO_REPUTACION", "descripcion": "Puntaje de reputación mínimo", "tipo": "REPUTACION", "valor_minimo": 800.0, "es_obligatorio": true, "nivel_requerido": "MAESTRO", "activo": true },
+        { "codigo": "HAB_MAESTRO_GARANTIA", "descripcion": "Garantía económica constituida, en bolivianos", "tipo": "GARANTIA_ECONOMICA", "valor_minimo": 5000.0, "es_obligatorio": true, "nivel_requerido": "MAESTRO", "activo": true },
+        { "codigo": "HAB_MAESTRO_CAPACITACION", "descripcion": "Módulos de capacitación aprobados y vigentes, incluida la formación en prevención de LGI/FT", "tipo": "CAPACITACION", "valor_minimo": 3.0, "es_obligatorio": true, "nivel_requerido": "MAESTRO", "activo": true }
+      ]
+    },
+    {
+      "tabla": "criterio_emparejamiento",
+      "solo_si_vacia": true,
+      "conflicto": "ninguno",
+      "comentario": "Los cuatro pesos suman 1,000. Es la única fila vigente: cambiar el criterio es insertar otra con `vigente_desde` posterior, no editar esta.",
+      "filas": [
+        {
+          "peso_reputacion": 0.4,
+          "peso_monto": 0.25,
+          "peso_historial_comun": 0.2,
+          "peso_geografia": 0.15,
+          "reputacion_minima": 600.0,
+          "max_morosos_por_grupo": 1,
+          "vigente_desde": "2026-01-01T00:00:00-04:00"
+        }
+      ]
+    },
+    {
+      "tabla": "regla_automatizacion",
+      "conflicto": [
+        "codigo"
+      ],
+      "comentario": "Lo que corre solo: generar cobros, recordar y aplicar la mora que el reglamento ya pactó. Lo que mueve plata hacia afuera o castiga a alguien queda propuesto y espera a una persona.",
+      "filas": [
+        { "codigo": "GENERAR_COBROS_DEL_PERIODO", "descripcion": "Al abrir el período, emitir la obligación de aporte de cada participante activo", "disparador": "EVENTO", "expresion_disparo": "periodo.abierto", "condicion": "grupo.estado = 'ACTIVO' AND periodo.estado = 'ABIERTO'", "accion": "GENERAR_COBROS", "requiere_confirmacion_humana": false, "prioridad": 10, "activa": true },
+        { "codigo": "RECORDATORIO_T_MENOS_3", "descripcion": "Recordar el aporte tres días antes del vencimiento", "disparador": "CRON", "expresion_disparo": "0 13 * * *", "condicion": "obligacion.estado = 'PENDIENTE' AND obligacion.fecha_vencimiento = current_date + 3", "accion": "ENVIAR_RECORDATORIO", "requiere_confirmacion_humana": false, "prioridad": 30, "activa": true },
+        { "codigo": "RECORDATORIO_T_MENOS_1", "descripcion": "Recordar el aporte el día antes del vencimiento", "disparador": "CRON", "expresion_disparo": "0 13 * * *", "condicion": "obligacion.estado = 'PENDIENTE' AND obligacion.fecha_vencimiento = current_date + 1", "accion": "ENVIAR_RECORDATORIO", "requiere_confirmacion_humana": false, "prioridad": 31, "activa": true },
+        { "codigo": "RECORDATORIO_VENCIDO_D1", "descripcion": "Avisar el día después del vencimiento, con el monto exacto y el recargo", "disparador": "CRON", "expresion_disparo": "0 14 * * *", "condicion": "obligacion.estado = 'VENCIDA' AND obligacion.dias_mora = 1", "accion": "ENVIAR_RECORDATORIO", "requiere_confirmacion_humana": false, "prioridad": 32, "activa": true },
+        { "codigo": "APLICAR_MORA_DIARIA", "descripcion": "Aplicar el recargo por mora que el reglamento del grupo ya pactó", "disparador": "CRON", "expresion_disparo": "0 2 * * *", "condicion": "obligacion.estado = 'VENCIDA' AND obligacion.dias_mora > politica_mora.dias_gracia", "accion": "APLICAR_MORA", "requiere_confirmacion_humana": false, "prioridad": 20, "activa": true },
+        { "codigo": "LIQUIDAR_PERIODO_CERRADO", "descripcion": "Liquidar el período: totalizar lo recaudado, la mora y las coberturas", "disparador": "EVENTO", "expresion_disparo": "periodo.cerrado", "condicion": "periodo.estado = 'CERRADO'", "accion": "LIQUIDAR_PERIODO", "requiere_confirmacion_humana": false, "prioridad": 15, "activa": true },
+        { "codigo": "PROPONER_ENTREGA_DE_TURNO", "descripcion": "Con el período liquidado y las validaciones previas en verde, dejar la entrega lista para autorizar", "disparador": "EVENTO", "expresion_disparo": "periodo.liquidado", "condicion": "validaciones_previas.todas_ok AND entrega.estado = 'PENDIENTE'", "accion": "EJECUTAR_ENTREGA", "requiere_confirmacion_humana": true, "prioridad": 5, "activa": true },
+        { "codigo": "ESCALAR_COBRANZA_D15", "descripcion": "A los 15 días de mora, pasar la gestión a la etapa siguiente con gestor humano", "disparador": "CRON", "expresion_disparo": "0 8 * * 1-5", "condicion": "obligacion.dias_mora >= 15 AND gestion_cobranza.etapa = 'TEMPRANA'", "accion": "ESCALAR_COBRANZA", "requiere_confirmacion_humana": true, "prioridad": 40, "activa": true }
+      ]
+    }
+  ]
+}

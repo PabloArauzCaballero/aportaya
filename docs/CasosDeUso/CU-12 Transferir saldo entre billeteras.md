@@ -122,8 +122,8 @@ export const ErroresCU12 = {
 
 ## Restricciones aplicables
 
-`R-BIL-01` · `R-BIL-02` · `R-BIL-06` · `R-GRP-03` · `R-LIM-01` · `R-AUD-01` ·
-`R-AUD-03` · `R-AUD-05` · `R-UIF-02`
+`R-BIL-01` · `R-BIL-02` · `R-BIL-06` · `R-BIL-19` · `R-BIL-20` · `R-GRP-03` ·
+`R-LIM-01` · `R-AUD-01` · `R-AUD-03` · `R-AUD-05` · `R-UIF-02`
 
 ## Evidencia que deja
 

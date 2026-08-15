@@ -786,7 +786,7 @@ entity "cotizacion_comision" as cotiz {
   valida_hasta : TIMESTAMPTZ
   mostrada_al_usuario_en : TIMESTAMPTZ <<NULL>>
   aceptada_en : TIMESTAMPTZ <<NULL>>
-  clave_idempotencia : VARCHAR(100) <<UQ>>
+  clave_idempotencia : VARCHAR(100)
 }
 
 entity "devengo_comision" as devengo {
@@ -810,7 +810,7 @@ entity "devengo_comision" as devengo {
   estado : VARCHAR(20) <<CK, IDX>>
   fecha_devengo : TIMESTAMPTZ <<IDX>>
   periodo_contable : CHAR(7) <<IDX>>
-  clave_idempotencia : VARCHAR(100) <<UQ>>
+  clave_idempotencia : VARCHAR(100)
 }
 
 entity "cargo_comision" as cargo {

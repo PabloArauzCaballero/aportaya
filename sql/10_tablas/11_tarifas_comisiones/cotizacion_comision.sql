@@ -30,4 +30,3 @@ COMMENT ON COLUMN cotizacion_comision.referencia_tipo IS 'CK';
 COMMENT ON COLUMN cotizacion_comision.referencia_id IS 'IDX, polimorfica';
 COMMENT ON COLUMN cotizacion_comision.mostrada_al_usuario_en IS 'NULL';
 COMMENT ON COLUMN cotizacion_comision.aceptada_en IS 'NULL';
-COMMENT ON COLUMN cotizacion_comision.clave_idempotencia IS 'UQ';

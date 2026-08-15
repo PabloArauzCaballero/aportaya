@@ -37,7 +37,7 @@ Las **27 tablas** de este módulo. Justificación de negocio en [[11_tarifas_com
 | [[datos_facturacion]] | 9 | 1 | 1 |
 | [[lote_envio_sin]] | 8 | 0 | 1 |
 | [[evento_significativo_sin]] | 14 | 1 | 1 |
-| [[factura_electronica]] | 26 | 5 | 1 |
+| [[factura_electronica]] | 26 | 5 | 2 |
 | [[nota_credito_debito]] | 9 | 2 | 0 |
 | [[liquidacion_ingresos]] | 17 | 2 | 1 |
 | [[costo_proveedor_operacion]] | 12 | 3 | 0 |

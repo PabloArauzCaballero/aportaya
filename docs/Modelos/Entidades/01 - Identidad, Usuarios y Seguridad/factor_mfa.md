@@ -6,7 +6,7 @@ tabla: factor_mfa
 clase: FactorMFA
 modulo: "01 — Identidad, Usuarios y Seguridad"
 clave_primaria: [id]
-columnas: 8
+columnas: 9
 fk_salientes: 1
 fk_entrantes: 0
 append_only: false
@@ -24,6 +24,7 @@ append_only: false
 | `usuario_id` | UUID | FK IDX | no | FK, IDX |
 | `tipo` | VARCHAR(20) | — | no | CK |
 | `secreto_cifrado` | VARCHAR(255) | — | no | — |
+| `version_llave` | SMALLINT | — | no | — |
 | `activo` | BOOLEAN | — | no | — |
 | `es_principal` | BOOLEAN | — | no | — |
 | `confirmado_en` | TIMESTAMPTZ | — | sí | NULL |

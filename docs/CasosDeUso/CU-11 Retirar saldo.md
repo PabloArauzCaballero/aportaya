@@ -136,12 +136,14 @@ export const ErroresCU11 = {
 ## Restricciones aplicables
 
 `R-BIL-01` · `R-BIL-02` · `R-BIL-06` · `R-BIL-07` · `R-BIL-08` · `R-BIL-09` ·
-`R-SEG-04` · `R-LIM-01` · `R-AUD-01` · `R-AUD-03` · `R-UIF-02`
+`R-BIL-11` · `R-BIL-19` · `R-BIL-20` · `R-SEG-04` · `R-LIM-01` · `R-AUD-01` ·
+`R-AUD-03` · `R-UIF-02`
 
 ## Evidencia que deja
 
 [[orden_retiro]] · [[retencion_saldo]] · [[evaluacion_antifraude]] ·
 [[transaccion_billetera]] · [[movimiento_billetera]] · [[asiento_contable]] ·
+[[respuesta_idempotente]] ·
 [[registro_operacion_relevante]] (si aplica)
 
 ## Criterios de aceptación

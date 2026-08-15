@@ -38,6 +38,8 @@ MODULOS = {
     "10": ("Billetera, Custodia y Dinero Electrónico", "10_billetera_custodia"),
     "11": ("Tarifas, Comisiones, Impuestos y Facturación", "11_tarifas_comisiones"),
     "12": ("Cumplimiento Regulatorio y Consumidor Financiero", "12_cumplimiento_asfi"),
+    "13": ("Contabilidad Financiera y ERP", "13_contabilidad_erp"),
+    "14": ("Publicidad y Campañas", "14_publicidad_campanas"),
 }
 
 APPEND_ONLY = {
@@ -49,6 +51,10 @@ APPEND_ONLY = {
     "saldo_diario_billetera", "devengo_comision",
     "registro_operacion_relevante", "evento_riesgo_operativo",
     "acta_comite",
+    "factura_proveedor", "pago_a_proveedor", "cuenta_por_cobrar",
+    "cobro_cuenta_por_cobrar", "depreciacion_activo", "estado_financiero_generado",
+    "cierre_periodo_contable",
+    "impresion_anuncio", "clic_anuncio", "conversion_anuncio", "factura_publicidad",
 }
 
 # --- FK -> tabla destino: overrides donde el nombre de columna no coincide ---
@@ -129,6 +135,14 @@ OVERRIDES = {
     "propietario_id": "usuario", "custodio_id": "usuario",
     "responsable_id": "usuario", "analista_id": "usuario",
     "usuario_obligado_id": "usuario", "responsable_usuario_id": "usuario",
+    # --- M13: contabilidad financiera y ERP ---
+    "cuenta_padre_id": "cuenta_contable",
+    "cuenta_activo_id": "cuenta_contable",
+    "cuenta_depreciacion_id": "cuenta_contable",
+    "cuenta_gasto_depreciacion_id": "cuenta_contable",
+    # --- M14: publicidad y campañas ---
+    "impresion_id": "impresion_anuncio",
+    "clic_id": "clic_anuncio",
 }
 # FK por modulo cuando el nombre es ambiguo
 POR_MODULO = {
@@ -139,6 +153,7 @@ POR_MODULO = {
     ("09", "regla_id"): "regla_cumplimiento",
     ("05", "evento_id"): "evento_notificable",
     ("08", "politica_id"): "politica_sancion",
+    ("13", "plantilla_id"): "asiento_plantilla",
 }
 # columnas de actor -> usuario
 ACTOR_A_USUARIO = re.compile(
@@ -520,6 +535,8 @@ FOCO = {
     "10": "El saldo no se guarda: se deriva, y todos los días cuadra contra el banco",
     "11": "La política de cobro es dato, no código: se cambia con un seeder",
     "12": "Que una inspección se responda con consultas, no armando carpetas",
+    "13": "Que cerrar un mes no dependa de un Excel armado a mano",
+    "14": "Que un partner se anuncie dentro de la app sin inventar un segundo cobro",
 }
 
 tablas = []

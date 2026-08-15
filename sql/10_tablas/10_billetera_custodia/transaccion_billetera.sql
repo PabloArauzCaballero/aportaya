@@ -47,6 +47,5 @@ COMMENT ON COLUMN transaccion_billetera.origen_tipo IS 'CK';
 COMMENT ON COLUMN transaccion_billetera.origen_id IS 'IDX, polimorfica';
 COMMENT ON COLUMN transaccion_billetera.canal IS 'CK';
 COMMENT ON COLUMN transaccion_billetera.ip_origen IS 'NULL';
-COMMENT ON COLUMN transaccion_billetera.clave_idempotencia IS 'UQ';
 COMMENT ON COLUMN transaccion_billetera.hash_anterior IS 'NULL';
 COMMENT ON COLUMN transaccion_billetera.ocurrida_en IS 'IDX';

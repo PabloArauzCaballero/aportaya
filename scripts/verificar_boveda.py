@@ -29,26 +29,36 @@ casos = sorted(CU.glob('CU-*.md'))
 print('\n=== CASOS DE USO ===')
 check(len(casos) > 0, f'{len(casos)} casos de uso encontrados')
 
-sin_seccion = [p.stem[:5] for p in casos if any(s not in p.read_text() for s in SEC)]
+
+def cu_num(p):
+    """Número de CU como string, sin asumir ancho fijo (soporta CU-99 y CU-100)."""
+    return re.match(r'CU-(\d+)', p.stem).group(1)
+
+
+def cu_label(p):
+    return 'CU-' + cu_num(p)
+
+
+sin_seccion = [cu_label(p) for p in casos if any(s not in p.read_text() for s in SEC)]
 check(not sin_seccion, f'todos con las 13 secciones de la plantilla {sin_seccion or ""}')
 
 sin_tabla, mal_num, sin_fila = [], [], []
 for p in casos:
-    t = p.read_text(); nn = p.stem[3:5]
+    t = p.read_text(); nn = cu_num(p)
     zod = re.findall(r"(\w+):\s*'AP-CU(\d+)-(\d+)'", t)
     filas = set(re.findall(r'^\|\s*`([A-Z0-9_]+)`\s*\|', t, re.M))
     if zod and '| Error | Cuándo se devuelve |' not in t:
-        sin_tabla.append(p.stem[:5])
+        sin_tabla.append(cu_label(p))
     if [int(c) for _, _, c in zod] != list(range(1, len(zod) + 1)):
-        mal_num.append(p.stem[:5])
+        mal_num.append(cu_label(p))
     for n, cc, _ in zod:
         if n not in filas or cc != nn:
-            sin_fila.append(f'{p.stem[:5]}:{n}')
+            sin_fila.append(f'{cu_label(p)}:{n}')
 check(not sin_tabla, f'todos con tabla de errores {sin_tabla or ""}')
 check(not mal_num, f'códigos de error correlativos {mal_num or ""}')
 check(not sin_fila, f'cada código con su fila y su CU {sin_fila[:5] or ""}')
 
-pocos_g = [p.stem[:5] for p in casos
+pocos_g = [cu_label(p) for p in casos
            if len(re.findall(r'^\s*Dad[oa]s?\b', re.search(r'```gherkin(.*?)```', p.read_text(), re.S).group(1), re.M)) < 3]
 check(not pocos_g, f'≥3 escenarios Gherkin por caso {pocos_g or ""}')
 
@@ -56,12 +66,12 @@ pocos_a = []
 for p in casos:
     sec = p.read_text().split('## Flujos alternativos')[-1].split('## Postcondiciones')[0]
     if len([l for l in sec.splitlines() if l.startswith('|') and '---' not in l]) - 1 < 4:
-        pocos_a.append(p.stem[:5])
+        pocos_a.append(cu_label(p))
 check(not pocos_a, f'≥4 flujos alternativos por caso {pocos_a or ""}')
 
 ref = {}
 for p in casos:
-    ref[p.stem[:5]] = set(re.findall(r'\[\[(CU-\d\d)[^\]]*\]\]', p.read_text().split('## Ver también')[-1]))
+    ref[cu_label(p)] = set(re.findall(r'\[\[(CU-\d+)[^\]]*\]\]', p.read_text().split('## Ver también')[-1]))
 no_rec = [f'{a}→{b}' for a, s in ref.items() for b in s if b in ref and a not in ref[b]]
 check(not no_rec, f'"Ver también" recíproco {no_rec[:5] or ""}')
 
@@ -85,7 +95,7 @@ check(not (rdef - rcit), f'toda restricción está citada por un caso {sorted(rd
 
 print('\n=== ÍNDICES ===')
 idx = (CU / '_CasosDeUso.md').read_text()
-enl = set(re.findall(r'\[\[(CU-\d\d[^\]]*)\]\]', idx))
+enl = set(re.findall(r'\[\[(CU-\d+[^\]]*)\]\]', idx))
 arch = {p.stem for p in casos}
 check(enl == arch, f'índice de casos completo (sobran {sorted(enl - arch)[:3]}, faltan {sorted(arch - enl)[:3]})')
 check(f'total_casos: {len(casos)}' in idx, f'total_casos: {len(casos)} en el frontmatter')

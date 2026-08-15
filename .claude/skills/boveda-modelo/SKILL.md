@@ -156,7 +156,7 @@ EOF
 
 ## Tamaño actual
 
-274 tablas · 566 claves foráneas · 640 índices · 378 `CHECK`, en 12 módulos.
+307 tablas · 633 claves foráneas · 701 índices · 425 `CHECK`, en 14 módulos.
 Si una corrida devuelve menos tablas de las que había, algo se rompió al parsear:
 se revisa el `.puml` tocado antes de commitear.
 

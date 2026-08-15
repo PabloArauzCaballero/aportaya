@@ -41,7 +41,7 @@ append_only: true
 | `estado` | VARCHAR(20) | IDX | no | CK, IDX |
 | `fecha_devengo` | TIMESTAMPTZ | IDX | no | IDX |
 | `periodo_contable` | CHAR(7) | IDX | no | IDX |
-| `clave_idempotencia` | VARCHAR(100) | UQ | no | UQ |
+| `clave_idempotencia` | VARCHAR(100) | — | no | — |
 
 ## Claves foráneas salientes
 

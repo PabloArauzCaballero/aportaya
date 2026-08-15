@@ -92,97 +92,474 @@
           "codigo": "BILLETERA_VER",
           "descripcion": "Ver saldo y movimientos propios",
           "recurso": "billetera",
-          "accion": "LEER"
+          "accion": "LEER",
+          "requiere_mfa": false
         },
         {
           "codigo": "BILLETERA_OPERAR",
           "descripcion": "Recargar, transferir y retirar",
           "recurso": "billetera",
-          "accion": "ESCRIBIR"
+          "accion": "ESCRIBIR",
+          "requiere_mfa": true
         },
         {
           "codigo": "BILLETERA_VER_TERCEROS",
           "descripcion": "Ver billeteras de terceros (backoffice)",
           "recurso": "billetera",
-          "accion": "LEER_TERCEROS"
+          "accion": "LEER_TERCEROS",
+          "requiere_mfa": true
         },
         {
           "codigo": "GRUPO_CREAR",
           "descripcion": "Crear un grupo de pasanaku",
           "recurso": "grupo",
-          "accion": "CREAR"
+          "accion": "CREAR",
+          "requiere_mfa": false
         },
         {
           "codigo": "GRUPO_ADMINISTRAR",
           "descripcion": "Administrar un grupo",
           "recurso": "grupo",
-          "accion": "ADMINISTRAR"
+          "accion": "ADMINISTRAR",
+          "requiere_mfa": false
         },
         {
           "codigo": "ENTREGA_AUTORIZAR",
           "descripcion": "Autorizar una entrega de fondo",
           "recurso": "entrega_fondo",
-          "accion": "AUTORIZAR"
+          "accion": "AUTORIZAR",
+          "requiere_mfa": true
         },
         {
           "codigo": "ENTREGA_EJECUTAR",
           "descripcion": "Ejecutar una entrega de fondo",
           "recurso": "entrega_fondo",
-          "accion": "EJECUTAR"
+          "accion": "EJECUTAR",
+          "requiere_mfa": true
         },
         {
           "codigo": "REVERSO_AUTORIZAR",
           "descripcion": "Autorizar el reverso de una transacción",
           "recurso": "transaccion_billetera",
-          "accion": "REVERSAR"
+          "accion": "REVERSAR",
+          "requiere_mfa": true
         },
         {
           "codigo": "CUMPLIMIENTO_ALERTAS",
           "descripcion": "Ver y tratar alertas de monitoreo",
           "recurso": "alerta_monitoreo_lft",
-          "accion": "GESTIONAR"
+          "accion": "GESTIONAR",
+          "requiere_mfa": false
         },
         {
           "codigo": "CUMPLIMIENTO_CASOS",
           "descripcion": "Abrir y decidir casos de investigación",
           "recurso": "caso_investigacion_lft",
-          "accion": "GESTIONAR"
+          "accion": "GESTIONAR",
+          "requiere_mfa": false
         },
         {
           "codigo": "CUMPLIMIENTO_REPORTAR",
           "descripcion": "Generar y enviar reportes regulatorios",
           "recurso": "reporte_regulatorio",
-          "accion": "ENVIAR"
+          "accion": "ENVIAR",
+          "requiere_mfa": true
         },
         {
           "codigo": "RECLAMO_ATENDER",
           "descripcion": "Atender y responder reclamos",
           "recurso": "reclamo_cliente",
-          "accion": "GESTIONAR"
+          "accion": "GESTIONAR",
+          "requiere_mfa": false
         },
         {
           "codigo": "TARIFARIO_PUBLICAR",
           "descripcion": "Publicar un tarifario nuevo",
           "recurso": "tarifario",
-          "accion": "PUBLICAR"
+          "accion": "PUBLICAR",
+          "requiere_mfa": true
         },
         {
           "codigo": "CATALOGO_EDITAR",
           "descripcion": "Editar catálogos regulatorios",
           "recurso": "catalogo",
-          "accion": "ESCRIBIR"
+          "accion": "ESCRIBIR",
+          "requiere_mfa": true
         },
         {
           "codigo": "AUDITORIA_LEER",
           "descripcion": "Consultar la bitácora y los registros de acceso",
           "recurso": "bitacora_evento",
-          "accion": "LEER"
+          "accion": "LEER",
+          "requiere_mfa": false
         },
         {
           "codigo": "DATOS_SENSIBLES_LEER",
           "descripcion": "Consultar documentos y cuentas de clientes",
           "recurso": "documento_identidad",
-          "accion": "LEER"
+          "accion": "LEER",
+          "requiere_mfa": true
+        }
+      ],
+      "comentario": "`requiere_mfa` marca los permisos que exigen segundo factor en el momento de usarlos, no solo al iniciar sesión: todo lo que mueve dinero, publica precios, edita catálogos o lee datos de terceros."
+    },
+    {
+      "tabla": "rol_permiso",
+      "conflicto": [
+        "rol_id",
+        "permiso_id"
+      ],
+      "comentario": "Sin esta matriz los roles no otorgan nada y el guard de denegar por omisión rechaza todo. Dos separaciones de funciones están cableadas acá y no se negocian: quien AUTORIZA una entrega o un reverso no puede EJECUTARLO, y quien edita catálogos no toca dinero ni datos sensibles (control CI-04).",
+      "filas": [
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "ADMIN_PLATAFORMA"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "CATALOGO_EDITAR"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "ADMIN_PLATAFORMA"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "TARIFARIO_PUBLICAR"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "ADMIN_PLATAFORMA"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "AUDITORIA_LEER"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "OFICIAL_CUMPLIMIENTO"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "CUMPLIMIENTO_ALERTAS"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "OFICIAL_CUMPLIMIENTO"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "CUMPLIMIENTO_CASOS"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "OFICIAL_CUMPLIMIENTO"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "CUMPLIMIENTO_REPORTAR"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "OFICIAL_CUMPLIMIENTO"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "DATOS_SENSIBLES_LEER"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "OFICIAL_CUMPLIMIENTO"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "BILLETERA_VER_TERCEROS"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "OFICIAL_CUMPLIMIENTO"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "AUDITORIA_LEER"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "ANALISTA_CUMPLIMIENTO"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "CUMPLIMIENTO_ALERTAS"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "ANALISTA_CUMPLIMIENTO"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "DATOS_SENSIBLES_LEER"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "ANALISTA_CUMPLIMIENTO"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "BILLETERA_VER_TERCEROS"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "AUDITOR_INTERNO"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "AUDITORIA_LEER"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "AUDITOR_INTERNO"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "BILLETERA_VER_TERCEROS"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "RESPONSABLE_RIESGOS"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "AUDITORIA_LEER"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "RESPONSABLE_RIESGOS"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "BILLETERA_VER_TERCEROS"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "RESPONSABLE_RIESGOS"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "ENTREGA_AUTORIZAR"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "RESPONSABLE_RIESGOS"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "REVERSO_AUTORIZAR"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "RESPONSABLE_SEGURIDAD"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "AUDITORIA_LEER"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "TESORERIA"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "ENTREGA_EJECUTAR"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "TESORERIA"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "BILLETERA_VER_TERCEROS"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "TESORERIA"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "AUDITORIA_LEER"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "CONTABILIDAD"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "AUDITORIA_LEER"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "CONTABILIDAD"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "BILLETERA_VER_TERCEROS"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "SOPORTE"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "RECLAMO_ATENDER"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "SOPORTE"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "BILLETERA_VER_TERCEROS"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "PUNTO_RECLAMO"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "RECLAMO_ATENDER"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "PUNTO_RECLAMO"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "BILLETERA_VER_TERCEROS"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "PUNTO_RECLAMO"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "DATOS_SENSIBLES_LEER"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "ORGANIZADOR"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "GRUPO_CREAR"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "ORGANIZADOR"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "GRUPO_ADMINISTRAR"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "ORGANIZADOR"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "BILLETERA_VER"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "ORGANIZADOR"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "BILLETERA_OPERAR"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "PARTICIPANTE"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "BILLETERA_VER"
+          }
+        },
+        {
+          "rol_id": {
+            "$ref": "rol",
+            "codigo": "PARTICIPANTE"
+          },
+          "permiso_id": {
+            "$ref": "permiso",
+            "codigo": "BILLETERA_OPERAR"
+          }
         }
       ]
     }

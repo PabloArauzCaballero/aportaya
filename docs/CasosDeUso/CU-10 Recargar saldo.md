@@ -128,14 +128,15 @@ export const ErroresCU10 = {
 
 ## Restricciones aplicables
 
-`R-BIL-01` · `R-BIL-02` · `R-BIL-06` · `R-BIL-10` · `R-LIM-01` · `R-LIM-02` ·
-`R-AUD-01` · `R-AUD-03` · `R-AUD-05` · `R-UIF-02`
+`R-BIL-01` · `R-BIL-02` · `R-BIL-06` · `R-BIL-10` · `R-BIL-19` · `R-BIL-20` ·
+`R-LIM-01` · `R-LIM-02` · `R-AUD-01` · `R-AUD-03` · `R-AUD-05` · `R-AUD-10` ·
+`R-UIF-02`
 
 ## Evidencia que deja
 
 [[orden_recarga]] · [[pago]] · [[webhook_pasarela]] · [[transaccion_billetera]] ·
 [[movimiento_billetera]] · [[asiento_contable]] · [[movimiento_custodia]] ·
-[[registro_operacion_relevante]] (si aplica)
+[[respuesta_idempotente]] · [[registro_operacion_relevante]] (si aplica)
 
 ## Criterios de aceptación
 

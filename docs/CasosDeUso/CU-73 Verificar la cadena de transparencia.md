@@ -104,7 +104,7 @@ export const ErroresCU73 = {
 
 ## Restricciones aplicables
 
-`R-REP-04` · `R-AUD-02` · `R-RIS-01`
+`R-REP-04` · `R-AUD-02` · `R-AUD-03` · `R-AUD-09` · `R-AUD-10` · `R-RIS-01`
 
 ## Evidencia que deja
 

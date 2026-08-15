@@ -12,6 +12,10 @@ ALTER TABLE asiento_contable
   FOREIGN KEY (grupo_id) REFERENCES grupo (id) ON DELETE SET NULL ON UPDATE CASCADE;
 
 ALTER TABLE asiento_contable
+  ADD CONSTRAINT fk_asiento_contable_periodo_contable_id
+  FOREIGN KEY (periodo_contable_id) REFERENCES periodo_contable (id) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE asiento_contable
   ADD CONSTRAINT fk_asiento_contable_registrado_por
   FOREIGN KEY (registrado_por) REFERENCES usuario (id) ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -46,6 +50,10 @@ ALTER TABLE conciliacion
 ALTER TABLE constancia_pago
   ADD CONSTRAINT fk_constancia_pago_pago_id
   FOREIGN KEY (pago_id) REFERENCES pago (id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE cuenta_contable
+  ADD CONSTRAINT fk_cuenta_contable_cuenta_padre_id
+  FOREIGN KEY (cuenta_padre_id) REFERENCES cuenta_contable (id) ON DELETE SET NULL ON UPDATE CASCADE;
 
 ALTER TABLE cuenta_contable
   ADD CONSTRAINT fk_cuenta_contable_grupo_id

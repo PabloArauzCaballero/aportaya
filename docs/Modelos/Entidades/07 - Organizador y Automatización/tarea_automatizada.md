@@ -27,7 +27,7 @@ append_only: false
 | `programada_para` | TIMESTAMPTZ | IDX | no | IDX |
 | `estado` | VARCHAR(25) | IDX | no | CK, IDX |
 | `intentos` | SMALLINT | — | no | — |
-| `clave_idempotencia` | VARCHAR(80) | UQ | no | UQ |
+| `clave_idempotencia` | VARCHAR(80) | — | no | — |
 
 ## Claves foráneas salientes
 

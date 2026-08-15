@@ -9,7 +9,7 @@ estereotipo: Raíz de agregado
 clave_primaria: [id]
 columnas: 15
 fk_salientes: 1
-fk_entrantes: 5
+fk_entrantes: 6
 append_only: false
 ---
 
@@ -47,6 +47,7 @@ append_only: false
 
 | Entidad | Columna | Módulo | Relación |
 | --- | --- | :-: | --- |
+| [[anunciante]] | `organizador_id` | ↗ 14 | [[anunciante.organizador_id → organizador]] |
 | [[capacitacion_organizador]] | `organizador_id` | 07 | [[capacitacion_organizador.organizador_id → organizador]] |
 | [[contrato_organizador]] | `organizador_id` | 07 | [[contrato_organizador.organizador_id → organizador]] |
 | [[evaluacion_desempeno]] | `organizador_id` | 07 | [[evaluacion_desempeno.organizador_id → organizador]] |
@@ -55,7 +56,7 @@ append_only: false
 
 ## Entidades vecinas
 
-[[capacitacion_organizador]] · [[contrato_organizador]] · [[evaluacion_desempeno]] · [[grupo]] · [[sancion_organizador]] · [[usuario]]
+[[anunciante]] · [[capacitacion_organizador]] · [[contrato_organizador]] · [[evaluacion_desempeno]] · [[grupo]] · [[sancion_organizador]] · [[usuario]]
 
 ## Notas del modelo
 

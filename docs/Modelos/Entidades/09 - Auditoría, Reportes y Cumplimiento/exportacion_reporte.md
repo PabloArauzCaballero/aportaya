@@ -6,7 +6,7 @@ tabla: exportacion_reporte
 clase: ExportacionReporte
 modulo: "09 — Auditoría, Reportes y Cumplimiento"
 clave_primaria: [id]
-columnas: 10
+columnas: 11
 fk_salientes: 1
 fk_entrantes: 0
 append_only: false
@@ -27,6 +27,7 @@ append_only: false
 | `hash_archivo` | VARCHAR(64) | — | no | — |
 | `tamano_bytes` | BIGINT | — | no | — |
 | `esta_cifrado` | BOOLEAN | — | no | — |
+| `version_llave` | SMALLINT | — | no | — |
 | `descargas` | SMALLINT | — | no | — |
 | `expira_en` | TIMESTAMPTZ | IDX | no | IDX |
 | `generada_en` | TIMESTAMPTZ | — | no | — |

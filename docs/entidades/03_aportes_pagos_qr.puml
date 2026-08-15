@@ -475,6 +475,9 @@ package "Contabilidad de doble partida" {
     - nombre: String
     - tipo: String <<ACTIVO | PASIVO | PATRIMONIO | INGRESO | EGRESO>>
     - naturaleza: String <<DEUDORA | ACREEDORA>>
+    - cuentaPadreId: UUID <<null si es cuenta de primer nivel; plan de cuentas jerarquico, M13>>
+    - nivel: Integer <<profundidad en el plan de cuentas>>
+    - esCuentaDeMovimiento: Boolean <<false = cuenta sumarizadora, no recibe movimientos directos>>
     - grupoId: UUID <<null si es cuenta del sistema>>
     - participanteId: UUID <<cuenta corriente del participante>>
     - saldo: Decimal
@@ -489,7 +492,7 @@ package "Contabilidad de doble partida" {
     - numero: Long <<correlativo>>
     - fecha: DateTime
     - glosa: String
-    - origenTipo: String <<PAGO | ENTREGA | COBERTURA | COMISION | BILLETERA | AJUSTE>>
+    - origenTipo: String <<PAGO | ENTREGA | COBERTURA | COMISION | BILLETERA | AJUSTE | FACTURA_PROVEEDOR | COBRO_CXC | DEPRECIACION_ACTIVO>>
     - origenId: UUID
     - grupoId: UUID
     - estado: String <<BORRADOR | CONFIRMADO | REVERSADO>>
@@ -727,7 +730,7 @@ entity "orden_cobro" as orden {
   estado : VARCHAR(15) <<CK, IDX>>
   emitida_en : TIMESTAMPTZ
   expira_en : TIMESTAMPTZ <<IDX>>
-  clave_idempotencia : VARCHAR(80) <<UQ>>
+  clave_idempotencia : VARCHAR(80)
 }
 
 entity "qr_cobro" as qr {
@@ -764,7 +767,7 @@ entity "intento_pago" as intento {
   estado : VARCHAR(15) <<CK>>
   codigo_error : VARCHAR(40) <<NULL>>
   mensaje_proveedor : VARCHAR(255) <<NULL>>
-  clave_idempotencia : VARCHAR(80) <<UQ>>
+  clave_idempotencia : VARCHAR(80)
 }
 
 entity "pago" as pago {
@@ -787,7 +790,7 @@ entity "pago" as pago {
   cuenta_origen_enmascarada : VARCHAR(40) <<NULL>>
   # registrado_por : UUID <<FK, NULL>>
   es_manual : BOOLEAN
-  clave_idempotencia : VARCHAR(80) <<UQ>>
+  clave_idempotencia : VARCHAR(80)
 }
 
 entity "comprobante_manual" as comp {
@@ -907,7 +910,7 @@ entity "webhook_pasarela" as webh {
   procesado_en : TIMESTAMPTZ <<NULL>>
   intentos_procesamiento : SMALLINT
   estado : VARCHAR(15) <<CK, IDX>>
-  clave_idempotencia : VARCHAR(120) <<UQ>>
+  clave_idempotencia : VARCHAR(120)
   error_procesamiento : TEXT <<NULL>>
   # pago_id : UUID <<FK, NULL>>
 }
@@ -930,6 +933,9 @@ entity "cuenta_contable" as cta {
   nombre : VARCHAR(80)
   tipo : VARCHAR(15) <<CK>>
   naturaleza : VARCHAR(12) <<CK>>
+  # cuenta_padre_id : UUID <<FK, NULL, IDX>>
+  nivel : SMALLINT
+  es_cuenta_de_movimiento : BOOLEAN
   # grupo_id : UUID <<FK, NULL>>
   # participante_id : UUID <<FK, NULL>>
   saldo : DECIMAL(16,2)
@@ -944,6 +950,7 @@ entity "asiento_contable" as asiento {
   origen_tipo : VARCHAR(20) <<CK>>
   origen_id : UUID <<IDX, polimorfica>>
   # grupo_id : UUID <<FK, NULL, IDX>>
+  # periodo_contable_id : UUID <<FK, NULL, IDX, M13>>
   estado : VARCHAR(15) <<CK>>
   # asiento_reversa_id : UUID <<FK, NULL>>
   # registrado_por : UUID <<FK, NULL>>
@@ -996,6 +1003,7 @@ extracto ||--o{ movban : "contiene"
 webh }o--o| pago : "genera"
 asiento ||--|{ movcta : "detalla"
 cta ||--o{ movcta : "afecta"
+cta |o--o{ cta : "agrupa (plan de cuentas)"
 
 note bottom of tcambio
   UNIQUE (moneda_origen, moneda_destino, fecha).
@@ -1020,8 +1028,23 @@ note bottom of asiento
   Trigger AFTER: por cada asiento CONFIRMADO,
   SUM(debe) = SUM(haber). Los asientos no se
   editan ni borran: se reversan (asiento_reversa_id).
-  origen_id es polimorfica: pago.id, entrega.id (M4)
-  y cobertura_incumplimiento.id (M8).
+  origen_id es polimorfica: pago.id, entrega.id (M4),
+  cobertura_incumplimiento.id (M8),
+  factura_proveedor.id, cobro_cuenta_por_cobrar.id y
+  depreciacion_activo.id (M13).
+  periodo_contable_id es NULL para asientos previos
+  a M13; todo asiento nuevo se ata a un periodo
+  abierto y no puede crearse contra uno cerrado.
+end note
+
+note bottom of cta
+  <b>Plan de cuentas jerarquico (M13)</b>
+  cuenta_padre_id arma el arbol contable; nivel es
+  la profundidad (1 = cuenta mayor). Solo las cuentas
+  con es_cuenta_de_movimiento = true reciben lineas
+  en movimiento_contable: una cuenta sumarizadora
+  (es_cuenta_de_movimiento = false) es un total, no
+  un destino de asiento. Ese CHECK vive en M13.
 end note
 
 note bottom of oblig

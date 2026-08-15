@@ -7,9 +7,9 @@ tabla: asiento_contable
 clase: AsientoContable
 modulo: "03 — Aportes, Pagos QR y Conciliación"
 clave_primaria: [id]
-columnas: 10
-fk_salientes: 3
-fk_entrantes: 8
+columnas: 11
+fk_salientes: 4
+fk_entrantes: 12
 append_only: true
 ---
 
@@ -28,6 +28,7 @@ append_only: true
 | `origen_tipo` | VARCHAR(20) | — | no | CK |
 | `origen_id` | UUID | IDX | no | IDX, polimorfica |
 | `grupo_id` | UUID | FK IDX | sí | FK, NULL, IDX |
+| `periodo_contable_id` | UUID | FK IDX | sí | FK, NULL, IDX, M13 |
 | `estado` | VARCHAR(15) | — | no | CK |
 | `asiento_reversa_id` | UUID | FK | sí | FK, NULL |
 | `registrado_por` | UUID | FK | sí | FK, NULL |
@@ -38,6 +39,7 @@ append_only: true
 | --- | --- | :-: | :-: | --- |
 | `asiento_reversa_id` | [[asiento_contable]] | 03 | sí | [[asiento_contable.asiento_reversa_id → asiento_contable]] |
 | `grupo_id` | [[grupo]] | ↗ 02 | sí | [[asiento_contable.grupo_id → grupo]] |
+| `periodo_contable_id` | [[periodo_contable]] | ↗ 13 | sí | [[asiento_contable.periodo_contable_id → periodo_contable]] |
 | `registrado_por` | [[usuario]] | ↗ 01 | sí | [[asiento_contable.registrado_por → usuario]] |
 
 ## Referenciada por
@@ -47,15 +49,19 @@ append_only: true
 | [[asiento_contable]] | `asiento_reversa_id` | 03 | [[asiento_contable.asiento_reversa_id → asiento_contable]] |
 | [[castigo_deuda]] | `asiento_contable_id` | ↗ 08 | [[castigo_deuda.asiento_contable_id → asiento_contable]] |
 | [[cobertura_incumplimiento]] | `asiento_contable_id` | ↗ 08 | [[cobertura_incumplimiento.asiento_contable_id → asiento_contable]] |
+| [[cobro_cuenta_por_cobrar]] | `asiento_contable_id` | ↗ 13 | [[cobro_cuenta_por_cobrar.asiento_contable_id → asiento_contable]] |
+| [[depreciacion_activo]] | `asiento_contable_id` | ↗ 13 | [[depreciacion_activo.asiento_contable_id → asiento_contable]] |
 | [[devengo_comision]] | `asiento_contable_id` | ↗ 11 | [[devengo_comision.asiento_contable_id → asiento_contable]] |
+| [[factura_proveedor]] | `asiento_contable_id` | ↗ 13 | [[factura_proveedor.asiento_contable_id → asiento_contable]] |
 | [[liquidacion_ingresos]] | `asiento_contable_id` | ↗ 11 | [[liquidacion_ingresos.asiento_contable_id → asiento_contable]] |
 | [[movimiento_contable]] | `asiento_id` | 03 | [[movimiento_contable.asiento_id → asiento_contable]] |
 | [[movimiento_fondo]] | `asiento_contable_id` | ↗ 08 | [[movimiento_fondo.asiento_contable_id → asiento_contable]] |
+| [[pago_a_proveedor]] | `asiento_contable_id` | ↗ 13 | [[pago_a_proveedor.asiento_contable_id → asiento_contable]] |
 | [[transaccion_billetera]] | `asiento_contable_id` | ↗ 10 | [[transaccion_billetera.asiento_contable_id → asiento_contable]] |
 
 ## Entidades vecinas
 
-[[asiento_contable]] · [[castigo_deuda]] · [[cobertura_incumplimiento]] · [[devengo_comision]] · [[grupo]] · [[liquidacion_ingresos]] · [[movimiento_contable]] · [[movimiento_fondo]] · [[transaccion_billetera]] · [[usuario]]
+[[asiento_contable]] · [[castigo_deuda]] · [[cobertura_incumplimiento]] · [[cobro_cuenta_por_cobrar]] · [[depreciacion_activo]] · [[devengo_comision]] · [[factura_proveedor]] · [[grupo]] · [[liquidacion_ingresos]] · [[movimiento_contable]] · [[movimiento_fondo]] · [[pago_a_proveedor]] · [[periodo_contable]] · [[transaccion_billetera]] · [[usuario]]
 
 ## Notas del modelo
 
@@ -63,8 +69,13 @@ append_only: true
 > Trigger AFTER: por cada asiento CONFIRMADO,
 > SUM(debe) = SUM(haber). Los asientos no se
 > editan ni borran: se reversan (asiento_reversa_id).
-> origen_id es polimorfica: pago.id, entrega.id (M4)
-> y cobertura_incumplimiento.id (M8).
+> origen_id es polimorfica: pago.id, entrega.id (M4),
+> cobertura_incumplimiento.id (M8),
+> factura_proveedor.id, cobro_cuenta_por_cobrar.id y
+> depreciacion_activo.id (M13).
+> periodo_contable_id es NULL para asientos previos
+> a M13; todo asiento nuevo se ata a un periodo
+> abierto y no puede crearse contra uno cerrado.
 
 ## Ver también
 

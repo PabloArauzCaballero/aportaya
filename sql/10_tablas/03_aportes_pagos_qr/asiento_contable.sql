@@ -11,11 +11,12 @@ CREATE TABLE IF NOT EXISTS asiento_contable (
   origen_tipo                        VARCHAR(20) NOT NULL,
   origen_id                          UUID NOT NULL,
   grupo_id                           UUID,
+  periodo_contable_id                UUID,
   estado                             VARCHAR(15) NOT NULL,
   asiento_reversa_id                 UUID,
   registrado_por                     UUID,
   CONSTRAINT pk_asiento_contable PRIMARY KEY (id),
-  CONSTRAINT ck_asiento_contable_origen_tipo CHECK (origen_tipo IN ('AJUSTE', 'BILLETERA', 'COBERTURA', 'COMISION', 'ENTREGA', 'PAGO')),
+  CONSTRAINT ck_asiento_contable_origen_tipo CHECK (origen_tipo IN ('AJUSTE', 'BILLETERA', 'COBERTURA', 'COBRO_CXC', 'COMISION', 'DEPRECIACION_ACTIVO', 'ENTREGA', 'FACTURA_PROVEEDOR', 'PAGO')),
   CONSTRAINT ck_asiento_contable_estado CHECK (estado IN ('BORRADOR', 'CONFIRMADO', 'REVERSADO'))
 );
 
@@ -26,6 +27,7 @@ COMMENT ON COLUMN asiento_contable.fecha IS 'IDX';
 COMMENT ON COLUMN asiento_contable.origen_tipo IS 'CK';
 COMMENT ON COLUMN asiento_contable.origen_id IS 'IDX, polimorfica';
 COMMENT ON COLUMN asiento_contable.grupo_id IS 'FK, NULL, IDX';
+COMMENT ON COLUMN asiento_contable.periodo_contable_id IS 'FK, NULL, IDX, M13';
 COMMENT ON COLUMN asiento_contable.estado IS 'CK';
 COMMENT ON COLUMN asiento_contable.asiento_reversa_id IS 'FK, NULL';
 COMMENT ON COLUMN asiento_contable.registrado_por IS 'FK, NULL';

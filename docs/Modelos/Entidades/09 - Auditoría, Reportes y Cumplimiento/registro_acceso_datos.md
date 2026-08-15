@@ -26,7 +26,7 @@ append_only: true
 | `usuario_afectado_id` | UUID | FK IDX | no | FK, IDX |
 | `tipo_dato` | VARCHAR(30) | — | no | CK |
 | `operacion` | VARCHAR(15) | — | no | CK |
-| `justificacion` | VARCHAR(300) | — | sí | NULL |
+| `justificacion` | VARCHAR(300) | — | no | — |
 | `ticket_soporte_id` | VARCHAR(30) | — | sí | NULL |
 | `cantidad_registros` | INTEGER | — | no | — |
 | `ip_origen` | INET | — | no | — |

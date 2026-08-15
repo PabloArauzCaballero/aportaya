@@ -115,7 +115,8 @@ export const ErroresCU04 = {
 
 ## Restricciones aplicables
 
-`R-SEG-01` · `R-SEG-02` · `R-BIL-09` · `R-AUD-02`
+`R-SEG-01` · `R-SEG-02` · `R-SEG-03` · `R-SEG-09` · `R-BIL-09` · `R-AUD-02` ·
+`R-AUD-09`
 
 ## Evidencia que deja
 

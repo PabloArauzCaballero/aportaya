@@ -22,6 +22,7 @@ valores, el script la reporta como PENDIENTE y termina con código 1: el objetiv
 es que no queden pendientes a nivel de datos.
 """
 
+import hashlib
 import re
 import pathlib
 import shutil
@@ -29,8 +30,8 @@ import sys
 from collections import defaultdict
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from modelo import (MODULOS, FOCO, APPEND_ONLY, cargar, resolver_fk,  # noqa: E402
-                    clase_de, a_camel)
+from modelo import (MODULOS, FOCO, APPEND_ONLY, PARTICIONADAS,  # noqa: E402
+                    cargar, resolver_fk, clase_de, a_camel)
 
 OUT = pathlib.Path("sql")
 MAX_IDENT = 63
@@ -231,6 +232,11 @@ VALORES = {
         ["PENDIENTE", "APROBADO", "RECHAZADO", "OBSERVADO"],
     ("evento_entrega_mensaje", "tipo_evento"):
         ["ENVIADO", "ENTREGADO", "LEIDO", "FALLIDO", "RECHAZADO", "EXPIRADO"],
+
+    # --- M13: contabilidad financiera y ERP ---
+    # Único valor legal hoy; sin "|" en la anotación no hay lista que derivar
+    # del diagrama de clases (valores_enum exige al menos un separador).
+    ("categoria_activo_fijo", "metodo_depreciacion"): ["LINEA_RECTA"],
 }
 
 # --- columnas validadas por patrón, no por enumeración --------------------
@@ -257,12 +263,18 @@ DEF_CERO_PREFIJOS = ("saldo_", "monto_", "total_", "costo_", "cantidad_",
 
 
 def ident(*partes):
-    """Identificador acotado a 63 caracteres, estable."""
+    """Identificador acotado a 63 caracteres, estable entre corridas.
+
+    La firma se calcula con md5 y no con hash(): el hash de cadenas de Python se
+    aleatoriza por proceso, así que el nombre del índice cambiaba en cada
+    regeneración y un despliegue posterior creaba un índice duplicado en vez de
+    reconocer el que ya existía.
+    """
     nombre = "_".join(partes)
     if len(nombre) <= MAX_IDENT:
         return nombre
     corte = MAX_IDENT - 9
-    firma = format(abs(hash(nombre)) % 0xFFFFFF, "06x")
+    firma = hashlib.md5(nombre.encode("utf-8")).hexdigest()[:6]
     return f"{nombre[:corte]}_{firma}"
 
 
@@ -441,9 +453,15 @@ def generar():
                 if col["idx"]:
                     idx_mod.append(("IX", tabla, [n]))
 
+            particion = PARTICIONADAS.get(tabla)
+
             cuerpo = ",\n".join(lineas)
             if pk:
-                cuerpo += f",\n  CONSTRAINT {ident('pk', tabla)} PRIMARY KEY ({', '.join(pk)})"
+                # La clave de partición debe formar parte de la PK: PostgreSQL
+                # no admite un índice único que no la incluya.
+                cols_pk = pk + [particion] if particion and particion not in pk else pk
+                cuerpo += (f",\n  CONSTRAINT {ident('pk', tabla)} "
+                           f"PRIMARY KEY ({', '.join(cols_pk)})")
             for nombre_ck, expr in checks:
                 cuerpo += f",\n  CONSTRAINT {nombre_ck} CHECK ({expr})"
             total_checks += len(checks)
@@ -453,10 +471,34 @@ def generar():
                 enc.append(f"-- clase de dominio: {clase}")
             if tabla in APPEND_ONLY:
                 enc.append("-- APPEND-ONLY: sin UPDATE ni DELETE (ver sql/40_reglas)")
+            if particion:
+                enc.append(f"-- PARTICIONADA por rango de {particion} (mensual)")
             enc.append("-- Generado por scripts/generar_ddl.py — no editar a mano.")
 
+            cierre = f") PARTITION BY RANGE ({particion});" if particion else ");"
             sql = ["\n".join(enc), "",
-                   f"CREATE TABLE IF NOT EXISTS {tabla} (", cuerpo, ");", ""]
+                   f"CREATE TABLE IF NOT EXISTS {tabla} (", cuerpo, cierre, ""]
+
+            if particion:
+                # Una partición por mes del año en curso y del siguiente, más la
+                # de desborde: sin ella, un INSERT fuera de rango falla. El
+                # mantenimiento posterior lo hace CU-58 con la misma plantilla.
+                sql += [
+                    f"CREATE TABLE IF NOT EXISTS {tabla}_desborde",
+                    f"  PARTITION OF {tabla} DEFAULT;", ""]
+                sql += [
+                    "DO $$",
+                    "DECLARE d DATE := date_trunc('year', current_date)::date;",
+                    "BEGIN",
+                    "  FOR i IN 0..23 LOOP",
+                    "    EXECUTE format(",
+                    f"      'CREATE TABLE IF NOT EXISTS {tabla}_%s PARTITION OF {tabla} "
+                    "FOR VALUES FROM (%L) TO (%L)',",
+                    "      to_char(d + (i || ' month')::interval, 'YYYYMM'),",
+                    "      d + (i || ' month')::interval,",
+                    "      d + ((i + 1) || ' month')::interval);",
+                    "  END LOOP;",
+                    "END $$;", ""]
             desc = FOCO[k].replace("'", "''")
             marca = " [append-only]" if tabla in APPEND_ONLY else ""
             sql.append(f"COMMENT ON TABLE {tabla} IS "
@@ -488,6 +530,16 @@ def generar():
              "-- Generado por scripts/generar_ddl.py — no editar a mano.", ""]
         vistos = set()
         for tipo, tabla, cols in idx_mod:
+            # PostgreSQL rechaza un índice único sobre una tabla particionada que
+            # no incluya la clave de partición: no puede garantizar unicidad
+            # global sin recorrer todas las particiones. Se agrega al final, de
+            # modo que el índice siga sirviendo para buscar por las columnas
+            # originales. La unicidad pasa a ser por partición; para las columnas
+            # afectadas (secuencia BIGSERIAL, hash SHA-256) eso no la debilita en
+            # la práctica, porque el generador ya garantiza valores irrepetibles.
+            part = PARTICIONADAS.get(tabla)
+            if tipo == "UQ" and part and part not in cols:
+                cols = cols + [part]
             clave = (tipo, tabla, tuple(cols))
             if clave in vistos:
                 continue

@@ -55,9 +55,6 @@ CREATE INDEX IF NOT EXISTS ix_cotizacion_comision_concepto_tarifa_id
 CREATE INDEX IF NOT EXISTS ix_cotizacion_comision_referencia_id
   ON cotizacion_comision (referencia_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_cotizacion_comision_clave_idempotencia
-  ON cotizacion_comision (clave_idempotencia);
-
 CREATE INDEX IF NOT EXISTS ix_devengo_comision_concepto_tarifa_id
   ON devengo_comision (concepto_tarifa_id);
 
@@ -84,9 +81,6 @@ CREATE INDEX IF NOT EXISTS ix_devengo_comision_fecha_devengo
 
 CREATE INDEX IF NOT EXISTS ix_devengo_comision_periodo_contable
   ON devengo_comision (periodo_contable);
-
-CREATE UNIQUE INDEX IF NOT EXISTS uq_devengo_comision_clave_idempotencia
-  ON devengo_comision (clave_idempotencia);
 
 CREATE INDEX IF NOT EXISTS ix_cargo_comision_devengo_id
   ON cargo_comision (devengo_id);
