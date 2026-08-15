@@ -2,11 +2,12 @@ name: Publicar landing en GitHub Pages
 
 # Publica el contenido de landing/ (sitio estático sin build) en GitHub Pages.
 #
-# Requiere un paso único de configuración que solo puede hacer alguien con
-# permiso de administrador del repositorio (no alcanza con "push"):
+# El paso `configure-pages` con `enablement: true` activa Pages por su cuenta
+# usando el token del workflow, así que no hace falta que nadie con permiso de
+# administrador entre a Settings → Pages a hacer el toggle a mano.
+#
+# Si aun así fallara con un error de permisos, el camino manual es:
 #   Settings → Pages → Build and deployment → Source → "GitHub Actions"
-# Una vez hecho eso, este workflow corre solo en cada push a main que toque
-# landing/, y también se puede disparar a mano desde la pestaña Actions.
 #
 # landing/README.md documenta qué hay en el sitio y qué placeholders reemplazar
 # antes de considerarlo publicable de verdad.
@@ -39,6 +40,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+        with:
+          # Activa Pages en el repo si todavía no lo está, usando el token del
+          # propio workflow (permiso `pages: write` de arriba). Evita depender
+          # de que alguien con admin entre a Settings → Pages a hacer el toggle
+          # a mano. Si ya está activado, este paso no hace nada.
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: landing

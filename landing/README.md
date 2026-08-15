@@ -17,16 +17,17 @@ completo, no un subdirectorio del sitio) en cada push a `main` **o `dev`** que t
 Escucha las dos ramas a propósito: `dev` es donde se integra el trabajo de este repo y
 `main` va varios merges atrás, así que un workflow que solo mirara `main` no correría nunca.
 
-**Falta un paso único que solo puede hacer alguien con permiso de administrador** del
-repositorio (verificado contra la API: esta cuenta tiene `push`, no `admin`, y GitHub
-Pages devuelve 404 al intentar activarlo):
+El paso `configure-pages` corre con `enablement: true`, así que **activa Pages por su
+cuenta** usando el token del propio workflow (permiso `pages: write`). No hace falta que
+nadie con permiso de administrador entre a Settings a hacer el toggle a mano.
+
+Si por política del repo ese auto-activado fallara, el camino manual es una sola vez:
 
 > Settings → Pages → Build and deployment → Source → **GitHub Actions**
 
-Una vez activado eso una sola vez, el workflow hace el resto solo. Los enlaces del pie que
-apuntaban a `../docs/...` y `../README.md` se cambiaron a URLs de GitHub, porque el
-artefacto que sube el workflow es solo `landing/` — esos archivos no existen en el sitio
-publicado.
+Los enlaces del pie que apuntaban a `../docs/...` y `../README.md` se cambiaron a URLs de
+GitHub, porque el artefacto que sube el workflow es solo `landing/` — esos archivos no
+existen en el sitio publicado.
 
 ## Qué hay acá
 
